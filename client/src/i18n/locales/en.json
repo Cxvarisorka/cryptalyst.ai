@@ -1,0 +1,109 @@
+{
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "about": "About",
+    "getStarted": "Get Started"
+  },
+  "home": {
+    "title": "Cryptalyst.ai",
+    "subtitle": "AI-Powered Cryptocurrency Analysis Platform",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "features": {
+      "aiAnalysis": {
+        "title": "AI Analysis",
+        "description": "Advanced machine learning algorithms for cryptocurrency market analysis",
+        "content": "Get real-time insights powered by cutting-edge AI technology to make informed trading decisions."
+      },
+      "marketTrends": {
+        "title": "Market Trends",
+        "description": "Track and analyze cryptocurrency market trends in real-time",
+        "content": "Stay ahead of the market with comprehensive trend analysis and predictive insights."
+      },
+      "portfolio": {
+        "title": "Portfolio Management",
+        "description": "Manage and optimize your cryptocurrency portfolio",
+        "content": "Track your investments and receive personalized recommendations for portfolio optimization."
+      }
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Monitor your cryptocurrency portfolio and market trends",
+    "tabs": {
+      "overview": "Overview",
+      "portfolio": "Portfolio",
+      "analytics": "Analytics"
+    },
+    "overview": {
+      "totalValue": {
+        "title": "Total Value",
+        "description": "Current portfolio value",
+        "change": "+12.5% this month"
+      },
+      "dayChange": {
+        "title": "24h Change",
+        "description": "Portfolio change today",
+        "change": "+3.5% change"
+      },
+      "assets": {
+        "title": "Assets",
+        "description": "Total cryptocurrencies",
+        "count": "Active holdings"
+      },
+      "marketOverview": {
+        "title": "Market Overview",
+        "description": "Top performing cryptocurrencies"
+      }
+    },
+    "portfolio": {
+      "title": "Your Portfolio",
+      "description": "Manage your cryptocurrency holdings",
+      "comingSoon": "Portfolio management features coming soon..."
+    },
+    "analytics": {
+      "title": "Advanced Analytics",
+      "description": "AI-powered insights and predictions",
+      "comingSoon": "Analytics features coming soon..."
+    }
+  },
+  "about": {
+    "title": "About",
+    "subtitle": "Empowering cryptocurrency traders with AI-driven insights and analytics",
+    "mission": {
+      "title": "Our Mission",
+      "content": "Cryptalyst.ai is dedicated to democratizing access to professional-grade cryptocurrency analysis tools. We believe that everyone should have access to the same powerful AI-driven insights that institutional investors use to make informed trading decisions."
+    },
+    "technology": {
+      "title": "Our Technology",
+      "content": "Our platform leverages cutting-edge machine learning algorithms and natural language processing to analyze market trends, news sentiment, and trading patterns. We process millions of data points in real-time to provide you with actionable insights."
+    },
+    "keyFeatures": {
+      "title": "Key Features",
+      "description": "What makes Cryptalyst.ai unique",
+      "aiPowered": {
+        "title": "AI-Powered Analysis",
+        "description": "Advanced algorithms that learn from market patterns to provide predictive insights"
+      },
+      "realTime": {
+        "title": "Real-Time Data",
+        "description": "Live market data and instant alerts for significant market movements"
+      },
+      "portfolioTracking": {
+        "title": "Portfolio Tracking",
+        "description": "Comprehensive portfolio management with performance analytics and optimization"
+      },
+      "sentiment": {
+        "title": "Sentiment Analysis",
+        "description": "Monitor social media and news sentiment to gauge market psychology"
+      }
+    },
+    "startAnalyzing": "Start Analyzing Now"
+  },
+  "notFound": {
+    "title": "404 - Page Not Found",
+    "message": "The page you are looking for doesn't exist or has been moved.",
+    "backHome": "Back to Home"
+  }
+}
