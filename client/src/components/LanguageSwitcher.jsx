@@ -21,6 +21,16 @@ export default function LanguageSwitcher() {
     i18n.changeLanguage(languageCode);
   };
 
+  const copyShareLink = async () => {
+    const lang = i18n.language || "en";
+    const url = `${window.location.origin}/share/${lang}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch (e) {
+      window.prompt('Copy link', url);
+    }
+  };
+
   const currentLanguage =
     languages.find((lang) => lang.code === i18n.language) || languages[0];
 
@@ -56,6 +66,10 @@ export default function LanguageSwitcher() {
             <span>{language.name}</span>
           </DropdownMenuItem>
         ))}
+        <div className="h-px my-1 bg-border" />
+        <DropdownMenuItem onClick={copyShareLink} className="flex items-center gap-2">
+          <span>Copy share link</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
