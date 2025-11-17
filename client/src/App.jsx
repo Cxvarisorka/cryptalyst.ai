@@ -5,6 +5,7 @@ import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import About from "@/pages/About";
 import NotFound from "@/pages/NotFound";
+import Pricing from "@/pages/Pricing";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/about" element={<About />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />

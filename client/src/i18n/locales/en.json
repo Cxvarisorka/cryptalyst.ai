@@ -3,6 +3,7 @@
     "home": "Home",
     "dashboard": "Dashboard",
     "about": "About",
+    "pricing": "Pricing",
     "getStarted": "Get Started"
   },
   "home": {
@@ -101,6 +102,32 @@
     },
     "startAnalyzing": "Start Analyzing Now"
   },
+  "pricing": {
+    "title": "Simple, transparent pricing",
+    "subtitle": "Choose the plan that fits your trading and investing needs",
+    "billing": { "monthly": "Billed monthly" },
+    "plans": {
+      "pro": { "name": "Pro", "price": "$19/mo" },
+      "max": { "name": "Max", "price": "$49/mo" },
+      "enterprise": { "name": "Enterprise", "price": "Contact" }
+    },
+    "features": {
+      "aiAnalysis": "AI-powered analysis",
+      "portfolioTracking": "Portfolio tracking",
+      "basicAlerts": "Basic alerts",
+      "advancedAnalytics": "Advanced analytics",
+      "marketTrends": "Market trends insights",
+      "prioritySupport": "Priority support",
+      "sso": "SSO integration",
+      "sla": "SLA & uptime commitments",
+      "dedicatedSupport": "Dedicated success manager"
+    },
+    "cta": {
+      "getStarted": "Get Started",
+      "contactSales": "Contact Sales"
+    }
+  },
+
   "notFound": {
     "title": "404 - Page Not Found",
     "message": "The page you are looking for doesn't exist or has been moved.",
