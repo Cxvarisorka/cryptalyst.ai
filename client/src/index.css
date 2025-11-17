@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Money-themed color palette - Light mode */
+    --background: 0 0% 100%;
+    --foreground: 150 10% 15%;
+
+    /* Primary - Light Green (Money/Growth) */
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 142 76% 45%;
+    --primary-dark: 142 76% 28%;
+
+    /* Secondary - Gold Accents */
+    --secondary: 45 100% 51%;
+    --secondary-foreground: 150 10% 15%;
+
+    /* Success/Gain - Bright Green */
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+
+    /* Danger/Loss - Red */
+    --danger: 0 84% 60%;
+    --danger-foreground: 0 0% 100%;
+
+    /* Card backgrounds */
+    --card: 0 0% 100%;
+    --card-foreground: 150 10% 15%;
+    --card-hover: 142 30% 98%;
+
+    /* Muted backgrounds */
+    --muted: 142 20% 97%;
+    --muted-foreground: 150 6% 40%;
+
+    /* Accent - Deep Green */
+    --accent: 158 64% 30%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Borders */
+    --border: 142 20% 88%;
+    --input: 142 20% 88%;
+    --ring: 142 76% 36%;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 10% 15%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    /* Money-themed color palette - Dark mode */
+    --background: 150 15% 8%;
+    --foreground: 142 15% 95%;
+
+    /* Primary - Light Green (Money/Growth) */
+    --primary: 142 76% 45%;
+    --primary-foreground: 150 15% 8%;
+    --primary-light: 142 76% 55%;
+    --primary-dark: 142 76% 35%;
+
+    /* Secondary - Gold Accents */
+    --secondary: 45 100% 55%;
+    --secondary-foreground: 150 15% 8%;
+
+    /* Success/Gain - Bright Green */
+    --success: 142 76% 50%;
+    --success-foreground: 150 15% 8%;
+
+    /* Danger/Loss - Red */
+    --danger: 0 72% 55%;
+    --danger-foreground: 0 0% 100%;
+
+    /* Card backgrounds */
+    --card: 150 15% 12%;
+    --card-foreground: 142 15% 95%;
+    --card-hover: 150 15% 15%;
+
+    /* Muted backgrounds */
+    --muted: 150 15% 15%;
+    --muted-foreground: 142 10% 65%;
+
+    /* Accent - Deep Green */
+    --accent: 158 64% 35%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Borders */
+    --border: 150 15% 20%;
+    --input: 150 15% 20%;
+    --ring: 142 76% 45%;
+
+    /* Popover */
+    --popover: 150 15% 12%;
+    --popover-foreground: 142 15% 95%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer var(--speed, 3s) ease-in-out infinite;
+  }
+
+  .money-gradient {
+    background: linear-gradient(135deg, hsl(142, 76%, 45%) 0%, hsl(158, 64%, 35%) 100%);
+  }
+
+  .gold-gradient {
+    background: linear-gradient(135deg, hsl(45, 100%, 55%) 0%, hsl(45, 100%, 45%) 100%);
+  }
+}
