@@ -8,24 +8,29 @@
   },
   "home": {
     "title": "Cryptalyst.ai",
-    "subtitle": "AI-Powered Cryptocurrency Analysis Platform",
+    "subtitle": "AI-powered cryptocurrency analysis platform",
     "getStarted": "Get Started",
     "learnMore": "Learn More",
     "features": {
       "aiAnalysis": {
         "title": "AI Analysis",
-        "description": "Advanced machine learning algorithms for cryptocurrency market analysis",
-        "content": "Get real-time insights powered by cutting-edge AI technology to make informed trading decisions."
+        "description": "Advanced machine learning algorithms for analyzing cryptocurrency markets",
+        "content": "Gain real-time insights powered by cutting-edge AI to make smarter trading decisions."
       },
       "marketTrends": {
         "title": "Market Trends",
-        "description": "Track and analyze cryptocurrency market trends in real-time",
-        "content": "Stay ahead of the market with comprehensive trend analysis and predictive insights."
+        "description": "Track and analyze cryptocurrency market trends in real time",
+        "content": "Stay ahead of the curve with comprehensive trend analysis and predictive insights."
       },
       "portfolio": {
         "title": "Portfolio Management",
         "description": "Manage and optimize your cryptocurrency portfolio",
-        "content": "Track your investments and receive personalized recommendations for portfolio optimization."
+        "content": "Monitor your investments and receive personalized recommendations for portfolio growth."
+      },
+      "promotion": {
+        "title": "Promotions",
+        "description": "Exclusive offers and discounts for new users",
+        "content": "Take advantage of limited-time promotions to maximize your trading potential."
       }
     }
   },
@@ -45,8 +50,8 @@
       },
       "dayChange": {
         "title": "24h Change",
-        "description": "Portfolio change today",
-        "change": "+3.5% change"
+        "description": "Portfolio change in the last 24 hours",
+        "change": "+3.5% today"
       },
       "assets": {
         "title": "Assets",
@@ -55,41 +60,41 @@
       },
       "marketOverview": {
         "title": "Market Overview",
-        "description": "Top performing cryptocurrencies"
+        "description": "Top-performing cryptocurrencies"
       }
     },
     "portfolio": {
       "title": "Your Portfolio",
       "description": "Manage your cryptocurrency holdings",
-      "comingSoon": "Portfolio management features coming soon..."
+      "comingSoon": "Portfolio management features are coming soon..."
     },
     "analytics": {
       "title": "Advanced Analytics",
       "description": "AI-powered insights and predictions",
-      "comingSoon": "Analytics features coming soon..."
+      "comingSoon": "Analytics features are coming soon..."
     }
   },
   "about": {
     "title": "About",
-    "subtitle": "Empowering cryptocurrency traders with AI-driven insights and analytics",
+    "subtitle": "Empowering cryptocurrency and promotional traders with AI-driven insights and analytics",
     "mission": {
       "title": "Our Mission",
-      "content": "Cryptalyst.ai is dedicated to democratizing access to professional-grade cryptocurrency analysis tools. We believe that everyone should have access to the same powerful AI-driven insights that institutional investors use to make informed trading decisions."
+      "content": "Cryptalyst.ai is committed to democratizing access to professional-grade cryptocurrency analysis tools. We believe everyone should benefit from the same powerful AI-driven insights that institutional investors rely on."
     },
     "technology": {
       "title": "Our Technology",
-      "content": "Our platform leverages cutting-edge machine learning algorithms and natural language processing to analyze market trends, news sentiment, and trading patterns. We process millions of data points in real-time to provide you with actionable insights."
+      "content": "Our platform uses cutting-edge machine learning algorithms and natural language processing to analyze market trends, news sentiment, and trading patterns. We process millions of data points in real time to deliver actionable insights."
     },
     "keyFeatures": {
       "title": "Key Features",
       "description": "What makes Cryptalyst.ai unique",
       "aiPowered": {
         "title": "AI-Powered Analysis",
-        "description": "Advanced algorithms that learn from market patterns to provide predictive insights"
+        "description": "Advanced algorithms that learn from market patterns to deliver predictive insights"
       },
       "realTime": {
         "title": "Real-Time Data",
-        "description": "Live market data and instant alerts for significant market movements"
+        "description": "Live market data and instant alerts for major market movements"
       },
       "portfolioTracking": {
         "title": "Portfolio Tracking",
@@ -97,40 +102,52 @@
       },
       "sentiment": {
         "title": "Sentiment Analysis",
-        "description": "Monitor social media and news sentiment to gauge market psychology"
+        "description": "Monitor social media and news sentiment to understand market psychology"
       }
     },
     "startAnalyzing": "Start Analyzing Now"
   },
   "pricing": {
     "title": "Simple, transparent pricing",
-    "subtitle": "Choose the plan that fits your trading and investing needs",
-    "billing": { "monthly": "Billed monthly" },
+    "subtitle": "Choose the plan that fits your trading and investing goals",
+    "billing": {
+      "monthly": "Billed monthly"
+    },
     "plans": {
-      "pro": { "name": "Pro", "price": "$19/mo" },
-      "max": { "name": "Max", "price": "$49/mo" },
-      "enterprise": { "name": "Enterprise", "price": "Contact" }
+      "pro": {
+        "name": "Pro",
+        "price": "$19/mo"
+      },
+      "max": {
+        "name": "Max",
+        "price": "$49/mo"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Contact"
+      }
     },
     "features": {
       "aiAnalysis": "AI-powered analysis",
       "portfolioTracking": "Portfolio tracking",
       "basicAlerts": "Basic alerts",
       "advancedAnalytics": "Advanced analytics",
-      "marketTrends": "Market trends insights",
+      "marketTrends": "Market trend insights",
       "prioritySupport": "Priority support",
       "sso": "SSO integration",
       "sla": "SLA & uptime commitments",
-      "dedicatedSupport": "Dedicated success manager"
+      "dedicatedSupport": "Dedicated success manager",
+      "promotion": "Exclusive promotions and discounts"
     },
     "cta": {
       "getStarted": "Get Started",
-      "contactSales": "Contact Sales"
+      "contactSales": "Contact Sales Team"
     }
   },
 
   "notFound": {
     "title": "404 - Page Not Found",
     "message": "The page you are looking for doesn't exist or has been moved.",
-    "backHome": "Back to Home"
+    "backHome": "Go Back to Home Page"
   }
 }
