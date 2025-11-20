@@ -22,7 +22,7 @@ export const ShimmerButton = ({
         "--bg": background,
       }}
       className={cn(
-        "group relative z-0 flex cursor-pointer items-center justify-center overflow-hidden whitespace-nowrap px-6 py-3 text-white [background:var(--bg)] [border-radius:var(--radius)] transition-transform duration-300 hover:scale-105",
+        "group relative z-0 flex cursor-pointer items-center justify-center overflow-hidden whitespace-nowrap px-6 py-3 text-white [background:var(--bg)] [border-radius:var(--radius)] transition-transform duration-300",
         "before:absolute before:inset-0 before:overflow-hidden before:rounded-[inherit] before:[border-radius:var(--radius)] before:[mask:linear-gradient(white,transparent)] before:[background:linear-gradient(var(--spread),transparent,var(--shimmer-color),transparent)] before:[content:''] before:animate-shimmer",
         className
       )}
