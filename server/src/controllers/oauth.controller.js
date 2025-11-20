@@ -65,12 +65,11 @@ const googleCallback = async (req, res) => {
       });
     }
 
-    // Set cookie and get token
-    const token = setTokenCookie(user, res);
+    // Set httpOnly cookie (token stored securely in cookie only)
+    setTokenCookie(user, res);
 
-    // Redirect to frontend with token in URL as backup
+    // Redirect to frontend - NO token in URL for security
     const redirectUrl = new URL(process.env.CLIENT_URL || 'http://localhost:5173');
-    redirectUrl.searchParams.set('token', token);
     redirectUrl.searchParams.set('auth', 'success');
 
     res.redirect(redirectUrl.toString());
@@ -151,12 +150,11 @@ const githubCallback = async (req, res) => {
       });
     }
 
-    // Set cookie and get token
-    const token = setTokenCookie(user, res);
+    // Set httpOnly cookie (token stored securely in cookie only)
+    setTokenCookie(user, res);
 
-    // Redirect to frontend with token in URL as backup
+    // Redirect to frontend - NO token in URL for security
     const redirectUrl = new URL(process.env.CLIENT_URL || 'http://localhost:5173');
-    redirectUrl.searchParams.set('token', token);
     redirectUrl.searchParams.set('auth', 'success');
 
     res.redirect(redirectUrl.toString());
