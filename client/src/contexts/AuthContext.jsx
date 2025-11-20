@@ -20,10 +20,46 @@ export const AuthProvider = ({ children }) => {
   axios.defaults.withCredentials = true;
   axios.defaults.baseURL = import.meta.env.VITE_API_URL || "https://cryptalyst.onrender.com/api";
 
-  // Check if user is logged in on mount
+  // Add axios interceptor to include token from localStorage
   useEffect(() => {
+    const interceptor = axios.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.request.eject(interceptor);
+    };
+  }, []);
+
+  // Check if user is logged in on mount and handle OAuth callback
+  useEffect(() => {
+    handleOAuthCallback();
     checkAuth();
   }, []);
+
+  const handleOAuthCallback = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const authStatus = urlParams.get('auth');
+
+    if (token && authStatus === 'success') {
+      // Store token in localStorage
+      localStorage.setItem('token', token);
+      console.log('✅ OAuth token stored successfully');
+
+      // Clean URL by removing query parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  };
 
   const checkAuth = async () => {
     try {
@@ -48,6 +84,10 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
+        // Store token if provided
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
         setUser(response.data.user);
         return { success: true };
       }
@@ -67,6 +107,10 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
+        // Store token if provided
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
         setUser(response.data.user);
         return { success: true };
       }
@@ -80,9 +124,12 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await axios.post("/auth/logout");
+      localStorage.removeItem('token');
       setUser(null);
     } catch (err) {
       console.error("Logout error:", err);
+      localStorage.removeItem('token');
+      setUser(null);
     }
   };
 
