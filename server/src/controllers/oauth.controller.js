@@ -65,14 +65,20 @@ const googleCallback = async (req, res) => {
       });
     }
 
-    // Set cookie (no response sent yet)
-    setTokenCookie(user, res);
+    // Set cookie and get token
+    const token = setTokenCookie(user, res);
 
-    // Redirect to frontend
-    res.redirect(process.env.CLIENT_URL || 'http://localhost:3000');
+    // Redirect to frontend with token in URL as backup
+    const redirectUrl = new URL(process.env.CLIENT_URL || 'http://localhost:5173');
+    redirectUrl.searchParams.set('token', token);
+    redirectUrl.searchParams.set('auth', 'success');
+
+    res.redirect(redirectUrl.toString());
   } catch (error) {
     console.error('Google OAuth Error:', error.message);
-    res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=oauth_failed`);
+    const redirectUrl = new URL(process.env.CLIENT_URL || 'http://localhost:5173');
+    redirectUrl.searchParams.set('error', 'oauth_failed');
+    res.redirect(redirectUrl.toString());
   }
 };
 
@@ -145,14 +151,20 @@ const githubCallback = async (req, res) => {
       });
     }
 
-    // Set cookie (no response sent yet)
-    setTokenCookie(user, res);
+    // Set cookie and get token
+    const token = setTokenCookie(user, res);
 
-    // Redirect to frontend
-    res.redirect(process.env.CLIENT_URL || 'http://localhost:3000');
+    // Redirect to frontend with token in URL as backup
+    const redirectUrl = new URL(process.env.CLIENT_URL || 'http://localhost:5173');
+    redirectUrl.searchParams.set('token', token);
+    redirectUrl.searchParams.set('auth', 'success');
+
+    res.redirect(redirectUrl.toString());
   } catch (error) {
     console.error('GitHub OAuth Error:', error.message);
-    res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=oauth_failed`);
+    const redirectUrl = new URL(process.env.CLIENT_URL || 'http://localhost:5173');
+    redirectUrl.searchParams.set('error', 'oauth_failed');
+    res.redirect(redirectUrl.toString());
   }
 };
 
