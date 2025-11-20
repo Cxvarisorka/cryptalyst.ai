@@ -9,6 +9,10 @@ const connectDB = require('./src/config/database');
 // Import routes
 const authRoutes = require('./src/routes/auth.routes');
 const oauthRoutes = require('./src/routes/oauth.routes');
+const marketRoutes = require('./src/routes/market.routes');
+
+// Import services
+const marketDataService = require('./src/services/marketData.service');
 
 const app = express();
 
@@ -34,6 +38,23 @@ app.get('/', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes); // Authentication routes
 app.use('/api/oauth', oauthRoutes); // OAuth routes
+app.use('/api/market', marketRoutes); // Market data routes
+
+// Start market data service
+marketDataService.startPeriodicUpdate();
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  marketDataService.stopPeriodicUpdate();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  marketDataService.stopPeriodicUpdate();
+  process.exit(0);
+});
 
 // Start server
 const PORT = process.env.PORT || 5000;
