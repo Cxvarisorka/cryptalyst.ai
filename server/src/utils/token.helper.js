@@ -14,12 +14,13 @@ const sendTokenResponse = (user, statusCode, message, res) => {
   // Generate token
   const token = generateToken(user._id);
 
-  // Cookie options
+  // Cookie options - httpOnly for maximum security
   const cookieOptions = {
-    httpOnly: true, // Cannot be accessed by JavaScript (security)
+    httpOnly: true, // Cannot be accessed by JavaScript (XSS protection)
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site for OAuth
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site for OAuth in production
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+    path: '/' // Cookie available on all paths
   };
 
   // Set token in HTTP-only cookie
@@ -28,11 +29,10 @@ const sendTokenResponse = (user, statusCode, message, res) => {
   // Remove password from user object
   user.password = undefined;
 
-  // Send response with user data and token
+  // Send response with user data only (NO token in response body for security)
   return res.status(statusCode).json({
     success: true,
     message: message,
-    token, // Include token in response for client storage as backup
     user: {
       id: user._id,
       name: user.name,
@@ -43,16 +43,16 @@ const sendTokenResponse = (user, statusCode, message, res) => {
   });
 };
 
-// Set token cookie only (for OAuth - no response sent)
+// Set token cookie only (for OAuth - no response sent, no token returned)
 const setTokenCookie = (user, res) => {
   // Generate token
   const token = generateToken(user._id);
 
-  // Cookie options - more permissive for OAuth redirects
+  // Cookie options - configured for OAuth redirects
   const cookieOptions = {
-    httpOnly: true, // Cannot be accessed by JavaScript (security)
+    httpOnly: true, // Cannot be accessed by JavaScript (XSS protection)
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site for OAuth
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site for OAuth in production
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
     path: '/' // Cookie available on all paths
   };
@@ -60,7 +60,7 @@ const setTokenCookie = (user, res) => {
   // Set token in HTTP-only cookie
   res.cookie('token', token, cookieOptions);
 
-  return token; // Return token for potential redirect URL use
+  // DO NOT return token - it should only exist in httpOnly cookie
 };
 
 // Clear token cookie (for logout)
