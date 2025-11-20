@@ -22,7 +22,7 @@ connectDB();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000', // Allow frontend URL
+  origin: process.env.CLIENT_URL || 'https://cryptalyst-ai.vercel.app/', // Allow frontend URL
   credentials: true // Allow cookies to be sent
 }));
 app.use(morgan('dev'));
