@@ -14,14 +14,20 @@ const sendTokenResponse = (user, statusCode, message, res) => {
   // Generate token
   const token = generateToken(user._id);
 
+  // Determine if we're in cross-origin scenario
+  const clientURL = process.env.CLIENT_URL || 'http://localhost:5173';
+  const isCrossOrigin = clientURL.includes('vercel.app') || clientURL.includes('https://');
+
   // Cookie options - httpOnly for maximum security
   const cookieOptions = {
     httpOnly: true, // Cannot be accessed by JavaScript (XSS protection)
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site for OAuth in production
+    secure: isCrossOrigin, // HTTPS required for cross-origin
+    sameSite: isCrossOrigin ? 'none' : 'lax', // 'none' required for cross-origin with secure
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
     path: '/' // Cookie available on all paths
   };
+
+  console.log('🍪 Setting cookie with options:', cookieOptions);
 
   // Set token in HTTP-only cookie
   res.cookie('token', token, cookieOptions);
@@ -48,14 +54,20 @@ const setTokenCookie = (user, res) => {
   // Generate token
   const token = generateToken(user._id);
 
+  // Determine if we're in cross-origin scenario
+  const clientURL = process.env.CLIENT_URL || 'http://localhost:5173';
+  const isCrossOrigin = clientURL.includes('vercel.app') || clientURL.includes('https://');
+
   // Cookie options - configured for OAuth redirects
   const cookieOptions = {
     httpOnly: true, // Cannot be accessed by JavaScript (XSS protection)
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site for OAuth in production
+    secure: isCrossOrigin, // HTTPS required for cross-origin
+    sameSite: isCrossOrigin ? 'none' : 'lax', // 'none' required for cross-origin with secure
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
     path: '/' // Cookie available on all paths
   };
+
+  console.log('🍪 Setting OAuth cookie with options:', cookieOptions);
 
   // Set token in HTTP-only cookie
   res.cookie('token', token, cookieOptions);
