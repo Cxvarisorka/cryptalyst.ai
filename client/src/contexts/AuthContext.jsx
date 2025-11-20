@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
 
   // Configure axios to send cookies with requests
   axios.defaults.withCredentials = true;
-  axios.defaults.baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL || "https://cryptalyst.onrender.com/api";
 
   // Check if user is logged in on mount
   useEffect(() => {
