@@ -4,6 +4,9 @@ const { setTokenCookie } = require('../utils/token.helper');
 
 // Google OAuth - Get authorization URL
 const getGoogleAuthUrl = (req, res) => {
+  console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+  console.log("GOOGLE_REDIRECT_URI:", process.env.GOOGLE_REDIRECT_URI);
+
   // Build Google OAuth URL
   const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
   const options = {
