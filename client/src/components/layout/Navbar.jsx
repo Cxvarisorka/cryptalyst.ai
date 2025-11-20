@@ -1,23 +1,32 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { GradientText } from "@/components/magicui/gradient-text";
+import { useAuth } from "@/contexts/AuthContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { Menu, X, Coins } from "lucide-react";
+import { Menu, X, Coins, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation();
+  const { isAuthenticated, user, logout } = useAuth();
 
   const navLinks = [
     { name: t('nav.home'), path: "/" },
-    { name: t('nav.dashboard'), path: "/dashboard" },
+    ...(isAuthenticated ? [{ name: t('nav.dashboard'), path: "/dashboard" }] : []),
     { name: t('nav.pricing'), path: "/pricing" },
     { name: t('nav.about'), path: "/about" },
   ];
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+    setMobileMenuOpen(false);
+  };
 
   const isActive = (path) => location.pathname === path;
 
@@ -54,12 +63,38 @@ export default function Navbar() {
           {/* Desktop CTA & Language Switcher */}
           <div className="hidden md:flex items-center gap-3">
             <LanguageSwitcher />
-            <Button 
-              variant="default" 
-              className="bg-gradient-money hover:opacity-90 transition-opacity shadow-sm"
-            >
-              {t('nav.getStarted')}
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User size={16} />
+                  <span>{user?.name}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate("/signin")}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  variant="default"
+                  className="bg-gradient-money hover:opacity-90 transition-opacity shadow-sm"
+                  onClick={() => navigate("/signup")}
+                >
+                  {t('nav.getStarted')}
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -91,12 +126,45 @@ export default function Navbar() {
                   {link.name}
                 </Link>
               ))}
-              <Button 
-                variant="default" 
-                className="w-full bg-gradient-money hover:opacity-90 transition-opacity shadow-sm"
-              >
-                {t('nav.getStarted')}
-              </Button>
+              {isAuthenticated ? (
+                <>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <User size={16} />
+                    <span>{user?.name}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2"
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/signin");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full"
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    variant="default"
+                    className="w-full bg-gradient-money hover:opacity-90 transition-opacity shadow-sm"
+                    onClick={() => {
+                      navigate("/signup");
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    {t('nav.getStarted')}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}
