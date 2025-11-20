@@ -27,6 +27,28 @@
         "description": "Manage and optimize your cryptocurrency portfolio",
         "content": "Track your investments and receive personalized recommendations for portfolio optimization."
       }
+    },
+    "marketOverview": {
+      "crypto": "Top Cryptocurrencies",
+      "cryptoDesc": "Real-time crypto market data",
+      "stocks": "Top Stocks",
+      "stocksDesc": "Leading stock market performers",
+      "noData": "No data available"
+    },
+    "benefits": {
+      "security": "Bank-level security for your data",
+      "realtime": "Real-time market updates",
+      "insights": "AI-powered insights & predictions"
+    },
+    "whyChoose": {
+      "title": "Why Choose Cryptalyst.ai?",
+      "subtitle": "Join thousands of traders who trust us for their cryptocurrency analysis"
+    },
+    "cta": {
+      "title": "Ready to Transform Your Trading?",
+      "subtitle": "Get started today and unlock the power of AI-driven cryptocurrency analysis",
+      "button": "Start Free Trial",
+      "pricing": "View Pricing"
     }
   },
   "dashboard": {
@@ -72,6 +94,12 @@
   "about": {
     "title": "About",
     "subtitle": "Empowering cryptocurrency traders with AI-driven insights and analytics",
+    "stats": {
+      "users": "Active Users",
+      "volume": "Trading Volume",
+      "uptime": "Uptime",
+      "latency": "Latency"
+    },
     "mission": {
       "title": "Our Mission",
       "content": "Cryptalyst.ai is dedicated to democratizing access to professional-grade cryptocurrency analysis tools. We believe that everyone should have access to the same powerful AI-driven insights that institutional investors use to make informed trading decisions."
@@ -100,12 +128,32 @@
         "description": "Monitor social media and news sentiment to gauge market psychology"
       }
     },
+    "values": {
+      "title": "Our Values",
+      "transparency": {
+        "title": "Transparency",
+        "description": "We believe in complete transparency in our algorithms, pricing, and operations"
+      },
+      "innovation": {
+        "title": "Innovation",
+        "description": "Continuously pushing the boundaries of what's possible with AI and blockchain technology"
+      },
+      "community": {
+        "title": "Community",
+        "description": "Building a supportive community of traders who learn and grow together"
+      }
+    },
+    "cta": {
+      "title": "Join the Future of Crypto Trading",
+      "subtitle": "Experience the power of AI-driven analysis and make smarter trading decisions"
+    },
     "startAnalyzing": "Start Analyzing Now"
   },
   "pricing": {
     "title": "Simple, transparent pricing",
     "subtitle": "Choose the plan that fits your trading and investing needs",
     "billing": { "monthly": "Billed monthly" },
+    "popular": "Most Popular",
     "plans": {
       "pro": { "name": "Pro", "price": "$19/mo" },
       "max": { "name": "Max", "price": "$49/mo" },
@@ -122,12 +170,87 @@
       "sla": "SLA & uptime commitments",
       "dedicatedSupport": "Dedicated success manager"
     },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "q1": "Can I cancel my subscription anytime?",
+      "a1": "Yes, you can cancel your subscription at any time with no cancellation fees. Your access will continue until the end of your billing period.",
+      "q2": "Do you offer a free trial?",
+      "a2": "Yes! All plans come with a 14-day free trial. No credit card required to start.",
+      "q3": "What payment methods do you accept?",
+      "a3": "We accept all major credit cards, debit cards, and cryptocurrency payments including Bitcoin and Ethereum.",
+      "q4": "Can I upgrade or downgrade my plan?",
+      "a4": "Absolutely! You can upgrade or downgrade your plan at any time, and we'll prorate the charges accordingly."
+    },
     "cta": {
+      "title": "Ready to Get Started?",
+      "subtitle": "Join thousands of traders making smarter decisions with AI-powered insights",
       "getStarted": "Get Started",
       "contactSales": "Contact Sales"
     }
   },
 
+  "auth": {
+    "signin": {
+      "title": "Welcome back",
+      "description": "Enter your credentials to access your account",
+      "email": "Email",
+      "password": "Password",
+      "button": "Sign in",
+      "buttonLoading": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "signupLink": "Sign up",
+      "orContinue": "Or continue with email",
+      "errors": {
+        "fillFields": "Please fill in all fields"
+      }
+    },
+    "signup": {
+      "title": "Create an account",
+      "description": "Enter your information to get started",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "button": "Sign up",
+      "buttonLoading": "Creating account...",
+      "haveAccount": "Already have an account?",
+      "signinLink": "Sign in",
+      "orContinue": "Or continue with email",
+      "errors": {
+        "fillFields": "Please fill in all fields",
+        "passwordMismatch": "Passwords do not match",
+        "passwordLength": "Password must be at least 6 characters"
+      }
+    }
+  },
+  "footer": {
+    "description": "AI-Powered Cryptocurrency Analysis Platform",
+    "rights": "All rights reserved.",
+    "product": {
+      "title": "Product",
+      "features": "Features",
+      "pricing": "Pricing",
+      "security": "Security"
+    },
+    "company": {
+      "title": "Company",
+      "about": "About",
+      "blog": "Blog",
+      "careers": "Careers"
+    },
+    "resources": {
+      "title": "Resources",
+      "documentation": "Documentation",
+      "support": "Support",
+      "api": "API"
+    },
+    "legal": {
+      "title": "Legal",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "cookies": "Cookies"
+    }
+  },
   "notFound": {
     "title": "404 - Page Not Found",
     "message": "The page you are looking for doesn't exist or has been moved.",
