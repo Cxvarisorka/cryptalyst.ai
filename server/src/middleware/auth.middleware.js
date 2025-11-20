@@ -4,8 +4,15 @@ const User = require('../models/user.model.js');
 // Middleware to protect routes - requires user to be logged in
 const protect = async (req, res, next) => {
   try {
-    // Get token from cookie
-    const token = req.cookies.token;
+    let token;
+
+    // Get token from cookie first (preferred)
+    token = req.cookies.token;
+
+    // If no cookie token, try Authorization header as backup
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
 
     // Check if token exists
     if (!token) {
