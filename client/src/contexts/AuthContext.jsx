@@ -16,29 +16,12 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Configure axios to send cookies with requests
+  // Configure axios to send httpOnly cookies with requests
   axios.defaults.withCredentials = true;
   axios.defaults.baseURL = import.meta.env.VITE_API_URL || "https://cryptalyst.onrender.com/api";
 
-  // Add axios interceptor to include token from localStorage
-  useEffect(() => {
-    const interceptor = axios.interceptors.request.use(
-      (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
-
-    return () => {
-      axios.interceptors.request.eject(interceptor);
-    };
-  }, []);
+  // NO interceptor needed - tokens are in httpOnly cookies, not localStorage
+  // Cookies are automatically sent with every request (withCredentials: true)
 
   // Check if user is logged in on mount and handle OAuth callback
   useEffect(() => {
@@ -48,13 +31,11 @@ export const AuthProvider = ({ children }) => {
 
   const handleOAuthCallback = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
     const authStatus = urlParams.get('auth');
 
-    if (token && authStatus === 'success') {
-      // Store token in localStorage
-      localStorage.setItem('token', token);
-      console.log('✅ OAuth token stored successfully');
+    if (authStatus === 'success') {
+      // Token is already set in httpOnly cookie by server
+      console.log('✅ OAuth successful - cookie set by server');
 
       // Clean URL by removing query parameters
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -84,10 +65,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
-        // Store token if provided
-        if (response.data.token) {
-          localStorage.setItem('token', response.data.token);
-        }
+        // Token is automatically set in httpOnly cookie by server
         setUser(response.data.user);
         return { success: true };
       }
@@ -107,10 +85,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
-        // Store token if provided
-        if (response.data.token) {
-          localStorage.setItem('token', response.data.token);
-        }
+        // Token is automatically set in httpOnly cookie by server
         setUser(response.data.user);
         return { success: true };
       }
@@ -124,11 +99,11 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await axios.post("/auth/logout");
-      localStorage.removeItem('token');
+      // Cookie is automatically cleared by server
       setUser(null);
     } catch (err) {
       console.error("Logout error:", err);
-      localStorage.removeItem('token');
+      // Clear user even if request fails
       setUser(null);
     }
   };
