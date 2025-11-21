@@ -11,6 +11,8 @@ import NotFound from "@/pages/NotFound";
 import Pricing from "@/pages/Pricing";
 import Signup from "@/pages/Signup";
 import Signin from "@/pages/Signin";
+import CryptoDetail from "@/pages/CryptoDetail";
+import StockDetail from "@/pages/StockDetail";
 
 function App() {
   return (
@@ -28,6 +30,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/crypto/:id"
+                element={
+                  <ProtectedRoute>
+                    <CryptoDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/stock/:symbol"
+                element={
+                  <ProtectedRoute>
+                    <StockDetail />
                   </ProtectedRoute>
                 }
               />
