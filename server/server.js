@@ -10,6 +10,7 @@ const connectDB = require('./src/config/database');
 const authRoutes = require('./src/routes/auth.routes');
 const oauthRoutes = require('./src/routes/oauth.routes');
 const marketRoutes = require('./src/routes/market.routes');
+const analysisRoutes = require('./src/routes/analysis.routes');
 
 // Import services
 const marketDataService = require('./src/services/marketData.service');
@@ -22,7 +23,7 @@ connectDB();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'https://cryptalyst-ai.vercel.app/', // Allow frontend URL
+  origin: process.env.CLIENT_URL, // Allow frontend URL
   credentials: true // Allow cookies to be sent
 }));
 app.use(morgan('dev'));
@@ -39,6 +40,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes); // Authentication routes
 app.use('/api/oauth', oauthRoutes); // OAuth routes
 app.use('/api/market', marketRoutes); // Market data routes
+app.use('/api/analysis', analysisRoutes); // Analysis routes (technical & price history)
 
 // Start market data service
 marketDataService.startPeriodicUpdate();
