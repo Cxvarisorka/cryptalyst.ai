@@ -62,13 +62,76 @@ export const getStockData = async (limit = 5) => {
 // Mock stock data as fallback
 const getMockStockData = (limit = 5) => {
   const mockStocks = [
-    { id: 'AAPL', symbol: 'AAPL', name: 'Apple Inc.', price: 178.25, change24h: 2.34, marketCap: 2800000000000, type: 'stock' },
-    { id: 'MSFT', symbol: 'MSFT', name: 'Microsoft Corp.', price: 378.91, change24h: 1.87, marketCap: 2810000000000, type: 'stock' },
-    { id: 'GOOGL', symbol: 'GOOGL', name: 'Alphabet Inc.', price: 141.80, change24h: -0.45, marketCap: 1780000000000, type: 'stock' },
-    { id: 'AMZN', symbol: 'AMZN', name: 'Amazon.com Inc.', price: 151.94, change24h: 1.23, marketCap: 1570000000000, type: 'stock' },
-    { id: 'TSLA', symbol: 'TSLA', name: 'Tesla Inc.', price: 242.84, change24h: -2.15, marketCap: 771000000000, type: 'stock' },
-    { id: 'META', symbol: 'META', name: 'Meta Platforms', price: 484.03, change24h: 3.12, marketCap: 1230000000000, type: 'stock' },
-    { id: 'NVDA', symbol: 'NVDA', name: 'NVIDIA Corp.', price: 495.22, change24h: 4.67, marketCap: 1220000000000, type: 'stock' },
+    {
+      id: 'AAPL',
+      symbol: 'AAPL',
+      name: 'Apple Inc.',
+      price: 178.25,
+      change24h: 2.34,
+      marketCap: 2800000000000,
+      type: 'stock',
+      image: 'https://logo.clearbit.com/apple.com'
+    },
+    {
+      id: 'MSFT',
+      symbol: 'MSFT',
+      name: 'Microsoft Corp.',
+      price: 378.91,
+      change24h: 1.87,
+      marketCap: 2810000000000,
+      type: 'stock',
+      image: 'https://logo.clearbit.com/microsoft.com'
+    },
+    {
+      id: 'GOOGL',
+      symbol: 'GOOGL',
+      name: 'Alphabet Inc.',
+      price: 141.80,
+      change24h: -0.45,
+      marketCap: 1780000000000,
+      type: 'stock',
+      image: 'https://logo.clearbit.com/google.com'
+    },
+    {
+      id: 'AMZN',
+      symbol: 'AMZN',
+      name: 'Amazon.com Inc.',
+      price: 151.94,
+      change24h: 1.23,
+      marketCap: 1570000000000,
+      type: 'stock',
+      image: 'https://logo.clearbit.com/amazon.com'
+    },
+    {
+      id: 'TSLA',
+      symbol: 'TSLA',
+      name: 'Tesla Inc.',
+      price: 242.84,
+      change24h: -2.15,
+      marketCap: 771000000000,
+      type: 'stock',
+      image: 'https://logo.clearbit.com/tesla.com'
+    },
+    {
+      id: 'META',
+      symbol: 'META',
+      name: 'Meta Platforms',
+      price: 484.03,
+      change24h: 3.12,
+      marketCap: 1230000000000,
+      type: 'stock',
+      image: 'https://logo.clearbit.com/meta.com'
+    },
+    {
+      id: 'NVDA',
+      symbol: 'NVDA',
+      name: 'NVIDIA Corp.',
+      price: 495.22,
+      change24h: 4.67,
+      marketCap: 1220000000000,
+      type: 'stock',
+      image: 'https://logo.clearbit.com/nvidia.com'
+    },
   ];
 
   return mockStocks.slice(0, limit);
