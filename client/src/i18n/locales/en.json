@@ -57,6 +57,7 @@
     "tabs": {
       "overview": "Overview",
       "portfolio": "Portfolio",
+      "search": "Search Assets",
       "analytics": "Analytics"
     },
     "overview": {
@@ -77,19 +78,111 @@
       },
       "marketOverview": {
         "title": "Market Overview",
-        "description": "Top performing cryptocurrencies"
+        "crypto": "Top Cryptocurrencies",
+        "stocks": "Top Stocks",
+        "description": "Top performing assets"
       }
     },
     "portfolio": {
       "title": "Your Portfolio",
       "description": "Manage your cryptocurrency holdings",
-      "comingSoon": "Portfolio management features coming soon..."
+      "comingSoon": "Portfolio management features coming soon...",
+      "search": {
+        "title": "Search Assets",
+        "description": "Search and add cryptocurrencies or stocks to your portfolio",
+        "placeholder": "Search by name or symbol...",
+        "crypto": "Cryptocurrencies",
+        "stocks": "Stocks",
+        "noResults": "No results found"
+      },
+      "add": "Add",
+      "remove": "Remove",
+      "details": "Details",
+      "totalValue": "Total Portfolio Value",
+      "totalValueDesc": "Current value of all your holdings",
+      "today": "Today",
+      "assets": "Assets",
+      "holdings": "Your Holdings",
+      "holdingsDesc": "All your portfolio assets",
+      "empty": "Your portfolio is empty",
+      "emptyDesc": "Add assets to start tracking your portfolio",
+      "added": "Asset Added",
+      "addedDesc": "has been added to your portfolio",
+      "removed": "Asset Removed",
+      "removedDesc": "has been removed from your portfolio",
+      "alreadyExists": "Asset Already Exists",
+      "alreadyExistsDesc": "This asset is already in your portfolio"
     },
     "analytics": {
-      "title": "Advanced Analytics",
-      "description": "AI-powered insights and predictions",
-      "comingSoon": "Analytics features coming soon..."
+      "title": "Portfolio Analytics",
+      "description": "Technical analysis and performance metrics",
+      "comingSoon": "Analytics features coming soon...",
+      "noData": "No portfolio data available",
+      "noDataDesc": "Add assets to your portfolio to see analytics",
+      "performance": "24h Performance",
+      "today": "Today",
+      "diversification": "Diversification Score",
+      "assets": "assets",
+      "cryptoAllocation": "Crypto Allocation",
+      "stockAllocation": "Stock Allocation",
+      "bestPerformer": "Best Performer (24h)",
+      "worstPerformer": "Worst Performer (24h)",
+      "assetAllocation": "Asset Allocation",
+      "assetAllocationDesc": "Distribution of your portfolio by asset"
     }
+  },
+  "crypto": {
+    "notFound": "Cryptocurrency not found",
+    "marketCap": "Market Cap",
+    "24hVolume": "24h Volume",
+    "circulatingSupply": "Circulating Supply",
+    "technicalAnalysis": "Technical Analysis",
+    "technicalAnalysisDesc": "Key technical indicators and signals",
+    "technicalSummary": "Based on current market data",
+    "uptrend": "Uptrend",
+    "downtrend": "Downtrend",
+    "priceAction": "Price Action",
+    "priceActionDesc": "Historical price movements",
+    "24hHigh": "24h High",
+    "24hLow": "24h Low",
+    "7dChange": "7d Change",
+    "30dChange": "30d Change"
+  },
+  "stock": {
+    "notFound": "Stock not found",
+    "publicCompany": "Public Company",
+    "marketCap": "Market Cap",
+    "peRatio": "P/E Ratio",
+    "eps": "EPS",
+    "dividendYield": "Dividend Yield",
+    "technicalAnalysis": "Technical Analysis",
+    "technicalAnalysisDesc": "Key technical indicators and signals",
+    "technicalSummary": "Based on current market data",
+    "uptrend": "Uptrend",
+    "downtrend": "Downtrend",
+    "priceAction": "Price Action",
+    "priceActionDesc": "Recent price movements",
+    "dayHigh": "Day High",
+    "dayLow": "Day Low",
+    "52wHigh": "52w High",
+    "52wLow": "52w Low",
+    "performance": "Performance",
+    "performanceDesc": "Historical returns",
+    "1wChange": "1 Week",
+    "1mChange": "1 Month",
+    "3mChange": "3 Months",
+    "1yChange": "1 Year",
+    "volumeLiquidity": "Volume & Liquidity",
+    "volumeLiquidityDesc": "Trading activity metrics",
+    "avgVolume": "Avg. Volume",
+    "todayVolume": "Today's Volume",
+    "sharesOutstanding": "Shares Outstanding",
+    "sharesTraded": "shares traded daily",
+    "aboveAverage": "above average",
+    "totalShares": "total shares"
+  },
+  "common": {
+    "back": "Back"
   },
   "about": {
     "title": "About",
