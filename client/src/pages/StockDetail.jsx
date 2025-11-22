@@ -7,7 +7,9 @@ import { FadeIn } from "@/components/magicui/fade-in";
 import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity, DollarSign } from "lucide-react";
 import { getStockBySymbol } from "@/services/marketDataService";
 import { getStockAnalysis } from "@/services/analysisService";
+import { getStockNews } from "@/services/newsService";
 import PriceChart from "@/components/charts/PriceChart";
+import NewsSection from "@/components/news/NewsSection";
 
 export default function StockDetail() {
   const { symbol } = useParams();
@@ -15,10 +17,13 @@ export default function StockDetail() {
   const { t } = useTranslation();
   const [stock, setStock] = useState(null);
   const [analysis, setAnalysis] = useState(null);
+  const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newsLoading, setNewsLoading] = useState(true);
 
   useEffect(() => {
     fetchStockDetail();
+    fetchNews();
   }, [symbol]);
 
   const fetchStockDetail = async () => {
@@ -47,6 +52,17 @@ export default function StockDetail() {
       setStock(null);
     }
     setLoading(false);
+  };
+
+  const fetchNews = async () => {
+    setNewsLoading(true);
+    try {
+      const newsData = await getStockNews(symbol, stock?.name, 5);
+      setNews(newsData);
+    } catch (error) {
+      console.error("Error fetching news:", error);
+    }
+    setNewsLoading(false);
   };
 
   const formatPrice = (price) => {
@@ -394,6 +410,9 @@ export default function StockDetail() {
               </div>
             </CardContent>
           </Card>
+
+          {/* News Section */}
+          <NewsSection news={news} loading={newsLoading} />
         </FadeIn>
       </div>
     </div>

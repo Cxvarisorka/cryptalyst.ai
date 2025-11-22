@@ -7,7 +7,9 @@ import { FadeIn } from "@/components/magicui/fade-in";
 import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity } from "lucide-react";
 import { getCryptoById } from "@/services/marketDataService";
 import { getCryptoAnalysis } from "@/services/analysisService";
+import { getCryptoNews } from "@/services/newsService";
 import PriceChart from "@/components/charts/PriceChart";
+import NewsSection from "@/components/news/NewsSection";
 
 export default function CryptoDetail() {
   const { id } = useParams();
@@ -15,10 +17,13 @@ export default function CryptoDetail() {
   const { t } = useTranslation();
   const [crypto, setCrypto] = useState(null);
   const [analysis, setAnalysis] = useState(null);
+  const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newsLoading, setNewsLoading] = useState(true);
 
   useEffect(() => {
     fetchCryptoDetail();
+    fetchNews();
   }, [id]);
 
   const fetchCryptoDetail = async () => {
@@ -47,6 +52,17 @@ export default function CryptoDetail() {
       setCrypto(null);
     }
     setLoading(false);
+  };
+
+  const fetchNews = async () => {
+    setNewsLoading(true);
+    try {
+      const newsData = await getCryptoNews(id, 5);
+      setNews(newsData);
+    } catch (error) {
+      console.error("Error fetching news:", error);
+    }
+    setNewsLoading(false);
   };
 
   const formatPrice = (price) => {
@@ -300,6 +316,9 @@ export default function CryptoDetail() {
               </div>
             </CardContent>
           </Card>
+
+          {/* News Section */}
+          <NewsSection news={news} loading={newsLoading} />
         </FadeIn>
       </div>
     </div>

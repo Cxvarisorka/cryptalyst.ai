@@ -8,7 +8,22 @@
       "Bash(node server.js:*)",
       "Bash(npm install:*)",
       "Bash(node -e:*)",
-      "Bash(powershell -Command \"Get-Content ''C:\\Users\\User\\cryptalyst.ai\\client\\src\\pages\\Dashboard.jsx'' | Select-Object -First 5\")"
+      "Bash(powershell -Command \"Get-Content ''C:\\Users\\User\\cryptalyst.ai\\client\\src\\pages\\Dashboard.jsx'' | Select-Object -First 5\")",
+      "Bash(git push:*)",
+      "Bash(\"C:\\Users\\User\\cryptalyst.ai\\server\\src\\services\\technicalAnalysis.service.js\")",
+      "Bash(\"C:\\Users\\User\\cryptalyst.ai\\server\\src\\services\\priceHistory.service.js\")",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(timeout /t 2)",
+      "Bash(npm run dev:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(nul)",
+      "Bash(timeout /t 5)",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 3\")",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

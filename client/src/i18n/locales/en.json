@@ -184,6 +184,14 @@
   "common": {
     "back": "Back"
   },
+  "news": {
+    "title": "Latest News",
+    "description": "Recent news and updates",
+    "noNews": "No news available at the moment",
+    "readMore": "Read more",
+    "justNow": "Just now",
+    "yesterday": "Yesterday"
+  },
   "about": {
     "title": "About",
     "subtitle": "Empowering cryptocurrency traders with AI-driven insights and analytics",
