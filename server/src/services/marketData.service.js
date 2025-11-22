@@ -143,73 +143,83 @@ class MarketDataService {
     this.isUpdatingStocks = true;
 
     try {
-      const stockPromises = this.stockSymbols.map(async (symbol) => {
-        try {
-          const [quoteResponse, profileResponse] = await Promise.all([
-            axios.get(`${this.finnhubAPI}/quote`, {
-              params: { symbol, token: this.finnhubApiKey },
-              timeout: 5000
-            }),
-            axios.get(`${this.finnhubAPI}/stock/profile2`, {
-              params: { symbol, token: this.finnhubApiKey },
-              timeout: 5000
-            })
-          ]);
+      // Limit to first 20 stocks to avoid rate limiting in production
+      const limitedSymbols = this.stockSymbols.slice(0, 20);
+      const batchSize = 5; // Process 5 stocks at a time
+      const delayBetweenBatches = 1000; // 1 second delay between batches
+      const validResults = [];
 
-          const quote = quoteResponse.data;
-          const profile = profileResponse.data;
+      // Process stocks in batches to avoid rate limiting
+      for (let i = 0; i < limitedSymbols.length; i += batchSize) {
+        const batch = limitedSymbols.slice(i, i + batchSize);
 
-          if (quote.c && quote.c > 0) {
-            // Generate logo URL from company domain
-            const logoUrl = profile.weburl
-              ? `https://logo.clearbit.com/${new URL(profile.weburl).hostname}`
-              : this.getStockLogoUrl(symbol);
+        const batchPromises = batch.map(async (symbol) => {
+          try {
+            const [quoteResponse, profileResponse] = await Promise.all([
+              axios.get(`${this.finnhubAPI}/quote`, {
+                params: { symbol, token: this.finnhubApiKey },
+                timeout: 5000
+              }),
+              axios.get(`${this.finnhubAPI}/stock/profile2`, {
+                params: { symbol, token: this.finnhubApiKey },
+                timeout: 5000
+              })
+            ]);
 
-            return {
-              id: symbol,
-              symbol: symbol,
-              name: profile.name || symbol,
-              price: quote.c,
-              change24h: quote.dp,
-              marketCap: profile.marketCapitalization ? profile.marketCapitalization * 1000000 : 0,
-              volume24h: quote.v || 0,
-              image: logoUrl,
-              type: 'stock'
-            };
+            const quote = quoteResponse.data;
+            const profile = profileResponse.data;
+
+            if (quote.c && quote.c > 0) {
+              // Generate logo URL from company domain
+              const logoUrl = profile.weburl
+                ? `https://logo.clearbit.com/${new URL(profile.weburl).hostname}`
+                : this.getStockLogoUrl(symbol);
+
+              return {
+                id: symbol,
+                symbol: symbol,
+                name: profile.name || symbol,
+                price: quote.c,
+                change24h: quote.dp,
+                marketCap: profile.marketCapitalization ? profile.marketCapitalization * 1000000 : 0,
+                volume24h: quote.v || 0,
+                image: logoUrl,
+                type: 'stock'
+              };
+            }
+            return null;
+          } catch (error) {
+            console.error(`❌ Error fetching ${symbol}:`, error.message);
+            return null;
           }
-          return null;
-        } catch (error) {
-          console.error(`❌ Error fetching ${symbol}:`, error.message);
-          return null;
+        });
+
+        const batchResults = await Promise.all(batchPromises);
+        validResults.push(...batchResults.filter(stock => stock !== null && stock.price > 0));
+
+        // Add delay between batches (except for the last batch)
+        if (i + batchSize < limitedSymbols.length) {
+          await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
         }
-      });
+      }
 
-      const results = await Promise.all(stockPromises);
-      const validResults = results.filter(stock => stock !== null && stock.price > 0);
-
-      if (validResults.length > 0) {
+      // If we got less than 10 stocks, use fallback data
+      if (validResults.length < 10) {
+        console.warn(`⚠️ Only got ${validResults.length} stocks from Finnhub, using fallback data`);
+        this.stockCache = this.getFallbackStockData();
+        this.lastStockUpdate = new Date();
+      } else {
         this.stockCache = validResults;
         this.lastStockUpdate = new Date();
         console.log(`✅ Stock data updated: ${this.stockCache.length} stocks at ${this.lastStockUpdate.toLocaleTimeString()}`);
-      } else {
-        console.warn('⚠️ No valid stock data from Finnhub');
-
-        // If cache is empty, use fallback data
-        if (this.stockCache.length === 0) {
-          console.log('📦 Using fallback stock data');
-          this.stockCache = this.getFallbackStockData();
-          this.lastStockUpdate = new Date();
-        }
       }
     } catch (error) {
       console.error('❌ Error updating stock data:', error.message);
 
-      // If cache is empty, use fallback data
-      if (this.stockCache.length === 0) {
-        console.log('📦 Using fallback stock data');
-        this.stockCache = this.getFallbackStockData();
-        this.lastStockUpdate = new Date();
-      }
+      // Use fallback data on error
+      console.log('📦 Using fallback stock data due to error');
+      this.stockCache = this.getFallbackStockData();
+      this.lastStockUpdate = new Date();
     } finally {
       this.isUpdatingStocks = false;
     }

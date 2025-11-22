@@ -129,11 +129,11 @@ export default function Dashboard() {
         </FadeIn>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-muted/60 w-full grid grid-cols-2 sm:grid-cols-4 gap-1">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm">{t("dashboard.tabs.overview")}</TabsTrigger>
-            <TabsTrigger value="portfolio" className="text-xs sm:text-sm">{t("dashboard.tabs.portfolio")}</TabsTrigger>
-            <TabsTrigger value="search" className="text-xs sm:text-sm">{t("dashboard.tabs.search")}</TabsTrigger>
-            <TabsTrigger value="analytics" className="text-xs sm:text-sm">{t("dashboard.tabs.analytics")}</TabsTrigger>
+          <TabsList className="bg-muted/60 w-full h-auto flex flex-wrap justify-start sm:justify-center gap-1 p-1">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.overview")}</TabsTrigger>
+            <TabsTrigger value="portfolio" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.portfolio")}</TabsTrigger>
+            <TabsTrigger value="search" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.search")}</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.analytics")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
