@@ -51,24 +51,24 @@ export default function PortfolioList({ portfolio, onRemoveAsset }) {
           <CardDescription>{t("dashboard.portfolio.totalValueDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-end justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
             <div>
-              <div className="text-4xl font-bold text-foreground">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
                 {formatPrice(totalValue)}
               </div>
-              <div className={`flex items-center gap-2 mt-2 text-lg font-semibold ${
+              <div className={`flex items-center gap-2 mt-2 text-base sm:text-lg font-semibold ${
                 isPositive ? 'text-green-500' : 'text-red-500'
               }`}>
-                {isPositive ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+                {isPositive ? <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />}
                 <span>{isPositive ? '+' : ''}{totalChange.toFixed(2)}%</span>
-                <span className="text-sm text-muted-foreground font-normal">
+                <span className="text-xs sm:text-sm text-muted-foreground font-normal">
                   {t("dashboard.portfolio.today")}
                 </span>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">{t("dashboard.portfolio.assets")}</div>
-              <div className="text-2xl font-bold text-foreground">{portfolio.length}</div>
+            <div className="text-left sm:text-right">
+              <div className="text-xs sm:text-sm text-muted-foreground">{t("dashboard.portfolio.assets")}</div>
+              <div className="text-xl sm:text-2xl font-bold text-foreground">{portfolio.length}</div>
             </div>
           </div>
         </CardContent>
@@ -90,53 +90,55 @@ export default function PortfolioList({ portfolio, onRemoveAsset }) {
                 return (
                   <div
                     key={`${asset.type}-${asset.id}`}
-                    className="flex items-center justify-between p-4 border border-border/40 rounded-lg hover:bg-muted/30 transition-all duration-300"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border border-border/40 rounded-lg hover:bg-muted/30 transition-all duration-300 gap-3 sm:gap-4"
                   >
-                    <div className="flex items-center gap-3 flex-1">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                       {asset.image && (
                         <img
                           src={asset.image}
                           alt={asset.name}
-                          className={`w-12 h-12 ${asset.type === 'crypto' ? 'rounded-full' : 'rounded-lg'}`}
+                          className={`w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 ${asset.type === 'crypto' ? 'rounded-full' : 'rounded-lg'}`}
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-foreground text-lg">{asset.symbol}</div>
-                        <div className="text-sm text-muted-foreground">{asset.name}</div>
+                        <div className="font-semibold text-foreground text-base sm:text-lg truncate">{asset.symbol}</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground truncate">{asset.name}</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          {asset.quantity || 1} {asset.quantity > 1 ? 'units' : 'unit'} • {percentage.toFixed(2)}% of portfolio
+                          {asset.quantity || 1} {asset.quantity > 1 ? 'units' : 'unit'} • {percentage.toFixed(2)}%
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <div className="font-semibold text-foreground">{formatPrice(value)}</div>
-                        <div className="text-sm text-muted-foreground">{formatPrice(asset.price)} each</div>
-                        <div className={`flex items-center gap-1 text-sm justify-end mt-1 ${
+                    <div className="flex flex-row sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                      <div className="text-left sm:text-right flex-1 sm:flex-initial">
+                        <div className="font-semibold text-foreground text-sm sm:text-base">{formatPrice(value)}</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground">{formatPrice(asset.price)} each</div>
+                        <div className={`flex items-center gap-1 text-xs sm:text-sm justify-start sm:justify-end mt-1 ${
                           isPositive ? 'text-green-500' : 'text-red-500'
                         }`}>
                           {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                           <span>{Math.abs(asset.change24h).toFixed(2)}%</span>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-row sm:flex-col gap-2">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleViewDetails(asset)}
-                          className="gap-2"
+                          className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3"
                         >
-                          <ExternalLink className="w-4 h-4" />
-                          {t("dashboard.portfolio.details")}
+                          <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">{t("dashboard.portfolio.details")}</span>
+                          <span className="sm:hidden">View</span>
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => onRemoveAsset(asset)}
-                          className="gap-2"
+                          className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3"
                         >
-                          <Trash2 className="w-4 h-4" />
-                          {t("dashboard.portfolio.remove")}
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">{t("dashboard.portfolio.remove")}</span>
+                          <span className="sm:hidden">Remove</span>
                         </Button>
                       </div>
                     </div>

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
-import { getCryptoData, getStockData } from "@/services/marketDataService";
+import { getCryptoData, getStockData, searchCrypto, searchStocks } from "@/services/marketDataService";
 
 export default function PortfolioSearch({ onAddAsset }) {
   const { t } = useTranslation();
@@ -14,14 +14,36 @@ export default function PortfolioSearch({ onAddAsset }) {
   const [cryptoData, setCryptoData] = useState([]);
   const [stockData, setStockData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(null);
 
   useEffect(() => {
     fetchMarketData();
   }, []);
 
+  // Debounce search to avoid too many API calls
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim().length >= 2) {
+        handleSearch(searchQuery);
+      } else if (searchQuery.trim().length === 0) {
+        fetchMarketData();
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, activeTab]);
+
+  // Re-search when switching tabs if there's an active search
+  useEffect(() => {
+    if (searchQuery.trim().length >= 2) {
+      handleSearch(searchQuery);
+    }
+  }, [activeTab]);
+
   const fetchMarketData = async () => {
     setLoading(true);
+    setSearching(false);
     try {
       const [crypto, stocks] = await Promise.all([
         getCryptoData(250),
@@ -35,6 +57,22 @@ export default function PortfolioSearch({ onAddAsset }) {
     setLoading(false);
   };
 
+  const handleSearch = async (query) => {
+    setSearching(true);
+    try {
+      if (activeTab === "crypto") {
+        const results = await searchCrypto(query);
+        setCryptoData(results);
+      } else {
+        const results = await searchStocks(query);
+        setStockData(results);
+      }
+    } catch (error) {
+      console.error("Error searching:", error);
+    }
+    setSearching(false);
+  };
+
   const handleAddAsset = async (asset) => {
     setAdding(asset.id);
     try {
@@ -44,17 +82,23 @@ export default function PortfolioSearch({ onAddAsset }) {
     }
   };
 
-  const filteredCrypto = cryptoData.filter(
-    (coin) =>
-      coin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      coin.symbol.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // When searching, use API results directly
+  // When not searching, filter cached data
+  const filteredCrypto = searchQuery.trim().length >= 2 && searching === false
+    ? cryptoData
+    : cryptoData.filter(
+        (coin) =>
+          coin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          coin.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
-  const filteredStocks = stockData.filter(
-    (stock) =>
-      stock.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      stock.symbol.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStocks = searchQuery.trim().length >= 2 && searching === false
+    ? stockData
+    : stockData.filter(
+        (stock) =>
+          stock.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          stock.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
   const formatPrice = (price) => {
     if (price >= 1) {
@@ -121,11 +165,16 @@ export default function PortfolioSearch({ onAddAsset }) {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder={t("dashboard.portfolio.search.placeholder")}
+              placeholder={t("dashboard.portfolio.search.placeholder") || "Search any stock or crypto worldwide..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
+            {searchQuery.trim().length > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {searching ? "Searching globally..." : searchQuery.trim().length >= 2 ? "Showing global search results" : "Type at least 2 characters to search"}
+              </p>
+            )}
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -135,9 +184,12 @@ export default function PortfolioSearch({ onAddAsset }) {
             </TabsList>
 
             <TabsContent value="crypto" className="mt-4">
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
+              {loading || searching ? (
+                <div className="flex flex-col items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {searching ? t("dashboard.portfolio.search.searching") || "Searching..." : "Loading..."}
+                  </p>
                 </div>
               ) : filteredCrypto.length > 0 ? (
                 <div className="space-y-3 max-h-[500px] overflow-y-auto">
@@ -153,9 +205,12 @@ export default function PortfolioSearch({ onAddAsset }) {
             </TabsContent>
 
             <TabsContent value="stocks" className="mt-4">
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
+              {loading || searching ? (
+                <div className="flex flex-col items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {searching ? t("dashboard.portfolio.search.searching") || "Searching..." : "Loading..."}
+                  </p>
                 </div>
               ) : filteredStocks.length > 0 ? (
                 <div className="space-y-3 max-h-[500px] overflow-y-auto">

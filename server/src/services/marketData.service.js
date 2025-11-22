@@ -249,6 +249,234 @@ class MarketDataService {
   }
 
   /**
+   * Get single crypto by ID (checks cache first, then API)
+   */
+  async getCryptoById(id) {
+    // First check cache
+    const cached = this.cryptoCache.find(c => c.id === id);
+    if (cached) {
+      console.log(`✅ Crypto ${id} found in cache`);
+      return cached;
+    }
+
+    // If not in cache, fetch from API
+    try {
+      console.log(`🔍 Fetching crypto ${id} from API...`);
+      const headers = {};
+      if (this.coinGeckoApiKey) {
+        headers['x-cg-demo-api-key'] = this.coinGeckoApiKey;
+      }
+
+      const response = await axios.get(`${this.coinGeckoAPI}/coins/${id}`, {
+        headers,
+        params: {
+          localization: false,
+          tickers: false,
+          market_data: true,
+          community_data: false,
+          developer_data: false,
+          sparkline: false
+        },
+        timeout: 10000
+      });
+
+      const coin = response.data;
+
+      return {
+        id: coin.id,
+        symbol: coin.symbol.toUpperCase(),
+        name: coin.name,
+        price: coin.market_data.current_price.usd,
+        change24h: coin.market_data.price_change_percentage_24h,
+        marketCap: coin.market_data.market_cap.usd,
+        volume24h: coin.market_data.total_volume.usd,
+        image: coin.image.large,
+        type: 'crypto'
+      };
+    } catch (error) {
+      console.error(`❌ Error fetching crypto ${id} from API:`, error.message);
+      return null;
+    }
+  }
+
+  /**
+   * Get single stock by symbol (checks cache first, then API)
+   */
+  async getStockBySymbol(symbol) {
+    // First check cache
+    const cached = this.stockCache.find(s => s.symbol === symbol);
+    if (cached) {
+      console.log(`✅ Stock ${symbol} found in cache`);
+      return cached;
+    }
+
+    // If not in cache, fetch from API
+    try {
+      console.log(`🔍 Fetching stock ${symbol} from API...`);
+      const [quoteResponse, profileResponse] = await Promise.all([
+        axios.get(`${this.finnhubAPI}/quote`, {
+          params: { symbol, token: this.finnhubApiKey },
+          timeout: 5000
+        }),
+        axios.get(`${this.finnhubAPI}/stock/profile2`, {
+          params: { symbol, token: this.finnhubApiKey },
+          timeout: 5000
+        })
+      ]);
+
+      const quote = quoteResponse.data;
+      const profile = profileResponse.data;
+
+      if (!quote.c || quote.c <= 0) {
+        console.log(`❌ Stock ${symbol} returned invalid data`);
+        return null;
+      }
+
+      // Generate logo URL from company domain
+      const logoUrl = profile.weburl
+        ? `https://logo.clearbit.com/${new URL(profile.weburl).hostname}`
+        : this.getStockLogoUrl(symbol);
+
+      return {
+        id: symbol,
+        symbol: symbol,
+        name: profile.name || symbol,
+        price: quote.c,
+        change24h: quote.dp,
+        marketCap: profile.marketCapitalization ? profile.marketCapitalization * 1000000 : 0,
+        volume24h: quote.v || 0,
+        image: logoUrl,
+        type: 'stock'
+      };
+    } catch (error) {
+      console.error(`❌ Error fetching stock ${symbol} from API:`, error.message);
+      return null;
+    }
+  }
+
+  /**
+   * Search for crypto by query
+   */
+  async searchCrypto(query) {
+    try {
+      const headers = {};
+      if (this.coinGeckoApiKey) {
+        headers['x-cg-demo-api-key'] = this.coinGeckoApiKey;
+      }
+
+      const response = await axios.get(`${this.coinGeckoAPI}/search`, {
+        headers,
+        params: { query },
+        timeout: 10000
+      });
+
+      const coins = response.data.coins || [];
+
+      // Fetch detailed data for top 10 results
+      const detailedPromises = coins.slice(0, 10).map(async (coin) => {
+        try {
+          const detailResponse = await axios.get(`${this.coinGeckoAPI}/coins/${coin.id}`, {
+            headers,
+            params: {
+              localization: false,
+              tickers: false,
+              market_data: true,
+              community_data: false,
+              developer_data: false,
+              sparkline: false
+            },
+            timeout: 5000
+          });
+
+          const detail = detailResponse.data;
+          return {
+            id: detail.id,
+            symbol: detail.symbol.toUpperCase(),
+            name: detail.name,
+            price: detail.market_data.current_price.usd,
+            change24h: detail.market_data.price_change_percentage_24h,
+            marketCap: detail.market_data.market_cap.usd,
+            volume24h: detail.market_data.total_volume.usd,
+            image: detail.image.large,
+            type: 'crypto'
+          };
+        } catch (err) {
+          console.error(`Error fetching detail for ${coin.id}:`, err.message);
+          return null;
+        }
+      });
+
+      const results = await Promise.all(detailedPromises);
+      return results.filter(r => r !== null);
+    } catch (error) {
+      console.error('Error searching crypto:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Search for stocks by query
+   */
+  async searchStock(query) {
+    try {
+      const response = await axios.get(`${this.finnhubAPI}/search`, {
+        params: { q: query, token: this.finnhubApiKey },
+        timeout: 10000
+      });
+
+      const results = response.data.result || [];
+
+      // Fetch detailed data for top 10 results
+      const detailedPromises = results.slice(0, 10).map(async (stock) => {
+        try {
+          const [quoteResponse, profileResponse] = await Promise.all([
+            axios.get(`${this.finnhubAPI}/quote`, {
+              params: { symbol: stock.symbol, token: this.finnhubApiKey },
+              timeout: 5000
+            }),
+            axios.get(`${this.finnhubAPI}/stock/profile2`, {
+              params: { symbol: stock.symbol, token: this.finnhubApiKey },
+              timeout: 5000
+            })
+          ]);
+
+          const quote = quoteResponse.data;
+          const profile = profileResponse.data;
+
+          if (!quote.c || quote.c <= 0) {
+            return null;
+          }
+
+          const logoUrl = profile.weburl
+            ? `https://logo.clearbit.com/${new URL(profile.weburl).hostname}`
+            : this.getStockLogoUrl(stock.symbol);
+
+          return {
+            id: stock.symbol,
+            symbol: stock.symbol,
+            name: stock.description || profile.name || stock.symbol,
+            price: quote.c,
+            change24h: quote.dp,
+            marketCap: profile.marketCapitalization ? profile.marketCapitalization * 1000000 : 0,
+            volume24h: quote.v || 0,
+            image: logoUrl,
+            type: 'stock'
+          };
+        } catch (err) {
+          console.error(`Error fetching detail for ${stock.symbol}:`, err.message);
+          return null;
+        }
+      });
+
+      const results_detailed = await Promise.all(detailedPromises);
+      return results_detailed.filter(r => r !== null);
+    } catch (error) {
+      console.error('Error searching stocks:', error.message);
+      return [];
+    }
+  }
+
+  /**
    * Fallback crypto data when API is unavailable
    */
   getFallbackCryptoData() {

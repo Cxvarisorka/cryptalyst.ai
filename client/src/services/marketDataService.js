@@ -184,3 +184,97 @@ export const getMarketData = async () => {
     }
   }
 };
+
+/**
+ * Get single cryptocurrency by ID
+ * @param {string} id - Cryptocurrency ID (e.g., 'bitcoin')
+ * @returns {Promise} Cryptocurrency data
+ */
+export const getCryptoById = async (id) => {
+  try {
+    const response = await axios.get(`${API_URL}/market/crypto/${id}`, {
+      timeout: 10000
+    });
+
+    if (response.data && response.data.success) {
+      console.log(`✅ Crypto data fetched for ${id}`);
+      return response.data.data;
+    }
+
+    throw new Error('Failed to get crypto data');
+  } catch (error) {
+    console.error(`❌ Error fetching crypto ${id}:`, error.message);
+    throw error;
+  }
+};
+
+/**
+ * Get single stock by symbol
+ * @param {string} symbol - Stock symbol (e.g., 'AAPL')
+ * @returns {Promise} Stock data
+ */
+export const getStockBySymbol = async (symbol) => {
+  try {
+    const response = await axios.get(`${API_URL}/market/stock/${symbol}`, {
+      timeout: 10000
+    });
+
+    if (response.data && response.data.success) {
+      console.log(`✅ Stock data fetched for ${symbol}`);
+      return response.data.data;
+    }
+
+    throw new Error('Failed to get stock data');
+  } catch (error) {
+    console.error(`❌ Error fetching stock ${symbol}:`, error.message);
+    throw error;
+  }
+};
+
+/**
+ * Search for cryptocurrencies globally
+ * @param {string} query - Search query
+ * @returns {Promise} Array of matching cryptocurrencies
+ */
+export const searchCrypto = async (query) => {
+  try {
+    const response = await axios.get(`${API_URL}/market/crypto/search`, {
+      params: { q: query },
+      timeout: 15000
+    });
+
+    if (response.data && response.data.success) {
+      console.log(`✅ Found ${response.data.count} crypto results for "${query}"`);
+      return response.data.data;
+    }
+
+    return [];
+  } catch (error) {
+    console.error(`❌ Error searching crypto "${query}":`, error.message);
+    return [];
+  }
+};
+
+/**
+ * Search for stocks globally
+ * @param {string} query - Search query
+ * @returns {Promise} Array of matching stocks
+ */
+export const searchStocks = async (query) => {
+  try {
+    const response = await axios.get(`${API_URL}/market/stocks/search`, {
+      params: { q: query },
+      timeout: 15000
+    });
+
+    if (response.data && response.data.success) {
+      console.log(`✅ Found ${response.data.count} stock results for "${query}"`);
+      return response.data.data;
+    }
+
+    return [];
+  } catch (error) {
+    console.error(`❌ Error searching stocks "${query}":`, error.message);
+    return [];
+  }
+};
