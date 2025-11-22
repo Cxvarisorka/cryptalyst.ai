@@ -32,19 +32,31 @@ class NewsService {
     }
 
     try {
-      // Try NewsAPI first if API key is available
+      // Always try CryptoCompare first (free, no API key needed, works in production)
+      try {
+        const cryptoCompareResults = await this.fetchFromCryptoCompare(symbol, limit);
+        if (cryptoCompareResults && cryptoCompareResults.length > 0) {
+          this.cacheNews(cacheKey, cryptoCompareResults);
+          console.log(`✅ Fetched ${cryptoCompareResults.length} news from CryptoCompare for ${symbol}`);
+          return cryptoCompareResults;
+        }
+      } catch (ccError) {
+        console.warn(`CryptoCompare failed for ${symbol}:`, ccError.message);
+      }
+
+      // Try NewsAPI as backup if API key is available (only works on localhost)
       if (this.newsApiKey) {
         const newsApiResults = await this.fetchFromNewsAPI(symbol, 'crypto', limit);
         if (newsApiResults && newsApiResults.length > 0) {
           this.cacheNews(cacheKey, newsApiResults);
+          console.log(`✅ Fetched ${newsApiResults.length} news from NewsAPI for ${symbol}`);
           return newsApiResults;
         }
       }
 
-      // Fallback to CryptoCompare (doesn't require API key)
-      const cryptoCompareResults = await this.fetchFromCryptoCompare(symbol, limit);
-      this.cacheNews(cacheKey, cryptoCompareResults);
-      return cryptoCompareResults;
+      // Final fallback to mock data
+      console.log(`⚠️ Using mock news for ${symbol}`);
+      return this.getMockCryptoNews(symbol, limit);
     } catch (error) {
       console.error(`❌ Error fetching crypto news for ${symbol}:`, error.message);
       return this.getMockCryptoNews(symbol, limit);
@@ -70,7 +82,8 @@ class NewsService {
 
     try {
       if (this.newsApiKey) {
-        const searchQuery = companyName || symbol;
+        // Use both company name AND symbol for better results
+        const searchQuery = companyName ? `${companyName} ${symbol}` : symbol;
         const newsApiResults = await this.fetchFromNewsAPI(searchQuery, 'stock', limit);
 
         if (newsApiResults && newsApiResults.length > 0) {
@@ -94,28 +107,32 @@ class NewsService {
    */
   async fetchFromNewsAPI(query, type, limit) {
     try {
-      const endpoint = type === 'crypto'
-        ? `${this.newsApiUrl}/everything`
-        : `${this.newsApiUrl}/everything`;
+      const endpoint = `${this.newsApiUrl}/everything`;
 
-      // Make search queries more specific to avoid irrelevant results
-      const searchQuery = type === 'crypto'
-        ? `"${query}" AND (cryptocurrency OR crypto OR blockchain OR bitcoin)`
-        : `"${query}" AND (stock OR company OR earnings OR shares OR market)`;
+      // Make search queries more specific with the actual company/crypto name
+      let searchQuery;
+      if (type === 'crypto') {
+        // For crypto, search for the symbol in crypto context
+        searchQuery = `${query} AND (cryptocurrency OR crypto OR blockchain)`;
+      } else {
+        // For stocks, be VERY specific - require the query term in title or description
+        // Use "in:title" to search only in titles for better relevance
+        searchQuery = `"${query.split(' ')[0]}"`;  // Use the company name (first part)
+      }
 
       const response = await axios.get(endpoint, {
         params: {
           q: searchQuery,
           language: 'en',
           sortBy: 'publishedAt',
-          pageSize: limit,
+          pageSize: limit * 2,  // Fetch more then filter for better results
           apiKey: this.newsApiKey
         },
         timeout: 10000
       });
 
       if (response.data && response.data.articles) {
-        return response.data.articles.map(article => ({
+        let articles = response.data.articles.map(article => ({
           title: article.title,
           description: article.description,
           url: article.url,
@@ -124,12 +141,25 @@ class NewsService {
           source: article.source.name,
           author: article.author
         }));
+
+        // For stocks, filter articles to ensure they actually mention the company
+        if (type === 'stock' && query) {
+          const keywords = query.toLowerCase().split(' ');
+          articles = articles.filter(article => {
+            const text = `${article.title} ${article.description}`.toLowerCase();
+            // Article must mention at least one keyword from the query
+            return keywords.some(keyword => text.includes(keyword));
+          });
+        }
+
+        return articles.slice(0, limit);
       }
 
       return [];
     } catch (error) {
       console.error('Error fetching from NewsAPI:', error.message);
-      throw error;
+      // Don't throw - return empty array to allow fallback to other sources
+      return [];
     }
   }
 
