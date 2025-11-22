@@ -3,8 +3,9 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { GradientText } from "@/components/magicui/gradient-text";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { Menu, X, Coins, LogOut, User } from "lucide-react";
+import { Menu, X, Coins, LogOut, User, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isAuthenticated, user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const navLinks = [
     { name: t('nav.home'), path: "/" },
@@ -62,6 +64,14 @@ export default function Navbar() {
 
           {/* Desktop CTA & Language Switcher */}
           <div className="hidden md:flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="rounded-full"
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </Button>
             <LanguageSwitcher />
             {isAuthenticated ? (
               <>
@@ -99,6 +109,14 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <div className="flex md:hidden items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="rounded-full"
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </Button>
             <LanguageSwitcher />
             <button
               className="text-foreground"

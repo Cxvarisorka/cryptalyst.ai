@@ -9,6 +9,7 @@ import PortfolioSearch from "@/components/portfolio/PortfolioSearch";
 import PortfolioList from "@/components/portfolio/PortfolioList";
 import PortfolioAnalytics from "@/components/portfolio/PortfolioAnalytics";
 import { getMarketData } from "@/services/marketDataService";
+import { getPortfolio, addAsset, removeAsset } from "@/services/portfolioService";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Dashboard() {
@@ -20,19 +21,21 @@ export default function Dashboard() {
   const [marketData, setMarketData] = useState({ crypto: [], stocks: [] });
 
   useEffect(() => {
-    // Load portfolio from localStorage
-    const savedPortfolio = localStorage.getItem('portfolio');
-    if (savedPortfolio) {
-      try {
-        setPortfolio(JSON.parse(savedPortfolio));
-      } catch (error) {
-        console.error("Error loading portfolio:", error);
-      }
-    }
+    // Load portfolio from database
+    loadPortfolio();
 
     // Fetch market data
     fetchMarketData();
   }, []);
+
+  const loadPortfolio = async () => {
+    try {
+      const portfolioData = await getPortfolio();
+      setPortfolio(portfolioData);
+    } catch (error) {
+      console.error("Error loading portfolio:", error);
+    }
+  };
 
   const fetchMarketData = async () => {
     try {
@@ -44,41 +47,45 @@ export default function Dashboard() {
   };
 
   const handleAddAsset = async (asset) => {
-    // Check if asset already exists
-    const exists = portfolio.some(
-      (item) => item.id === asset.id && item.type === asset.type
-    );
+    try {
+      await addAsset(asset);
 
-    if (exists) {
+      // Reload portfolio to get updated data
+      await loadPortfolio();
+
       toast({
-        title: t("dashboard.portfolio.alreadyExists"),
-        description: t("dashboard.portfolio.alreadyExistsDesc"),
+        title: t("dashboard.portfolio.added"),
+        description: `${asset.name} ${t("dashboard.portfolio.addedDesc")}`
+      });
+    } catch (error) {
+      console.error("Error adding asset:", error);
+      toast({
+        title: t("dashboard.portfolio.error") || "Error",
+        description: error.message || t("dashboard.portfolio.addError") || "Failed to add asset",
         variant: "destructive"
       });
-      return;
     }
-
-    const newPortfolio = [...portfolio, { ...asset, quantity: 1, addedAt: Date.now() }];
-    setPortfolio(newPortfolio);
-    localStorage.setItem('portfolio', JSON.stringify(newPortfolio));
-
-    toast({
-      title: t("dashboard.portfolio.added"),
-      description: `${asset.name} ${t("dashboard.portfolio.addedDesc")}`
-    });
   };
 
-  const handleRemoveAsset = (asset) => {
-    const newPortfolio = portfolio.filter(
-      (item) => !(item.id === asset.id && item.type === asset.type)
-    );
-    setPortfolio(newPortfolio);
-    localStorage.setItem('portfolio', JSON.stringify(newPortfolio));
+  const handleRemoveAsset = async (asset) => {
+    try {
+      await removeAsset(asset._id);
 
-    toast({
-      title: t("dashboard.portfolio.removed"),
-      description: `${asset.name} ${t("dashboard.portfolio.removedDesc")}`
-    });
+      // Reload portfolio to get updated data
+      await loadPortfolio();
+
+      toast({
+        title: t("dashboard.portfolio.removed"),
+        description: `${asset.name} ${t("dashboard.portfolio.removedDesc")}`
+      });
+    } catch (error) {
+      console.error("Error removing asset:", error);
+      toast({
+        title: t("dashboard.portfolio.error") || "Error",
+        description: error.message || t("dashboard.portfolio.removeError") || "Failed to remove asset",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleViewCrypto = (crypto) => {
