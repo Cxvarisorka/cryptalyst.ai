@@ -1,0 +1,9 @@
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate("/settings")}
+                  className="rounded-full"
+                  title="Settings"
+                >
+                  <Settings size={18} />
+                </Button>
