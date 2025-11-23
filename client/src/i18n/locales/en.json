@@ -356,5 +356,77 @@
     "title": "404 - Page Not Found",
     "message": "The page you are looking for doesn't exist or has been moved.",
     "backHome": "Back to Home"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account settings and preferences",
+    "tabs": {
+      "profile": "Profile",
+      "security": "Security",
+      "preferences": "Preferences"
+    },
+    "profile": {
+      "title": "Profile Information",
+      "description": "Update your personal information",
+      "name": "Name",
+      "namePlaceholder": "Your name",
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "avatar": "Avatar URL",
+      "avatarPlaceholder": "https://example.com/avatar.jpg",
+      "avatarPreview": "Avatar preview",
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "success": "Profile updated successfully",
+      "error": "Failed to update profile"
+    },
+    "security": {
+      "title": "Security Settings",
+      "description": "Manage your account security",
+      "changePassword": "Change Password",
+      "currentPassword": "Current Password",
+      "currentPasswordPlaceholder": "Enter current password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Enter new password",
+      "confirmPassword": "Confirm New Password",
+      "confirmPasswordPlaceholder": "Confirm new password",
+      "updatePassword": "Update Password",
+      "updating": "Updating...",
+      "oauthAccount": "OAuth Account",
+      "oauthNotice": "You signed in with {provider}. Password changes are not available for OAuth accounts.",
+      "success": "Password updated successfully",
+      "error": "Failed to update password",
+      "passwordMismatch": "Passwords do not match"
+    },
+    "preferences": {
+      "title": "Display Preferences",
+      "description": "Customize your experience",
+      "currency": "Currency",
+      "dateFormat": "Date Format",
+      "theme": "Theme",
+      "currencies": {
+        "usd": "USD - US Dollar",
+        "eur": "EUR - Euro",
+        "gbp": "GBP - British Pound",
+        "jpy": "JPY - Japanese Yen",
+        "cny": "CNY - Chinese Yuan",
+        "inr": "INR - Indian Rupee",
+        "aud": "AUD - Australian Dollar",
+        "cad": "CAD - Canadian Dollar"
+      },
+      "themes": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+      },
+      "savePreferences": "Save Preferences",
+      "saving": "Saving...",
+      "success": "Preferences updated successfully",
+      "error": "Failed to update preferences"
+    },
+    "common": {
+      "success": "Success",
+      "error": "Error"
+    }
   }
 }
