@@ -40,7 +40,9 @@ const sendTokenResponse = (user, statusCode, message, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      avatar: user.avatar || null
+      avatar: user.avatar || null,
+      oauthProvider: user.oauthProvider || null,
+      settings: user.settings
     }
   });
 };

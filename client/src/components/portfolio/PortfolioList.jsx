@@ -110,9 +110,9 @@ export default function PortfolioList({ portfolio, onRemoveAsset }) {
                     </div>
                     <div className="flex flex-row sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                       <div className="text-left sm:text-right flex-1 sm:flex-initial">
-                        <div className="font-semibold text-foreground text-sm sm:text-base">{formatPrice(value)}</div>
-                        <div className="text-xs sm:text-sm text-muted-foreground">{formatPrice(asset.price)} each</div>
-                        <div className={`flex items-center gap-1 text-xs sm:text-sm justify-start sm:justify-end mt-1 ${
+                        <div className="font-semibold text-foreground text-sm sm:text-base whitespace-nowrap">{formatPrice(value)}</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">{formatPrice(asset.price)} each</div>
+                        <div className={`flex items-center gap-1 text-xs sm:text-sm justify-start sm:justify-end mt-1 whitespace-nowrap ${
                           isPositive ? 'text-green-500' : 'text-red-500'
                         }`}>
                           {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}

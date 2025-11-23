@@ -82,7 +82,9 @@ const getCurrentUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        avatar: user.avatar
+        avatar: user.avatar,
+        oauthProvider: user.oauthProvider,
+        settings: user.settings
       }
     });
   } catch (error) {

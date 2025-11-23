@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/magicui/fade-in";
 import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity, DollarSign } from "lucide-react";
 import { getStockBySymbol } from "@/services/marketDataService";
-import { getStockAnalysis } from "@/services/analysisService";
+import { getStockAnalysis, getPriceHistory } from "@/services/analysisService";
 import { getStockNews } from "@/services/newsService";
 import PriceChart from "@/components/charts/PriceChart";
 import NewsSection from "@/components/news/NewsSection";
+import AIAnalysis from "@/components/analysis/AIAnalysis";
 
 export default function StockDetail() {
   const { symbol } = useParams();
@@ -20,11 +21,24 @@ export default function StockDetail() {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newsLoading, setNewsLoading] = useState(true);
+  const [priceHistory, setPriceHistory] = useState([]);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     fetchStockDetail();
     fetchNews();
+    fetchPriceHistory();
   }, [symbol]);
+
+  const fetchPriceHistory = async () => {
+    try {
+      const response = await getPriceHistory('stock', symbol, '1M');
+      setPriceHistory(response.priceData || []);
+      setStats(response.stats || {});
+    } catch (error) {
+      console.error('Error fetching price history:', error);
+    }
+  };
 
   const fetchStockDetail = async () => {
     setLoading(true);
@@ -410,6 +424,21 @@ export default function StockDetail() {
               </div>
             </CardContent>
           </Card>
+
+          {/* AI Analysis Section */}
+          {stock && priceHistory.length > 0 && stats && (
+            <AIAnalysis
+              assetName={stock.name}
+              assetSymbol={stock.symbol}
+              assetType="stock"
+              currentPrice={stock.price}
+              change24h={stock.change24h}
+              priceHistory={priceHistory}
+              stats={stats}
+              news={news}
+              chartData={priceHistory}
+            />
+          )}
 
           {/* News Section */}
           <NewsSection news={news} loading={newsLoading} />

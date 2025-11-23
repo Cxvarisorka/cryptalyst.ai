@@ -203,20 +203,20 @@ export default function Dashboard() {
                         <div
                           key={crypto.id}
                           onClick={() => handleViewCrypto(crypto)}
-                          className="flex items-center justify-between rounded-md border border-border/60 p-2 sm:p-3 hover:bg-muted/30 cursor-pointer transition-all duration-300"
+                          className="flex items-center justify-between rounded-md border border-border/60 p-2 sm:p-3 hover:bg-muted/30 cursor-pointer transition-all duration-300 gap-2 min-w-0"
                         >
-                          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
                             {crypto.image && (
                               <img src={crypto.image} alt={crypto.name} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex-shrink-0" />
                             )}
-                            <div className="min-w-0">
-                              <div className="font-medium text-foreground text-sm sm:text-base truncate">{crypto.name}</div>
-                              <div className="text-muted-foreground text-xs sm:text-sm">{crypto.symbol}</div>
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <div className="font-medium text-foreground text-sm sm:text-base truncate" title={crypto.name}>{crypto.name}</div>
+                              <div className="text-muted-foreground text-xs sm:text-sm truncate">{crypto.symbol}</div>
                             </div>
                           </div>
-                          <div className="text-right flex-shrink-0 ml-2">
-                            <div className="font-semibold text-sm sm:text-base">{formatPrice(crypto.price)}</div>
-                            <div className={`text-xs sm:text-sm ${isPositive ? "text-green-500" : "text-red-500"}`}>
+                          <div className="text-right flex-shrink-0">
+                            <div className="font-semibold text-sm sm:text-base whitespace-nowrap">{formatPrice(crypto.price)}</div>
+                            <div className={`text-xs sm:text-sm whitespace-nowrap ${isPositive ? "text-green-500" : "text-red-500"}`}>
                               {isPositive ? '+' : ''}{crypto.change24h.toFixed(2)}%
                             </div>
                           </div>
@@ -240,20 +240,20 @@ export default function Dashboard() {
                         <div
                           key={stock.id}
                           onClick={() => handleViewStock(stock)}
-                          className="flex items-center justify-between rounded-md border border-border/60 p-2 sm:p-3 hover:bg-muted/30 cursor-pointer transition-all duration-300"
+                          className="flex items-center justify-between rounded-md border border-border/60 p-2 sm:p-3 hover:bg-muted/30 cursor-pointer transition-all duration-300 gap-2 min-w-0"
                         >
-                          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
                             {stock.image && (
                               <img src={stock.image} alt={stock.name} className="w-7 h-7 sm:w-8 sm:h-8 rounded flex-shrink-0" />
                             )}
-                            <div className="min-w-0">
-                              <div className="font-medium text-foreground text-sm sm:text-base truncate">{stock.name}</div>
-                              <div className="text-muted-foreground text-xs sm:text-sm">{stock.symbol}</div>
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <div className="font-medium text-foreground text-sm sm:text-base truncate" title={stock.name}>{stock.name}</div>
+                              <div className="text-muted-foreground text-xs sm:text-sm truncate">{stock.symbol}</div>
                             </div>
                           </div>
-                          <div className="text-right flex-shrink-0 ml-2">
-                            <div className="font-semibold text-sm sm:text-base">{formatPrice(stock.price)}</div>
-                            <div className={`text-xs sm:text-sm ${isPositive ? "text-green-500" : "text-red-500"}`}>
+                          <div className="text-right flex-shrink-0">
+                            <div className="font-semibold text-sm sm:text-base whitespace-nowrap">{formatPrice(stock.price)}</div>
+                            <div className={`text-xs sm:text-sm whitespace-nowrap ${isPositive ? "text-green-500" : "text-red-500"}`}>
                               {isPositive ? '+' : ''}{stock.change24h.toFixed(2)}%
                             </div>
                           </div>

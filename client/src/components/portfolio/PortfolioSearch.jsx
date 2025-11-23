@@ -112,24 +112,24 @@ export default function PortfolioSearch({ onAddAsset }) {
     const isAdding = adding === asset.id;
 
     return (
-      <div className="flex items-center justify-between p-4 border border-border/40 rounded-lg hover:bg-muted/30 transition-all duration-300">
-        <div className="flex items-center gap-3 flex-1">
+      <div className="flex items-center justify-between p-3 sm:p-4 border border-border/40 rounded-lg hover:bg-muted/30 transition-all duration-300 gap-2 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 overflow-hidden">
           {asset.image && (
             <img
               src={asset.image}
               alt={asset.name}
-              className={`w-10 h-10 ${type === 'crypto' ? 'rounded-full' : 'rounded'}`}
+              className={`w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 ${type === 'crypto' ? 'rounded-full' : 'rounded'}`}
             />
           )}
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-foreground">{asset.symbol}</div>
-            <div className="text-sm text-muted-foreground truncate">{asset.name}</div>
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <div className="font-semibold text-foreground text-sm sm:text-base truncate">{asset.symbol}</div>
+            <div className="text-xs sm:text-sm text-muted-foreground truncate">{asset.name}</div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="font-semibold text-foreground">{formatPrice(asset.price)}</div>
-            <div className={`flex items-center gap-1 text-sm justify-end ${
+        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+          <div className="text-right hidden sm:block">
+            <div className="font-semibold text-foreground whitespace-nowrap">{formatPrice(asset.price)}</div>
+            <div className={`flex items-center gap-1 text-sm justify-end whitespace-nowrap ${
               isPositive ? 'text-green-500' : 'text-red-500'
             }`}>
               {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -140,14 +140,15 @@ export default function PortfolioSearch({ onAddAsset }) {
             size="sm"
             onClick={() => handleAddAsset({ ...asset, type })}
             disabled={isAdding}
-            className="gap-2"
+            className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3"
           >
             {isAdding ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
             ) : (
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
             )}
-            {t("dashboard.portfolio.add")}
+            <span className="hidden sm:inline">{t("dashboard.portfolio.add")}</span>
+            <span className="sm:hidden">Add</span>
           </Button>
         </div>
       </div>

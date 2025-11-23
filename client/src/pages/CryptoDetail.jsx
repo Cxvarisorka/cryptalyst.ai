@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/magicui/fade-in";
 import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity } from "lucide-react";
 import { getCryptoById } from "@/services/marketDataService";
-import { getCryptoAnalysis } from "@/services/analysisService";
+import { getCryptoAnalysis, getPriceHistory } from "@/services/analysisService";
 import { getCryptoNews } from "@/services/newsService";
 import PriceChart from "@/components/charts/PriceChart";
 import NewsSection from "@/components/news/NewsSection";
+import AIAnalysis from "@/components/analysis/AIAnalysis";
 
 export default function CryptoDetail() {
   const { id } = useParams();
@@ -20,11 +21,24 @@ export default function CryptoDetail() {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newsLoading, setNewsLoading] = useState(true);
+  const [priceHistory, setPriceHistory] = useState([]);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     fetchCryptoDetail();
     fetchNews();
+    fetchPriceHistory();
   }, [id]);
+
+  const fetchPriceHistory = async () => {
+    try {
+      const response = await getPriceHistory('crypto', id, '1M');
+      setPriceHistory(response.priceData || []);
+      setStats(response.stats || {});
+    } catch (error) {
+      console.error('Error fetching price history:', error);
+    }
+  };
 
   const fetchCryptoDetail = async () => {
     setLoading(true);
@@ -316,6 +330,21 @@ export default function CryptoDetail() {
               </div>
             </CardContent>
           </Card>
+
+          {/* AI Analysis Section */}
+          {crypto && priceHistory.length > 0 && stats && (
+            <AIAnalysis
+              assetName={crypto.name}
+              assetSymbol={crypto.symbol}
+              assetType="crypto"
+              currentPrice={crypto.price}
+              change24h={crypto.change24h}
+              priceHistory={priceHistory}
+              stats={stats}
+              news={news}
+              chartData={priceHistory}
+            />
+          )}
 
           {/* News Section */}
           <NewsSection news={news} loading={newsLoading} />
