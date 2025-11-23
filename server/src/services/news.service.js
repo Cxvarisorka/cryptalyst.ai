@@ -2,13 +2,10 @@ const axios = require('axios');
 
 class NewsService {
   constructor() {
-    // Using NewsAPI.org for financial and crypto news
-    // Free tier: 100 requests/day, 30 days of historical data
-    this.newsApiKey = process.env.NEWS_API_KEY || '';
-    this.newsApiUrl = 'https://newsapi.org/v2';
-
-    // Fallback to CryptoCompare for crypto-specific news
-    this.cryptoCompareUrl = 'https://min-api.cryptocompare.com/data/v2/news';
+    // Using Marketaux.com for financial and crypto news
+    // Free tier: 100 requests/month
+    this.marketauxApiKey = process.env.MARKETAUX_API_KEY || '';
+    this.marketauxApiUrl = 'https://api.marketaux.com/v1';
 
     // Cache for news articles (15 minutes TTL)
     this.newsCache = new Map();
@@ -32,31 +29,23 @@ class NewsService {
     }
 
     try {
-      // Always try CryptoCompare first (free, no API key needed, works in production)
-      try {
-        const cryptoCompareResults = await this.fetchFromCryptoCompare(symbol, limit);
-        if (cryptoCompareResults && cryptoCompareResults.length > 0) {
-          this.cacheNews(cacheKey, cryptoCompareResults);
-          console.log(`✅ Fetched ${cryptoCompareResults.length} news from CryptoCompare for ${symbol}`);
-          return cryptoCompareResults;
+      // Try Marketaux if API key is available
+      if (this.marketauxApiKey) {
+        const marketauxResults = await this.fetchFromMarketaux(symbol, 'crypto', limit);
+        if (marketauxResults && marketauxResults.length > 0) {
+          this.cacheNews(cacheKey, marketauxResults);
+          console.log(`✅ Fetched ${marketauxResults.length} news from Marketaux for ${symbol}`);
+          return marketauxResults;
         }
-      } catch (ccError) {
-        console.warn(`CryptoCompare failed for ${symbol}:`, ccError.message);
+      } else {
+        console.warn('⚠️ MARKETAUX_API_KEY not configured');
       }
 
-      // Try NewsAPI as backup if API key is available (only works on localhost)
-      if (this.newsApiKey) {
-        const newsApiResults = await this.fetchFromNewsAPI(symbol, 'crypto', limit);
-        if (newsApiResults && newsApiResults.length > 0) {
-          this.cacheNews(cacheKey, newsApiResults);
-          console.log(`✅ Fetched ${newsApiResults.length} news from NewsAPI for ${symbol}`);
-          return newsApiResults;
-        }
-      }
-
-      // Final fallback to mock data
+      // Fallback to mock data
       console.log(`⚠️ Using mock news for ${symbol}`);
-      return this.getMockCryptoNews(symbol, limit);
+      const mockNews = this.getMockCryptoNews(symbol, limit);
+      this.cacheNews(cacheKey, mockNews);
+      return mockNews;
     } catch (error) {
       console.error(`❌ Error fetching crypto news for ${symbol}:`, error.message);
       return this.getMockCryptoNews(symbol, limit);
@@ -81,18 +70,18 @@ class NewsService {
     }
 
     try {
-      if (this.newsApiKey) {
-        // Use both company name AND symbol for better results
-        const searchQuery = companyName ? `${companyName} ${symbol}` : symbol;
-        const newsApiResults = await this.fetchFromNewsAPI(searchQuery, 'stock', limit);
+      if (this.marketauxApiKey) {
+        const marketauxResults = await this.fetchFromMarketaux(symbol, 'stock', limit, companyName);
 
-        if (newsApiResults && newsApiResults.length > 0) {
-          this.cacheNews(cacheKey, newsApiResults);
-          return newsApiResults;
+        if (marketauxResults && marketauxResults.length > 0) {
+          this.cacheNews(cacheKey, marketauxResults);
+          console.log(`✅ Fetched ${marketauxResults.length} news from Marketaux for ${symbol}`);
+          return marketauxResults;
         }
       }
 
       // Return mock data if API key not available or no results
+      console.log(`⚠️ Using mock news for ${symbol}`);
       const mockNews = this.getMockStockNews(symbol, companyName, limit);
       this.cacheNews(cacheKey, mockNews);
       return mockNews;
@@ -103,95 +92,69 @@ class NewsService {
   }
 
   /**
-   * Fetch news from NewsAPI.org
+   * Fetch news from Marketaux.com
    */
-  async fetchFromNewsAPI(query, type, limit) {
+  async fetchFromMarketaux(symbol, type, limit, companyName = '') {
     try {
-      const endpoint = `${this.newsApiUrl}/everything`;
+      const endpoint = `${this.marketauxApiUrl}/news/all`;
 
-      // Make search queries more specific with the actual company/crypto name
-      let searchQuery;
+      // Build parameters based on type
+      const params = {
+        api_token: this.marketauxApiKey,
+        language: 'en',
+        limit: Math.min(limit, 100), // Marketaux max limit per request
+        sort: 'published_at'
+      };
+
       if (type === 'crypto') {
-        // For crypto, search for the symbol in crypto context
-        searchQuery = `${query} AND (cryptocurrency OR crypto OR blockchain)`;
+        // For crypto: use entity_types and search
+        params.entity_types = 'crypto,cryptocurrency';
+        // Search for crypto name/symbol
+        params.search = symbol;
       } else {
-        // For stocks, be VERY specific - require the query term in title or description
-        // Use "in:title" to search only in titles for better relevance
-        searchQuery = `"${query.split(' ')[0]}"`;  // Use the company name (first part)
+        // For stocks: use symbols parameter for ticker symbol
+        params.symbols = symbol.toUpperCase();
+        params.entity_types = 'equity';
+
+        // If company name provided, use it in search for better relevance
+        if (companyName) {
+          params.search = companyName;
+        }
       }
 
+      console.log(`📰 Fetching news from Marketaux for ${symbol}:`, params);
+
       const response = await axios.get(endpoint, {
-        params: {
-          q: searchQuery,
-          language: 'en',
-          sortBy: 'publishedAt',
-          pageSize: limit * 2,  // Fetch more then filter for better results
-          apiKey: this.newsApiKey
-        },
-        timeout: 10000
+        params: params,
+        timeout: 15000
       });
 
-      if (response.data && response.data.articles) {
-        let articles = response.data.articles.map(article => ({
-          title: article.title,
-          description: article.description,
-          url: article.url,
-          image: article.urlToImage,
-          publishedAt: article.publishedAt,
-          source: article.source.name,
-          author: article.author
-        }));
+      console.log(`📰 Marketaux response status: ${response.status}, articles found: ${response.data?.data?.length || 0}`);
 
-        // For stocks, filter articles to ensure they actually mention the company
-        if (type === 'stock' && query) {
-          const keywords = query.toLowerCase().split(' ');
-          articles = articles.filter(article => {
-            const text = `${article.title} ${article.description}`.toLowerCase();
-            // Article must mention at least one keyword from the query
-            return keywords.some(keyword => text.includes(keyword));
-          });
-        }
+      if (response.data && response.data.data && response.data.data.length > 0) {
+        const articles = response.data.data.map(article => ({
+          title: article.title,
+          description: article.description || article.snippet || '',
+          url: article.url,
+          image: article.image_url || null,
+          publishedAt: article.published_at,
+          source: article.source || 'Unknown',
+          author: article.source || 'Unknown'
+        }));
 
         return articles.slice(0, limit);
       }
 
+      console.log(`⚠️ No articles found from Marketaux for ${symbol}`);
       return [];
     } catch (error) {
-      console.error('Error fetching from NewsAPI:', error.message);
+      console.error('❌ Error fetching from Marketaux:', error.message);
+      if (error.response) {
+        console.error('Marketaux API Status:', error.response.status);
+        console.error('Marketaux API Response:', error.response.data);
+      }
       // Don't throw - return empty array to allow fallback to other sources
       return [];
-    }
-  }
-
-  /**
-   * Fetch crypto news from CryptoCompare
-   */
-  async fetchFromCryptoCompare(symbol, limit) {
-    try {
-      const response = await axios.get(this.cryptoCompareUrl, {
-        params: {
-          categories: symbol,
-          lang: 'EN'
-        },
-        timeout: 10000
-      });
-
-      if (response.data && response.data.Data) {
-        return response.data.Data.slice(0, limit).map(article => ({
-          title: article.title,
-          description: article.body,
-          url: article.url,
-          image: article.imageurl,
-          publishedAt: new Date(article.published_on * 1000).toISOString(),
-          source: article.source,
-          author: article.source
-        }));
-      }
-
-      return [];
-    } catch (error) {
-      console.error('Error fetching from CryptoCompare:', error.message);
-      throw error;
     }
   }
 
