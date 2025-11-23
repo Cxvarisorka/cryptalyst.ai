@@ -5,7 +5,7 @@ import { GradientText } from "@/components/magicui/gradient-text";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { Menu, X, Coins, LogOut, User, Moon, Sun } from "lucide-react";
+import { Menu, X, Coins, LogOut, User, Moon, Sun, Settings } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -80,6 +80,15 @@ export default function Navbar() {
                   <span>{user?.name}</span>
                 </div>
                 <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate("/settings")}
+                  className="rounded-full"
+                  title="Settings"
+                >
+                  <Settings size={18} />
+                </Button>
+                <Button
                   variant="outline"
                   onClick={handleLogout}
                   className="flex items-center gap-2"
@@ -150,6 +159,17 @@ export default function Navbar() {
                     <User size={16} />
                     <span>{user?.name}</span>
                   </div>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/settings");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2"
+                  >
+                    <Settings size={16} />
+                    Settings
+                  </Button>
                   <Button
                     variant="outline"
                     onClick={handleLogout}

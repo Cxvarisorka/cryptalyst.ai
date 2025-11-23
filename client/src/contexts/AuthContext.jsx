@@ -135,6 +135,20 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: message };
     }
   };
+  // Refresh user data (useful after settings updates)
+  const refreshUser = async () => {
+    try {
+      const response = await axios.get("/auth/me");
+      if (response.data.success) {
+        setUser(response.data.user);
+        return { success: true };
+      }
+    } catch (err) {
+      console.error("Refresh user error:", err);
+      return { success: false };
+    }
+  };
+
 
   const value = {
     user,
@@ -145,6 +159,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     loginWithGoogle,
     loginWithGithub,
+    refreshUser,
     isAuthenticated: !!user,
   };
 

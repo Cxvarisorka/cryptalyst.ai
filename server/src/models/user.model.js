@@ -1,16 +1,12 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// User schema - defines structure of user data in database
 const userSchema = new mongoose.Schema({
-  // User's name
   name: {
     type: String,
     required: [true, 'Please provide a name'],
     trim: true
   },
-
-  // User's email - must be unique
   email: {
     type: String,
     required: [true, 'Please provide an email'],
@@ -19,72 +15,95 @@ const userSchema = new mongoose.Schema({
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
-
-  // Password - only required for local signup (not OAuth)
   password: {
     type: String,
     required: function() {
-      // Password only required if not using OAuth
       return !this.oauthProvider;
     },
     minlength: [6, 'Password must be at least 6 characters'],
-    select: false // Don't return password in queries by default
+    select: false
   },
-
-  // OAuth provider info (google, github, etc.)
   oauthProvider: {
     type: String,
     enum: ['google', 'github', null],
     default: null
   },
-
-  // OAuth provider's user ID
   oauthId: {
     type: String,
     default: null
   },
-
-  // User's profile picture
   avatar: {
     type: String,
     default: null
   },
-
-  // User role for permissions
   role: {
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
   },
-
-  // Account status
   isActive: {
     type: Boolean,
     default: true
+  },
+  settings: {
+    currency: {
+      type: String,
+      enum: ['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'INR', 'AUD', 'CAD'],
+      default: 'USD'
+    },
+    timezone: {
+      type: String,
+      default: 'UTC'
+    },
+    dateFormat: {
+      type: String,
+      enum: ['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD'],
+      default: 'MM/DD/YYYY'
+    },
+    notifications: {
+      email: {
+        priceAlerts: { type: Boolean, default: true },
+        newsUpdates: { type: Boolean, default: true },
+        portfolioUpdates: { type: Boolean, default: true },
+        weeklyReport: { type: Boolean, default: false }
+      },
+      push: {
+        priceAlerts: { type: Boolean, default: false },
+        newsUpdates: { type: Boolean, default: false }
+      }
+    },
+    privacy: {
+      profileVisibility: {
+        type: String,
+        enum: ['public', 'private'],
+        default: 'private'
+      },
+      showPortfolio: { type: Boolean, default: false },
+      dataSharing: { type: Boolean, default: false }
+    },
+    theme: {
+      type: String,
+      enum: ['light', 'dark', 'system'],
+      default: 'system'
+    }
   }
 }, {
-  timestamps: true // Automatically add createdAt and updatedAt
+  timestamps: true
 });
 
-// Hash password before saving to database
 userSchema.pre('save', async function(next) {
-  // Only hash password if it was modified
   if (!this.isModified('password') || !this.password) {
     return next();
   }
-
-  // Generate salt and hash password
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
-// Method to compare entered password with hashed password
 userSchema.methods.comparePassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Method to get user data without sensitive info
 userSchema.methods.toJSON = function() {
   const user = this.toObject();
   delete user.password;

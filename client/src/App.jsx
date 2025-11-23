@@ -14,6 +14,7 @@ import Signup from "@/pages/Signup";
 import Signin from "@/pages/Signin";
 import CryptoDetail from "@/pages/CryptoDetail";
 import StockDetail from "@/pages/StockDetail";
+import Settings from "@/pages/Settings";
 
 function App() {
   return (
@@ -48,6 +49,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <StockDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
                     </ProtectedRoute>
                   }
                 />
