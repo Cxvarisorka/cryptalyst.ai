@@ -107,9 +107,7 @@ class NewsService {
       };
 
       if (type === 'crypto') {
-        // For crypto: use entity_types and search
-        params.entity_types = 'crypto,cryptocurrency';
-        // Search for crypto name/symbol
+        // For crypto: just use search (entity_types filter doesn't work well for crypto)
         params.search = symbol;
       } else {
         // For stocks: use symbols parameter for ticker symbol
