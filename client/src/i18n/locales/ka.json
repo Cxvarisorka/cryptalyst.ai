@@ -356,5 +356,77 @@
     "title": "404 - გვერდი ვერ მოიძებნა",
     "message": "გვერდი, რომელსაც ეძებთ, არ არსებობს ან გადატანილია.",
     "backHome": "უკან მთავარზე"
+  },
+  "settings": {
+    "title": "პარამეტრები",
+    "subtitle": "მართეთ თქვენი ანგარიშის პარამეტრები და უპირატესობები",
+    "tabs": {
+      "profile": "პროფილი",
+      "security": "უსაფრთხოება",
+      "preferences": "უპირატესობები"
+    },
+    "profile": {
+      "title": "პროფილის ინფორმაცია",
+      "description": "განაახლეთ თქვენი პირადი ინფორმაცია",
+      "name": "სახელი",
+      "namePlaceholder": "თქვენი სახელი",
+      "email": "ელ-ფოსტა",
+      "emailPlaceholder": "your@email.com",
+      "avatar": "ავატარის URL",
+      "avatarPlaceholder": "https://example.com/avatar.jpg",
+      "avatarPreview": "ავატარის წინასწარი ნახვა",
+      "saveChanges": "ცვლილებების შენახვა",
+      "saving": "შენახვა...",
+      "success": "პროფილი წარმატებით განახლდა",
+      "error": "პროფილის განახლება ვერ მოხერხდა"
+    },
+    "security": {
+      "title": "უსაფრთხოების პარამეტრები",
+      "description": "მართეთ თქვენი ანგარიშის უსაფრთხოება",
+      "changePassword": "პაროლის შეცვლა",
+      "currentPassword": "მიმდინარე პაროლი",
+      "currentPasswordPlaceholder": "შეიყვანეთ მიმდინარე პაროლი",
+      "newPassword": "ახალი პაროლი",
+      "newPasswordPlaceholder": "შეიყვანეთ ახალი პაროლი",
+      "confirmPassword": "დაადასტურეთ ახალი პაროლი",
+      "confirmPasswordPlaceholder": "დაადასტურეთ ახალი პაროლი",
+      "updatePassword": "პაროლის განახლება",
+      "updating": "განახლება...",
+      "oauthAccount": "OAuth ანგარიში",
+      "oauthNotice": "თქვენ შეხვედით {provider}-ით. პაროლის შეცვლა მიუწვდომელია OAuth ანგარიშებისთვის.",
+      "success": "პაროლი წარმატებით განახლდა",
+      "error": "პაროლის განახლება ვერ მოხერხდა",
+      "passwordMismatch": "პაროლები არ ემთხვევა"
+    },
+    "preferences": {
+      "title": "ჩვენების უპირატესობები",
+      "description": "მოარგეთ თქვენი გამოცდილება",
+      "currency": "ვალუტა",
+      "dateFormat": "თარიღის ფორმატი",
+      "theme": "თემა",
+      "currencies": {
+        "usd": "USD - აშშ დოლარი",
+        "eur": "EUR - ევრო",
+        "gbp": "GBP - ბრიტანული ფუნტი",
+        "jpy": "JPY - იაპონური იენი",
+        "cny": "CNY - ჩინური იუანი",
+        "inr": "INR - ინდური რუპია",
+        "aud": "AUD - ავსტრალიური დოლარი",
+        "cad": "CAD - კანადური დოლარი"
+      },
+      "themes": {
+        "light": "ღია",
+        "dark": "მუქი",
+        "system": "სისტემური"
+      },
+      "savePreferences": "უპირატესობების შენახვა",
+      "saving": "შენახვა...",
+      "success": "უპირატესობები წარმატებით განახლდა",
+      "error": "უპირატესობების განახლება ვერ მოხერხდა"
+    },
+    "common": {
+      "success": "წარმატება",
+      "error": "შეცდომა"
+    }
   }
 }
