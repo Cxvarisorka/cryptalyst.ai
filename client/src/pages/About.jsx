@@ -34,7 +34,7 @@ export default function About() {
         showSingleIcon={false}
       />
 
-      <div className="container mx-auto px-4 max-w-6xl">
+      <div className="container mx-auto px-4">
         {/* Stats */}
         <FadeIn className="my-20">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
