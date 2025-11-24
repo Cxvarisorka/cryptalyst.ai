@@ -130,7 +130,10 @@ const generateYearlyData = (currentPrice, change24h) => {
   const weeklyChange = (change24h * 7) / 100; // Approximate weekly change
   const volatility = Math.abs(weeklyChange) * 1.5;
 
-  let price = currentPrice;
+  // Calculate starting price from 52 weeks ago
+  // Work backwards from current price to estimate historical starting point
+  const totalChange = weeklyChange * weeks * 0.3;
+  let price = currentPrice / (1 + totalChange);
 
   for (let i = weeks; i >= 0; i--) {
     const date = new Date(now);
@@ -139,8 +142,9 @@ const generateYearlyData = (currentPrice, change24h) => {
     const randomChange = (Math.random() - 0.5) * volatility;
     const trendInfluence = weeklyChange * 0.3;
 
-    price = price * (1 - (trendInfluence + randomChange));
-    price = Math.max(price * 0.3, price);
+    // Move forward in time by adding the change
+    price = price * (1 + (trendInfluence + randomChange));
+    price = Math.max(price * 0.1, price); // Ensure price stays positive
 
     data.push({
       date: date.toISOString().split('T')[0],

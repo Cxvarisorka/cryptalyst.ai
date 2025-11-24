@@ -15,6 +15,8 @@ import Signin from "@/pages/Signin";
 import CryptoDetail from "@/pages/CryptoDetail";
 import StockDetail from "@/pages/StockDetail";
 import Settings from "@/pages/Settings";
+import Community from "@/pages/Community";
+import UserProfile from "@/pages/UserProfile";
 
 function App() {
   return (
@@ -57,6 +59,22 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/community"
+                  element={
+                    <ProtectedRoute>
+                      <Community />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile/:userId"
+                  element={
+                    <ProtectedRoute>
+                      <UserProfile />
                     </ProtectedRoute>
                   }
                 />

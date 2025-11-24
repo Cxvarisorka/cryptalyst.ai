@@ -26,7 +26,9 @@
       "mcp__ide__getDiagnostics",
       "Bash(del \"C:\\Users\\User\\cryptalyst.ai\\SETTINGS_README.md\")",
       "WebFetch(domain:www.marketaux.com)",
-      "Bash(del \"C:\\Users\\User\\cryptalyst.ai\\client\\src\\components\\layout\\navbar_restore_instructions.txt\")"
+      "Bash(del \"C:\\Users\\User\\cryptalyst.ai\\client\\src\\components\\layout\\navbar_restore_instructions.txt\")",
+      "Bash(timeout /t 3)",
+      "Bash(cmd //c \"taskkill /PID 1720 /F\")"
     ],
     "deny": [],
     "ask": []

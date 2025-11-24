@@ -2,6 +2,7 @@
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
+    "community": "Community",
     "about": "About",
     "pricing": "Pricing",
     "getStarted": "Get Started"
@@ -363,7 +364,8 @@
     "tabs": {
       "profile": "Profile",
       "security": "Security",
-      "preferences": "Preferences"
+      "preferences": "Preferences",
+      "privacy": "Privacy"
     },
     "profile": {
       "title": "Profile Information",
@@ -469,5 +471,58 @@
     "bearish": "Bearish",
     "neutral": "Neutral",
     "noSignals": "No technical signals available"
+  },
+  "community": {
+    "title": "Community",
+    "subtitle": "Discover and connect with other investors",
+    "search": "Search",
+    "searchPlaceholder": "Search by name or email...",
+    "clear": "Clear",
+    "searching": "Searching...",
+    "noUsers": "No users found",
+    "noUsersDesc": "Try adjusting your search query",
+    "beFirst": "Be the first to make your profile public!",
+    "public": "Public",
+    "private": "Private",
+    "portfolioValue": "Portfolio Value",
+    "assets": "Assets",
+    "portfolioHidden": "Portfolio hidden"
+  },
+  "profile": {
+    "back": "Back",
+    "notFound": "User not found",
+    "joined": "Joined",
+    "privateAccount": "Private Account",
+    "publicProfile": "Public Profile",
+    "privateTitle": "This profile is private",
+    "privateMessage": "{{name}} has chosen to keep their profile and portfolio private.",
+    "totalValue": "Total Portfolio Value",
+    "change24h": "24h Change",
+    "totalAssets": "Total Assets",
+    "holdings": "Portfolio Holdings",
+    "holdingsDesc": "Assets owned by {{name}}",
+    "noPortfolio": "No portfolio shared",
+    "noPortfolioMessage": "{{name}} has chosen to keep their portfolio private."
+  },
+  "privacy": {
+    "title": "Privacy Settings",
+    "description": "Control who can see your profile and portfolio",
+    "profileVisibility": "Profile Visibility",
+    "profileVisibilityDesc": "Make your profile visible to other users in the community",
+    "showPortfolio": "Show Portfolio",
+    "showPortfolioDesc": "Allow other users to view your portfolio holdings when visiting your public profile",
+    "dataSharing": "Data Sharing",
+    "dataSharingDesc": "Allow anonymous usage data to help improve the platform",
+    "public": "Public",
+    "private": "Private",
+    "publicNotice": "Your profile is public",
+    "publicNoticeDesc": "Other users can view your profile, including your name, email{portfolio}. You will appear in the community search results.",
+    "publicNoticePortfolio": ", and portfolio holdings",
+    "privateNotice": "Your profile is private",
+    "privateNoticeDesc": "Only your name will be visible to other users. Your profile will not appear in community search results.",
+    "save": "Save Privacy Settings",
+    "saving": "Saving...",
+    "success": "Privacy settings updated successfully",
+    "error": "Failed to update privacy settings"
   }
 }

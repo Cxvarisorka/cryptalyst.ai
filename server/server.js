@@ -14,6 +14,7 @@ const analysisRoutes = require('./src/routes/analysis.routes');
 const portfolioRoutes = require('./src/routes/portfolio.routes');
 const newsRoutes = require('./src/routes/news.routes');
 const settingsRoutes = require('./src/routes/settings.routes');
+const userRoutes = require('./src/routes/user.routes');
 
 // Import services
 const marketDataService = require('./src/services/marketData.service');
@@ -47,6 +48,7 @@ app.use('/api/analysis', analysisRoutes); // Analysis routes (technical & price 
 app.use('/api/portfolio', portfolioRoutes); // Portfolio routes
 app.use('/api/news', newsRoutes); // News routes
 app.use('/api/settings', settingsRoutes); // User settings routes
+app.use('/api/users', userRoutes); // User profile routes
 
 // Start market data service
 marketDataService.startPeriodicUpdate();

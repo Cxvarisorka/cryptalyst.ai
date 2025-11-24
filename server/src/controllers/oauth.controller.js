@@ -51,6 +51,13 @@ const googleCallback = async (req, res) => {
       }
     );
 
+    console.log('Google profile data:', {
+      name: profile.name,
+      email: profile.email,
+      picture: profile.picture,
+      id: profile.id
+    });
+
     // Check if user exists
     let user = await User.findOne({ email: profile.email });
 
@@ -63,7 +70,25 @@ const googleCallback = async (req, res) => {
         oauthProvider: 'google',
         oauthId: profile.id
       });
+    } else {
+      // Update existing user's avatar and OAuth info if not set
+      if (!user.avatar || user.avatar === '') {
+        user.avatar = profile.picture;
+      }
+      if (!user.oauthProvider) {
+        user.oauthProvider = 'google';
+        user.oauthId = profile.id;
+      }
+      await user.save();
     }
+
+    console.log('Google OAuth - User after save:', {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      oauthProvider: user.oauthProvider
+    });
 
     // Set httpOnly cookie (token stored securely in cookie only)
     setTokenCookie(user, res);
@@ -148,6 +173,16 @@ const githubCallback = async (req, res) => {
         oauthProvider: 'github',
         oauthId: profile.id.toString()
       });
+    } else {
+      // Update existing user's avatar and OAuth info if not set
+      if (!user.avatar || user.avatar === '') {
+        user.avatar = profile.avatar_url;
+      }
+      if (!user.oauthProvider) {
+        user.oauthProvider = 'github';
+        user.oauthId = profile.id.toString();
+      }
+      await user.save();
     }
 
     // Set httpOnly cookie (token stored securely in cookie only)

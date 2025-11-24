@@ -5,7 +5,7 @@ import { GradientText } from "@/components/magicui/gradient-text";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { Menu, X, Coins, LogOut, User, Moon, Sun, Settings, ChevronDown } from "lucide-react";
+import { Menu, X, Coins, LogOut, Moon, Sun, Settings, ChevronDown, Users } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -28,6 +28,7 @@ export default function Navbar() {
   const navLinks = [
     { name: t('nav.home'), path: "/" },
     ...(isAuthenticated ? [{ name: t('nav.dashboard'), path: "/dashboard" }] : []),
+    ...(isAuthenticated ? [{ name: t('nav.community'), path: "/community" }] : []),
     { name: t('nav.pricing'), path: "/pricing" },
     { name: t('nav.about'), path: "/about" },
   ];
@@ -104,7 +105,9 @@ export default function Navbar() {
                       />
                     ) : (
                       <div className="w-7 h-7 rounded-full bg-gradient-money flex items-center justify-center">
-                        <User size={16} className="text-white" />
+                        <span className="text-white text-sm font-bold">
+                          {user?.name?.charAt(0).toUpperCase() || 'U'}
+                        </span>
                       </div>
                     )}
                     <span className="text-sm font-medium max-w-[120px] truncate">
@@ -204,7 +207,9 @@ export default function Navbar() {
                       />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gradient-money flex items-center justify-center">
-                        <User size={18} className="text-white" />
+                        <span className="text-white text-lg font-bold">
+                          {user?.name?.charAt(0).toUpperCase() || 'U'}
+                        </span>
                       </div>
                     )}
                     <div className="flex flex-col">
