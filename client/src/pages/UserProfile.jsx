@@ -104,6 +104,7 @@ export default function UserProfile() {
                       src={profile.avatar}
                       alt={profile.name}
                       className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover flex-shrink-0"
+                      referrerPolicy="no-referrer"
                     />
                   ) : (
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-money flex items-center justify-center text-white text-xl sm:text-2xl font-bold flex-shrink-0">

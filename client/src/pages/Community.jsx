@@ -160,6 +160,7 @@ export default function Community() {
                           src={user.avatar}
                           alt={user.name}
                           className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover flex-shrink-0"
+                          referrerPolicy="no-referrer"
                         />
                       ) : (
                         <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-money flex items-center justify-center text-white text-lg sm:text-xl font-bold flex-shrink-0">

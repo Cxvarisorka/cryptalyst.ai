@@ -263,7 +263,7 @@ export default function Settings() {
                   />
                   {profile.avatar && (
                     <div className="flex items-center gap-3 mt-3 p-3 bg-muted/50 rounded-lg">
-                      <img src={profile.avatar} alt="Avatar preview" className="w-12 h-12 rounded-full object-cover" />
+                      <img src={profile.avatar} alt="Avatar preview" className="w-12 h-12 rounded-full object-cover" referrerPolicy="no-referrer" />
                       <span className="text-sm text-muted-foreground">{t('settings.profile.avatarPreview')}</span>
                     </div>
                   )}

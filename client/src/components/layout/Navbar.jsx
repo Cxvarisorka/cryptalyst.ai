@@ -28,9 +28,10 @@ export default function Navbar() {
   const navLinks = [
     { name: t('nav.home'), path: "/" },
     ...(isAuthenticated ? [{ name: t('nav.dashboard'), path: "/dashboard" }] : []),
+    ...(isAuthenticated ? [{ name: t('nav.feed'), path: "/feed" }] : []),
     ...(isAuthenticated ? [{ name: t('nav.community'), path: "/community" }] : []),
-    { name: t('nav.pricing'), path: "/pricing" },
-    { name: t('nav.about'), path: "/about" },
+    ...(!isAuthenticated ? [{ name: t('nav.pricing'), path: "/pricing" }] : []),
+    ...(!isAuthenticated ? [{ name: t('nav.about'), path: "/about" }] : []),
   ];
 
   const handleLogout = async () => {
@@ -102,6 +103,7 @@ export default function Navbar() {
                         src={user.avatar}
                         alt={user.name}
                         className="w-7 h-7 rounded-full object-cover"
+                        referrerPolicy="no-referrer"
                       />
                     ) : (
                       <div className="w-7 h-7 rounded-full bg-gradient-money flex items-center justify-center">
@@ -204,6 +206,7 @@ export default function Navbar() {
                         src={user.avatar}
                         alt={user.name}
                         className="w-10 h-10 rounded-full object-cover"
+                        referrerPolicy="no-referrer"
                       />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gradient-money flex items-center justify-center">
