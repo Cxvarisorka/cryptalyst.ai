@@ -16,7 +16,7 @@ cloudinary.config({
  * @param {string} folder - Cloudinary folder name
  * @returns {Promise<Object>} Upload result with URL and public_id
  */
-const uploadToCloudinary = (fileBuffer, folder = 'cryptalyst/posts') => {
+const uploadToCloudinary = (fileBuffer, folder = 'posts') => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {

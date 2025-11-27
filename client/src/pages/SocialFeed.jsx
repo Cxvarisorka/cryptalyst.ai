@@ -86,6 +86,12 @@ const SocialFeed = () => {
     setPosts((prev) => prev.filter((post) => post._id !== postId));
   };
 
+  const handlePostUpdated = (updatedPost) => {
+    setPosts((prev) =>
+      prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
+    );
+  };
+
   const handleCommentClick = (post) => {
     setSelectedPost(post);
     setShowComments(true);
@@ -115,36 +121,37 @@ const SocialFeed = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-20">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background pt-16 sm:pt-20">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Header - Full width */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2">
             {t('feed.title') || 'Community Feed'}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             {t('feed.subtitle') || 'Share your insights and connect with other traders'}
           </p>
         </div>
 
         {/* Actions & Filters - Full width */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
           {/* Search & Create */}
-          <div className="flex gap-3">
-            <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+          <div className="flex gap-2 sm:gap-3">
+            <form onSubmit={handleSearch} className="flex-1 flex gap-1.5 sm:gap-2">
               <Input
                 type="text"
-                placeholder={t('feed.searchPlaceholder') || 'Search posts, tags, or assets...'}
+                placeholder={t('feed.searchPlaceholder') || 'Search posts...'}
                 value={filters.searchQuery}
                 onChange={(e) =>
                   setFilters((prev) => ({ ...prev, searchQuery: e.target.value }))
                 }
-                className="flex-1 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                className="flex-1 bg-card border-border text-foreground placeholder:text-muted-foreground text-sm sm:text-base"
               />
               <Button
                 type="submit"
                 variant="outline"
-                className="border-border hover:bg-muted"
+                size="sm"
+                className="border-border hover:bg-muted px-2 sm:px-3"
               >
                 <Search className="w-4 h-4" />
               </Button>
@@ -153,9 +160,10 @@ const SocialFeed = () => {
             {user && (
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild>
-                  <Button className="bg-primary hover:bg-primary-dark text-primary-foreground">
-                    <Plus className="w-4 h-4 mr-2" />
-                    {t('feed.createPost') || 'Create Post'}
+                  <Button size="sm" className="bg-primary hover:bg-primary-dark text-primary-foreground whitespace-nowrap">
+                    <Plus className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">{t('feed.createPost') || 'Create Post'}</span>
+                    <span className="sm:hidden">Post</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl bg-popover border-border max-h-[90vh] overflow-y-auto">
@@ -174,16 +182,16 @@ const SocialFeed = () => {
           </div>
 
           {/* Filters */}
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-2 sm:gap-3 flex-wrap">
             <Select
               value={filters.assetType}
               onValueChange={(value) =>
                 setFilters((prev) => ({ ...prev, assetType: value }))
               }
             >
-              <SelectTrigger className="w-[180px] bg-card border-border text-foreground">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder={t('feed.assetType') || 'Asset Type'} />
+              <SelectTrigger className="w-[140px] sm:w-[180px] bg-card border-border text-foreground text-sm sm:text-base">
+                <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <SelectValue placeholder={t('feed.assetType') || 'Type'} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('feed.allAssets') || 'All Assets'}</SelectItem>
@@ -198,9 +206,9 @@ const SocialFeed = () => {
                 setFilters((prev) => ({ ...prev, sortBy: value }))
               }
             >
-              <SelectTrigger className="w-[180px] bg-card border-border text-foreground">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                <SelectValue placeholder={t('feed.sortBy') || 'Sort By'} />
+              <SelectTrigger className="w-[140px] sm:w-[180px] bg-card border-border text-foreground text-sm sm:text-base">
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <SelectValue placeholder={t('feed.sortBy') || 'Sort'} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="createdAt">{t('feed.latest') || 'Latest'}</SelectItem>
@@ -252,6 +260,7 @@ const SocialFeed = () => {
                     key={post._id}
                     post={post}
                     onPostDeleted={handlePostDeleted}
+                    onPostUpdated={handlePostUpdated}
                     onCommentClick={handleCommentClick}
                   />
                 ))}
