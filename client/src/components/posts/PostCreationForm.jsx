@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import postService from '../../services/post.service';
 import { useAuth } from '../../contexts/AuthContext';
 import { getMarketData } from '../../services/marketDataService';
+import { useTranslation } from 'react-i18next';
 
 /**
  * PostCreationForm Component
@@ -16,6 +17,7 @@ import { getMarketData } from '../../services/marketDataService';
  */
 const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [marketAssets, setMarketAssets] = useState({ crypto: [], stocks: [] });
@@ -118,17 +120,17 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
     const files = Array.from(e.target.files);
 
     if (selectedImages.length + files.length > 4) {
-      setError('Maximum 4 images allowed');
+      setError(t('feed.postForm.errors.maxImages'));
       return;
     }
 
     const validFiles = files.filter((file) => {
       if (!file.type.startsWith('image/')) {
-        setError('Only image files are allowed');
+        setError(t('feed.postForm.errors.onlyImages'));
         return false;
       }
       if (file.size > 5 * 1024 * 1024) {
-        setError('Image size must be less than 5MB');
+        setError(t('feed.postForm.errors.imageSize'));
         return false;
       }
       return true;
@@ -161,7 +163,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
 
     if (tag && !formData.tags.includes(tag)) {
       if (formData.tags.length >= 10) {
-        setError('Maximum 10 tags allowed');
+        setError(t('feed.postForm.errors.maxTags'));
         return;
       }
 
@@ -194,13 +196,13 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
 
     try {
       if (!formData.asset.symbol || !formData.asset.name) {
-        throw new Error('Please select an asset');
+        throw new Error(t('feed.postForm.errors.selectAsset'));
       }
       if (!formData.content.trim()) {
-        throw new Error('Post content is required');
+        throw new Error(t('feed.postForm.errors.contentRequired'));
       }
       if (formData.content.length > 5000) {
-        throw new Error('Content cannot exceed 5000 characters');
+        throw new Error(t('feed.postForm.errors.contentTooLong'));
       }
 
       const response = await postService.createPost(formData, selectedImages);
@@ -212,7 +214,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
       }
     } catch (err) {
       console.error('Error creating post:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to create post');
+      setError(err.response?.data?.message || err.message || t('feed.postForm.errors.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -227,7 +229,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Asset Selection */}
           <div className="space-y-2">
-            <Label className="text-card-foreground">Select Asset *</Label>
+            <Label className="text-card-foreground">{t('feed.postForm.selectAssetRequired')}</Label>
 
             {!formData.asset.symbol ? (
               <div>
@@ -238,7 +240,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                   disabled={!!preselectedAsset}
                   className="w-full justify-start border-border hover:bg-muted text-muted-foreground"
                 >
-                  Choose a cryptocurrency or stock...
+                  {t('feed.postForm.chooseAsset')}
                 </Button>
 
                 {/* Asset Selector Modal */}
@@ -247,7 +249,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                     <Card className="w-full max-w-2xl max-h-[80vh] bg-card border-border overflow-hidden">
                       <div className="p-4 border-b border-border">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold text-foreground">Select Asset</h3>
+                          <h3 className="text-lg font-semibold text-foreground">{t('feed.postForm.selectAsset')}</h3>
                           <Button
                             type="button"
                             variant="ghost"
@@ -266,7 +268,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             type="text"
-                            placeholder="Search by name or symbol..."
+                            placeholder={t('feed.postForm.searchAssets')}
                             value={assetSearch}
                             onChange={(e) => setAssetSearch(e.target.value)}
                             className="pl-10 bg-background border-border text-foreground"
@@ -279,22 +281,22 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                         <div className="px-4 pt-2">
                           <TabsList className="grid w-full grid-cols-2 bg-muted">
                             <TabsTrigger value="crypto" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                              Cryptocurrency ({filteredCrypto.length})
+                              {t('feed.postForm.cryptocurrency')} ({filteredCrypto.length})
                             </TabsTrigger>
                             <TabsTrigger value="stocks" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                              Stocks ({filteredStocks.length})
+                              {t('feed.stocks')} ({filteredStocks.length})
                             </TabsTrigger>
                           </TabsList>
                         </div>
 
                         <div className="overflow-y-auto max-h-[50vh] p-4">
                           {loadingAssets ? (
-                            <div className="text-center py-8 text-muted-foreground">Loading assets...</div>
+                            <div className="text-center py-8 text-muted-foreground">{t('feed.postForm.loadingAssets')}</div>
                           ) : (
                             <>
                               <TabsContent value="crypto" className="mt-0 space-y-2">
                                 {filteredCrypto.length === 0 ? (
-                                  <div className="text-center py-8 text-muted-foreground">No cryptocurrencies found</div>
+                                  <div className="text-center py-8 text-muted-foreground">{t('feed.postForm.noCrypto')}</div>
                                 ) : (
                                   <div className="grid gap-2">
                                     {filteredCrypto.map((crypto) => (
@@ -340,7 +342,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
 
                               <TabsContent value="stocks" className="mt-0 space-y-2">
                                 {filteredStocks.length === 0 ? (
-                                  <div className="text-center py-8 text-muted-foreground">No stocks found</div>
+                                  <div className="text-center py-8 text-muted-foreground">{t('feed.postForm.noStocks')}</div>
                                 ) : (
                                   <div className="grid gap-2">
                                     {filteredStocks.map((stock) => (
@@ -428,7 +430,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
 
           {/* Sentiment Buttons */}
           <div className="space-y-2">
-            <Label className="text-card-foreground">Sentiment (Optional)</Label>
+            <Label className="text-card-foreground">{t('feed.postForm.sentiment')}</Label>
             <div className="grid grid-cols-3 gap-2">
               <Button
                 type="button"
@@ -441,7 +443,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                 }`}
               >
                 <TrendingUp className="w-4 h-4 mr-2" />
-                Bullish
+                {t('feed.postForm.bullish')}
               </Button>
               <Button
                 type="button"
@@ -454,7 +456,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                 }`}
               >
                 <TrendingDown className="w-4 h-4 mr-2" />
-                Bearish
+                {t('feed.postForm.bearish')}
               </Button>
               <Button
                 type="button"
@@ -466,7 +468,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                     : 'border-border hover:bg-muted'
                 }`}
               >
-                Neutral
+                {t('feed.postForm.neutral')}
               </Button>
             </div>
           </div>
@@ -474,12 +476,12 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
           {/* Content */}
           <div className="space-y-2">
             <Label htmlFor="content" className="text-card-foreground">
-              What's your take? *
+              {t('feed.postForm.content')}
             </Label>
             <textarea
               id="content"
               rows={6}
-              placeholder="Share your analysis, thoughts, or predictions..."
+              placeholder={t('feed.postForm.contentPlaceholder')}
               value={formData.content}
               onChange={handleContentChange}
               required
@@ -493,7 +495,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
 
           {/* Image Upload */}
           <div className="space-y-2">
-            <Label className="text-card-foreground">Images (Max 4)</Label>
+            <Label className="text-card-foreground">{t('feed.postForm.images')}</Label>
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -504,10 +506,10 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                 className="border-border hover:bg-muted"
               >
                 <ImageIcon className="w-4 h-4 mr-2" />
-                Add Images
+                {t('feed.postForm.addImages')}
               </Button>
               <span className="text-sm text-muted-foreground">
-                {selectedImages.length} / 4 selected
+                {selectedImages.length} / 4 {t('feed.postForm.selected')}
               </span>
             </div>
             <input
@@ -543,12 +545,12 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
 
           {/* Tags */}
           <div className="space-y-2">
-            <Label htmlFor="tags" className="text-card-foreground">Tags (Optional)</Label>
+            <Label htmlFor="tags" className="text-card-foreground">{t('feed.postForm.tags')}</Label>
             <div className="flex gap-2">
               <Input
                 id="tags"
                 type="text"
-                placeholder="e.g., analysis, technical"
+                placeholder={t('feed.postForm.tagsPlaceholder')}
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -591,7 +593,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
 
           {/* Visibility */}
           <div className="space-y-2">
-            <Label htmlFor="visibility" className="text-card-foreground">Visibility</Label>
+            <Label htmlFor="visibility" className="text-card-foreground">{t('feed.postForm.visibility')}</Label>
             <Select
               value={formData.visibility}
               onValueChange={(value) =>
@@ -599,25 +601,25 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
               }
             >
               <SelectTrigger className="bg-background border-border text-foreground">
-                <SelectValue placeholder="Select visibility" />
+                <SelectValue placeholder={t('feed.postForm.selectVisibility')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="public">
                   <div className="flex items-center gap-2">
                     <Globe className="w-4 h-4" />
-                    Public
+                    {t('feed.postForm.public')}
                   </div>
                 </SelectItem>
                 <SelectItem value="followers">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4" />
-                    Followers Only
+                    {t('feed.postForm.followersOnly')}
                   </div>
                 </SelectItem>
                 <SelectItem value="private">
                   <div className="flex items-center gap-2">
                     <Lock className="w-4 h-4" />
-                    Private
+                    {t('feed.postForm.private')}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -641,7 +643,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                 disabled={loading}
                 className="border-border hover:bg-muted"
               >
-                Cancel
+                {t('feed.postForm.cancel')}
               </Button>
             )}
             <Button
@@ -649,7 +651,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
               disabled={loading || !formData.asset.symbol}
               className="bg-primary hover:bg-primary-dark text-primary-foreground"
             >
-              {loading ? 'Posting...' : 'Post'}
+              {loading ? t('feed.postForm.posting') : t('feed.postForm.post')}
             </Button>
           </div>
         </form>
