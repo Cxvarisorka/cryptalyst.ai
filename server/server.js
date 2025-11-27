@@ -15,6 +15,9 @@ const portfolioRoutes = require('./src/routes/portfolio.routes');
 const newsRoutes = require('./src/routes/news.routes');
 const settingsRoutes = require('./src/routes/settings.routes');
 const userRoutes = require('./src/routes/user.routes');
+const postRoutes = require('./src/routes/post.routes');
+const commentRoutes = require('./src/routes/comment.routes');
+const likeRoutes = require('./src/routes/like.routes');
 
 // Import services
 const marketDataService = require('./src/services/marketData.service');
@@ -49,6 +52,23 @@ app.use('/api/portfolio', portfolioRoutes); // Portfolio routes
 app.use('/api/news', newsRoutes); // News routes
 app.use('/api/settings', settingsRoutes); // User settings routes
 app.use('/api/users', userRoutes); // User profile routes
+app.use('/api/posts', postRoutes); // Post routes
+app.use('/api', commentRoutes); // Comment routes
+app.use('/api', likeRoutes); // Like routes
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
+
+  res.status(statusCode).json({
+    success: false,
+    message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+});
 
 // Start market data service
 marketDataService.startPeriodicUpdate();

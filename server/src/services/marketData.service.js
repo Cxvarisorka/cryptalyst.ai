@@ -250,10 +250,10 @@ class MarketDataService {
   /**
    * Get all cached market data
    */
-  getAllMarketData() {
+  getAllMarketData(cryptoLimit = 100, stockLimit = 100) {
     return {
-      crypto: this.cryptoCache.slice(0, 5),
-      stocks: this.stockCache.slice(0, 5),
+      crypto: this.cryptoCache.slice(0, cryptoLimit),
+      stocks: this.stockCache.slice(0, stockLimit),
       lastUpdate: this.lastCryptoUpdate || this.lastStockUpdate
     };
   }

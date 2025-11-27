@@ -140,8 +140,12 @@ const getMockStockData = (limit = 5) => {
 // Combined market data - fetch all from server
 export const getMarketData = async () => {
   try {
-    // Try to get all data from server first
+    // Try to get all data from server first with high limit
     const response = await axios.get(`${API_URL}/market/all`, {
+      params: {
+        cryptoLimit: 100,
+        stockLimit: 100
+      },
       timeout: 5000
     });
 
@@ -151,10 +155,10 @@ export const getMarketData = async () => {
       return response.data.data;
     }
 
-    // Fallback to individual fetches
+    // Fallback to individual fetches - get all assets
     const [cryptoData, stockData] = await Promise.all([
-      getCryptoData(5),
-      getStockData(5)
+      getCryptoData(100),
+      getStockData(100)
     ]);
 
     return {
@@ -164,11 +168,11 @@ export const getMarketData = async () => {
   } catch (error) {
     console.error('❌ Error fetching market data from server:', error.message);
 
-    // Final fallback: try individual fetches
+    // Final fallback: try individual fetches - get all assets
     try {
       const [cryptoData, stockData] = await Promise.all([
-        getCryptoData(5),
-        getStockData(5)
+        getCryptoData(100),
+        getStockData(100)
       ]);
 
       return {
@@ -178,8 +182,8 @@ export const getMarketData = async () => {
     } catch (fallbackError) {
       console.error('Error fetching market data:', fallbackError);
       return {
-        crypto: getMockCryptoData(5),
-        stocks: getMockStockData(5)
+        crypto: getMockCryptoData(100),
+        stocks: getMockStockData(100)
       };
     }
   }

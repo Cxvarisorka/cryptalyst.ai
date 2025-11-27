@@ -41,6 +41,7 @@ const googleCallback = async (req, res) => {
       grant_type: 'authorization_code'
     });
 
+
     const { access_token } = data;
 
     // Get user info from Google

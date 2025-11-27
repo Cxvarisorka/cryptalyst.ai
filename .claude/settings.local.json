@@ -28,7 +28,12 @@
       "WebFetch(domain:www.marketaux.com)",
       "Bash(del \"C:\\Users\\User\\cryptalyst.ai\\client\\src\\components\\layout\\navbar_restore_instructions.txt\")",
       "Bash(timeout /t 3)",
-      "Bash(cmd //c \"taskkill /PID 1720 /F\")"
+      "Bash(cmd //c \"taskkill /PID 1720 /F\")",
+      "Bash(xargs:*)",
+      "Bash(npm run build:*)",
+      "Bash(dir:*)",
+      "Bash(del nul)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

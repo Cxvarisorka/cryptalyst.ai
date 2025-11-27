@@ -17,6 +17,7 @@ import StockDetail from "@/pages/StockDetail";
 import Settings from "@/pages/Settings";
 import Community from "@/pages/Community";
 import UserProfile from "@/pages/UserProfile";
+import SocialFeed from "@/pages/SocialFeed";
 
 function App() {
   return (
@@ -75,6 +76,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <UserProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/feed"
+                  element={
+                    <ProtectedRoute>
+                      <SocialFeed />
                     </ProtectedRoute>
                   }
                 />

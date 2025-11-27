@@ -52,7 +52,9 @@ exports.getStockData = async (req, res) => {
  */
 exports.getAllMarketData = async (req, res) => {
   try {
-    const data = marketDataService.getAllMarketData();
+    const cryptoLimit = parseInt(req.query.cryptoLimit) || 100;
+    const stockLimit = parseInt(req.query.stockLimit) || 100;
+    const data = marketDataService.getAllMarketData(cryptoLimit, stockLimit);
 
     res.json({
       success: true,
