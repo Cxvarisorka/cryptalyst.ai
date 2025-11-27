@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Heart, MessageCircle, Share2, MoreVertical, Trash2, Edit2, Globe, Users, Lock, TrendingUp, TrendingDown } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Button } from '../ui/button';
@@ -17,6 +18,7 @@ import { formatDistanceToNow } from 'date-fns';
  */
 const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagClick }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
   const [sharesCount, setSharesCount] = useState(post.sharesCount || 0);
@@ -196,7 +198,13 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
         <div className="flex items-start justify-between gap-2">
           {/* User Info & Asset */}
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-            <Avatar className="w-8 h-8 sm:w-10 sm:h-10 bg-muted text-foreground flex-shrink-0">
+            <Avatar
+              className="w-8 h-8 sm:w-10 sm:h-10 bg-muted text-foreground flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (post.userId?._id) navigate(`/profile/${post.userId._id}`);
+              }}
+            >
               {post.userId?.avatar ? (
                 <img src={post.userId.avatar} alt={post.userId.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
@@ -205,7 +213,15 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
             </Avatar>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                <h4 className="text-foreground font-medium text-sm sm:text-base truncate">{post.userId?.name || 'Unknown User'}</h4>
+                <h4
+                  className="text-foreground font-medium text-sm sm:text-base truncate cursor-pointer hover:text-primary transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (post.userId?._id) navigate(`/profile/${post.userId._id}`);
+                  }}
+                >
+                  {post.userId?.name || 'Unknown User'}
+                </h4>
                 <span className="text-muted-foreground text-xs sm:text-sm flex-shrink-0">•</span>
                 <span className="text-muted-foreground text-xs sm:text-sm flex-shrink-0">{formatTime(post.createdAt)}</span>
                 <span className="flex-shrink-0">{getVisibilityIcon()}</span>

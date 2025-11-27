@@ -128,6 +128,10 @@ export default function Navbar() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate(`/profile/${user?._id}`)} className="cursor-pointer">
+                    <Users size={16} className="mr-2" />
+                    My Profile
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
                     <Settings size={16} className="mr-2" />
                     Settings
