@@ -1,6 +1,15 @@
 const mongoose = require('mongoose');
 
 const portfolioSchema = new mongoose.Schema({
+  // Reference to the portfolio collection this asset belongs to
+  collection: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'PortfolioCollection',
+    required: false,
+    index: true,
+    default: null,
+  },
+
   // Reference to the user who owns this portfolio item
   userId: {
     type: mongoose.Schema.Types.ObjectId,

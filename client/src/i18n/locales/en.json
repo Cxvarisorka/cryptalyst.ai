@@ -565,7 +565,18 @@
     "holdings": "Portfolio Holdings",
     "holdingsDesc": "Assets owned by {{name}}",
     "noPortfolio": "No portfolio shared",
-    "noPortfolioMessage": "{{name}} has chosen to keep their portfolio private."
+    "noPortfolioMessage": "{{name}} has chosen to keep their portfolio private.",
+    "followers": "Followers",
+    "following": "Following",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "posts": "Posts",
+    "portfolios": "Portfolios",
+    "assets": "assets",
+    "noPosts": "No posts yet",
+    "noPostsMessage": "{{name}} hasn't shared any posts yet.",
+    "noPortfolios": "No portfolios shared",
+    "noPortfoliosMessage": "{{name}} hasn't shared any portfolios yet."
   },
   "privacy": {
     "title": "Privacy Settings",
