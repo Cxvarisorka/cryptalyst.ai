@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Filter, TrendingUp, Search } from 'lucide-react';
+import { Plus, Filter, TrendingUp, Search, X, Tag } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -33,6 +33,7 @@ const SocialFeed = () => {
     sortBy: 'createdAt',
     sortOrder: 'desc',
     searchQuery: '',
+    tag: null, // Selected tag filter
   });
 
   useEffect(() => {
@@ -53,6 +54,10 @@ const SocialFeed = () => {
 
       if (filters.assetType && filters.assetType !== 'all') {
         params.assetType = filters.assetType;
+      }
+
+      if (filters.tag) {
+        params.tag = filters.tag;
       }
 
       const response = await postService.getFeed(params);
@@ -95,6 +100,14 @@ const SocialFeed = () => {
   const handleCommentClick = (post) => {
     setSelectedPost(post);
     setShowComments(true);
+  };
+
+  const handleTagClick = (tag) => {
+    setFilters((prev) => ({ ...prev, tag, searchQuery: '' }));
+  };
+
+  const clearTagFilter = () => {
+    setFilters((prev) => ({ ...prev, tag: null }));
   };
 
   const handleSearch = async (e) => {
@@ -216,6 +229,21 @@ const SocialFeed = () => {
                 <SelectItem value="commentsCount">{t('feed.mostDiscussed') || 'Most Discussed'}</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* Active Tag Filter */}
+            {filters.tag && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full border border-primary/20">
+                <Tag className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="text-xs sm:text-sm font-medium">#{filters.tag}</span>
+                <button
+                  onClick={clearTagFilter}
+                  className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                  aria-label="Clear tag filter"
+                >
+                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -262,6 +290,7 @@ const SocialFeed = () => {
                     onPostDeleted={handlePostDeleted}
                     onPostUpdated={handlePostUpdated}
                     onCommentClick={handleCommentClick}
+                    onTagClick={handleTagClick}
                   />
                 ))}
 

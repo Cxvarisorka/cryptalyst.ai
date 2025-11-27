@@ -95,21 +95,13 @@ const createPost = async (req, res, next) => {
 /**
  * Get feed posts with filters
  * GET /api/posts/feed
+ * Query params: page, limit, assetType, assetSymbol, userId, tag, sentiment, sortBy, sortOrder, search
  */
 const getFeed = async (req, res, next) => {
   try {
-    const options = {
-      page: parseInt(req.query.page) || 1,
-      limit: parseInt(req.query.limit) || 20,
-      assetSymbol: req.query.symbol,
-      assetType: req.query.assetType,
-      userId: req.query.userId,
-      tag: req.query.tag,
-      sortBy: req.query.sortBy || 'createdAt',
-      sortOrder: req.query.sortOrder || 'desc',
-    };
-
-    const result = await postService.getFeedPosts(options);
+    // Pass all query parameters to the service
+    // PostFilter class will handle parsing and validation
+    const result = await postService.getFeedPosts(req.query);
 
     res.status(200).json({
       success: true,

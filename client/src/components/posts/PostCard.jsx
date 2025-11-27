@@ -15,7 +15,7 @@ import { formatDistanceToNow } from 'date-fns';
  * PostCard Component
  * Displays a single post with interactions (like, comment, share) and sentiment
  */
-const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick }) => {
+const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagClick }) => {
   const { user } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
@@ -291,12 +291,13 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick }) => {
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {post.tags.map((tag) => (
-              <span
+              <button
                 key={tag}
-                className="text-xs sm:text-sm text-primary hover:text-primary-light cursor-pointer"
+                onClick={() => onTagClick && onTagClick(tag)}
+                className="text-xs sm:text-sm text-primary hover:text-primary-light cursor-pointer hover:underline transition-all"
               >
                 #{tag}
-              </span>
+              </button>
             ))}
           </div>
         )}

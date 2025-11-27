@@ -1,6 +1,7 @@
 const Post = require('../models/post.model');
 const Comment = require('../models/comment.model');
 const Like = require('../models/like.model');
+const PostFilter = require('../utils/PostFilter');
 const {
   uploadToCloudinary,
   deleteFromCloudinary,
@@ -57,11 +58,28 @@ const createPost = async (postData, files = []) => {
 
 /**
  * Get feed posts with filters and pagination
- * @param {Object} options - Query options
+ * @param {Object} query - Query parameters from request
  * @returns {Promise<Object>} Posts with pagination
  */
-const getFeedPosts = async (options = {}) => {
-  return await Post.getFeed(options);
+const getFeedPosts = async (query = {}) => {
+  try {
+    // Create filter instance with query parameters
+    const postFilter = new PostFilter(query);
+
+    // Exclude hidden posts
+    postFilter.excludeHidden();
+
+    // Build and execute query using the FilterBuilder's execute method
+    const result = await postFilter.execute(Post);
+
+    return {
+      posts: result.data,
+      pagination: result.pagination
+    };
+  } catch (error) {
+    console.error('Error in getFeedPosts:', error);
+    throw error;
+  }
 };
 
 /**
@@ -165,70 +183,41 @@ const incrementShareCount = async (postId) => {
 /**
  * Get posts by asset symbol
  * @param {string} symbol - Asset symbol
- * @param {Object} options - Query options
+ * @param {Object} query - Query options
  * @returns {Promise<Object>} Posts with pagination
  */
-const getPostsByAsset = async (symbol, options = {}) => {
-  return await Post.getFeed({ ...options, assetSymbol: symbol });
+const getPostsByAsset = async (symbol, query = {}) => {
+  return await getFeedPosts({ ...query, assetSymbol: symbol });
 };
 
 /**
  * Get posts by user
  * @param {string} userId - User ID
- * @param {Object} options - Query options
+ * @param {Object} query - Query options
  * @returns {Promise<Object>} Posts with pagination
  */
-const getPostsByUser = async (userId, options = {}) => {
-  return await Post.getFeed({ ...options, userId });
+const getPostsByUser = async (userId, query = {}) => {
+  return await getFeedPosts({ ...query, userId });
 };
 
 /**
  * Get posts by tag
  * @param {string} tag - Tag name
- * @param {Object} options - Query options
+ * @param {Object} query - Query options
  * @returns {Promise<Object>} Posts with pagination
  */
-const getPostsByTag = async (tag, options = {}) => {
-  return await Post.getFeed({ ...options, tag });
+const getPostsByTag = async (tag, query = {}) => {
+  return await getFeedPosts({ ...query, tag });
 };
 
 /**
  * Search posts by content or tags
- * @param {string} query - Search query
- * @param {Object} options - Query options
+ * @param {string} searchQuery - Search query
+ * @param {Object} query - Query options
  * @returns {Promise<Object>} Search results
  */
-const searchPosts = async (query, options = {}) => {
-  const { page = 1, limit = 20 } = options;
-  const skip = (page - 1) * limit;
-
-  const searchRegex = new RegExp(query, 'i');
-
-  const [posts, total] = await Promise.all([
-    Post.find({
-      $or: [{ content: searchRegex }, { tags: searchRegex }],
-      isHidden: false,
-    })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate('userId', 'name avatar email')
-      .lean(),
-    Post.countDocuments({
-      $or: [{ content: searchRegex }, { tags: searchRegex }],
-      isHidden: false,
-    }),
-  ]);
-
-  return {
-    posts,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit),
-    },
-  };
+const searchPosts = async (searchQuery, query = {}) => {
+  return await getFeedPosts({ ...query, search: searchQuery });
 };
 
 module.exports = {
