@@ -27,7 +27,32 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick }) => {
   const [editVisibility, setEditVisibility] = useState(post.visibility || 'public');
   const [editTags, setEditTags] = useState((post.tags || []).join(', '));
 
-  const isAuthor = user && post.userId?._id === user._id;
+  // More robust author check - convert to strings and check both id and _id
+  const isAuthor = user && post.userId && (
+    String(post.userId._id || post.userId.id) === String(user._id || user.id)
+  );
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('PostCard Debug:', {
+      user: user ? {
+        _id: user._id,
+        id: user.id,
+        name: user.name
+      } : null,
+      postUserId: post.userId ? {
+        _id: post.userId._id,
+        id: post.userId.id,
+        name: post.userId.name
+      } : null,
+      isAuthor,
+      comparison: user && post.userId ? {
+        userIdString: String(user._id || user.id),
+        postUserIdString: String(post.userId._id || post.userId.id),
+        matches: String(post.userId._id || post.userId.id) === String(user._id || user.id)
+      } : null
+    });
+  }, [user, post, isAuthor]);
 
   /**
    * Handle like toggle
