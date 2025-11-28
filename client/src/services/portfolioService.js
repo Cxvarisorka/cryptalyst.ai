@@ -37,11 +37,13 @@ apiClient.interceptors.request.use(
 
 /**
  * Get all portfolio items for the authenticated user
+ * @param {string} collectionId - Optional collection ID to filter by
  * @returns {Promise<Array>} Array of portfolio items with current market data
  */
-export const getPortfolio = async () => {
+export const getPortfolio = async (collectionId) => {
   try {
-    const response = await apiClient.get('/');
+    const params = collectionId ? { collection: collectionId } : {};
+    const response = await apiClient.get('/', { params });
 
     if (response.data && response.data.success) {
       console.log(`✅ Portfolio fetched: ${response.data.count} items`);
@@ -71,6 +73,7 @@ export const getPortfolio = async () => {
  * @param {string} asset.symbol - Asset symbol
  * @param {string} asset.name - Asset name
  * @param {string} asset.image - Asset image URL
+ * @param {string} asset.collectionId - Optional collection ID
  * @returns {Promise<Object>} Added portfolio item
  */
 export const addAsset = async (asset) => {
@@ -82,7 +85,8 @@ export const addAsset = async (asset) => {
       purchasePrice: asset.price,
       symbol: asset.symbol,
       name: asset.name,
-      image: asset.image
+      image: asset.image,
+      collection: asset.collectionId
     });
 
     if (response.data && response.data.success) {

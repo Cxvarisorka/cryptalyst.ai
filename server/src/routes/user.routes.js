@@ -4,7 +4,7 @@ const {
   getUserProfile,
   getMyProfile
 } = require('../controllers/user.controller');
-const { protect } = require('../middleware/auth.middleware');
+const { protect, optionalAuth } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
@@ -16,7 +16,8 @@ router.get('/me', protect, getMyProfile);
 // GET /api/users - Get all public users with optional search
 router.get('/', getPublicUsers);
 
-// GET /api/users/:userId - Get a specific user's public profile (MUST be last)
-router.get('/:userId', getUserProfile);
+// GET /api/users/:userId - Get a specific user's profile (public or own)
+// Uses optionalAuth to detect if viewing own profile
+router.get('/:userId', optionalAuth, getUserProfile);
 
 module.exports = router;

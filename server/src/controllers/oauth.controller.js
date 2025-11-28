@@ -1,5 +1,6 @@
 const axios = require('axios');
 const User = require('../models/user.model');
+const PortfolioCollection = require('../models/portfolioCollection.model');
 const { setTokenCookie } = require('../utils/token.helper');
 
 // Google OAuth - Get authorization URL
@@ -70,6 +71,17 @@ const googleCallback = async (req, res) => {
         avatar: profile.picture,
         oauthProvider: 'google',
         oauthId: profile.id
+      });
+
+      // Create default portfolio collection for new user
+      await PortfolioCollection.create({
+        user: user._id,
+        name: 'My Portfolio',
+        description: 'Your default portfolio collection',
+        isDefault: true,
+        visibility: 'private',
+        color: '#10b981',
+        icon: 'briefcase'
       });
     } else {
       // Update existing user's avatar and OAuth info if not set
@@ -173,6 +185,17 @@ const githubCallback = async (req, res) => {
         avatar: profile.avatar_url,
         oauthProvider: 'github',
         oauthId: profile.id.toString()
+      });
+
+      // Create default portfolio collection for new user
+      await PortfolioCollection.create({
+        user: user._id,
+        name: 'My Portfolio',
+        description: 'Your default portfolio collection',
+        isDefault: true,
+        visibility: 'private',
+        color: '#10b981',
+        icon: 'briefcase'
       });
     } else {
       // Update existing user's avatar and OAuth info if not set

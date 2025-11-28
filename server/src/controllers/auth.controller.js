@@ -1,4 +1,5 @@
 const User = require('../models/user.model');
+const PortfolioCollection = require('../models/portfolioCollection.model');
 const { sendTokenResponse, clearTokenCookie } = require('../utils/token.helper');
 
 // Sign up new user with email and password
@@ -17,6 +18,17 @@ const signup = async (req, res) => {
       name,
       email,
       password
+    });
+
+    // Create default portfolio collection for new user
+    await PortfolioCollection.create({
+      user: user._id,
+      name: 'My Portfolio',
+      description: 'Your default portfolio collection',
+      isDefault: true,
+      visibility: 'private',
+      color: '#10b981',
+      icon: 'briefcase'
     });
 
     // Generate token, set cookie, and send response

@@ -17,9 +17,11 @@ const toggleLike = async (req, res, next) => {
     // Check if like exists
     const existingLike = await Like.findOne({ postId, userId });
 
+    console.log(existingLike)
+
     if (existingLike) {
       // Unlike: Remove the like
-      await existingLike.deleteOne();
+      await Like.findOneAndDelete({ _id: existingLike._id });
 
       return res.status(200).json({
         success: true,

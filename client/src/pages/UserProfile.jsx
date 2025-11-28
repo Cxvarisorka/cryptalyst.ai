@@ -44,7 +44,7 @@ export default function UserProfile() {
   const [userPosts, setUserPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(false);
 
-  const isOwnProfile = currentUser?._id === userId;
+  const isOwnProfile = currentUser?.id === userId;
 
   useEffect(() => {
     fetchUserProfile();
@@ -58,22 +58,21 @@ export default function UserProfile() {
     setLoading(true);
     try {
       const response = await userService.getUserProfile(userId);
+      setProfile(response.data);
+      setIsPrivate(false);
 
-      if (response.data.isPrivate) {
-        setIsPrivate(true);
-        setProfile(response.data);
-      } else {
-        setProfile(response.data);
-        setIsPrivate(false);
-        // Fetch portfolios and posts for public profiles
-        fetchPortfolioCollections();
-        fetchUserPosts();
-      }
+      // Fetch portfolios and posts for all accessible profiles
+      fetchPortfolioCollections();
+      fetchUserPosts();
     } catch (error) {
       console.error("Error fetching user profile:", error);
       if (error.response?.status === 403) {
+        // Profile is private and user doesn't have access
         setIsPrivate(true);
         setProfile(error.response.data.data);
+      } else if (error.response?.status === 404) {
+        // User not found
+        setProfile(null);
       }
     } finally {
       setLoading(false);
@@ -110,7 +109,7 @@ export default function UserProfile() {
   const fetchUserPosts = async () => {
     setPostsLoading(true);
     try {
-      const response = await postService.getFeed({ author: userId, limit: 20 });
+      const response = await postService.getFeed({ userId: userId, limit: 20 });
       setUserPosts(response.data || []);
     } catch (error) {
       console.error("Error fetching user posts:", error);
@@ -187,7 +186,7 @@ export default function UserProfile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background pt-20">
-      <div className="container mx-auto px-4 py-6 sm:py-10 max-w-6xl">
+      <div className="container mx-auto px-4 py-6 sm:py-10">
         <Button onClick={() => navigate(-1)} variant="outline" className="mb-4 sm:mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t("profile.back")}

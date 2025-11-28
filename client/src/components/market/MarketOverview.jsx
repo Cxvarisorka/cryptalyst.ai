@@ -95,7 +95,7 @@ export default function MarketOverview() {
           <CardContent className="px-3">
             {marketData.crypto.length > 0 ? (
               <div className="space-y-0">
-                {marketData.crypto.map((coin) => (
+                {marketData.crypto.slice(0, 5).map((coin) => (
                   <MarketItem key={coin.id} item={coin} />
                 ))}
               </div>
@@ -127,7 +127,7 @@ export default function MarketOverview() {
           <CardContent className="px-3">
             {marketData.stocks.length > 0 ? (
               <div className="space-y-0">
-                {marketData.stocks.map((stock) => (
+                {marketData.stocks.slice(0, 5).map((stock) => (
                   <MarketItem key={stock.id} item={stock} />
                 ))}
               </div>

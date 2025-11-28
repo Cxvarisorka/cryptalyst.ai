@@ -7,20 +7,35 @@ const marketDataService = require('../services/marketData.service');
 exports.getPortfolio = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { collection } = req.query;
 
-    const portfolioItems = await Portfolio.find({ userId }).sort({ createdAt: -1 });
+    // Build query filter
+    const filter = { userId };
+    // Only filter by collection if a valid collection ID is provided
+    if (collection && collection !== 'undefined' && collection !== 'null') {
+      filter.collection = collection;
+    }
 
-    // Enrich with current market data
+    console.log('Portfolio filter:', filter);
+
+    const portfolioItems = await Portfolio.find(filter).sort({ createdAt: -1 });
+
+    console.log(`Found ${portfolioItems.length} portfolio items`);
+
     const enrichedPortfolio = await Promise.all(
       portfolioItems.map(async (item) => {
         try {
           let currentData = null;
 
+          // Fetch live market data
           if (item.assetType === 'crypto') {
             currentData = await marketDataService.getCryptoById(item.assetId);
           } else if (item.assetType === 'stock') {
             currentData = await marketDataService.getStockBySymbol(item.assetId);
           }
+
+          // Ensure currentData is safe
+          const live = currentData || {};
 
           return {
             _id: item._id,
@@ -28,17 +43,18 @@ exports.getPortfolio = async (req, res) => {
             type: item.assetType,
             quantity: item.quantity,
             purchasePrice: item.purchasePrice,
-            symbol: currentData?.symbol || item.symbol,
-            name: currentData?.name || item.name,
-            image: currentData?.image || item.image,
-            price: currentData?.price || 0,
-            change24h: currentData?.change24h || 0,
-            marketCap: currentData?.marketCap || 0,
-            addedAt: item.createdAt
+            symbol: live.symbol ?? item.symbol,
+            name: live.name ?? item.name,
+            image: live.image ?? item.image,
+            price: live.price ?? 0,
+            change24h: live.change24h ?? 0,
+            marketCap: live.marketCap ?? 0,
+            addedAt: item.createdAt,
           };
         } catch (error) {
           console.error(`Error enriching ${item.assetType} ${item.assetId}:`, error.message);
-          // Return item with stored data if market data fetch fails
+
+          // Fallback to saved data
           return {
             _id: item._id,
             id: item.assetId,
@@ -51,7 +67,7 @@ exports.getPortfolio = async (req, res) => {
             price: 0,
             change24h: 0,
             marketCap: 0,
-            addedAt: item.createdAt
+            addedAt: item.createdAt,
           };
         }
       })
@@ -60,17 +76,19 @@ exports.getPortfolio = async (req, res) => {
     res.json({
       success: true,
       count: enrichedPortfolio.length,
-      data: enrichedPortfolio
+      data: enrichedPortfolio,
     });
+
   } catch (error) {
     console.error('Error fetching portfolio:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch portfolio',
-      error: error.message
+      error: error.message,
     });
   }
 };
+
 
 /**
  * Add an asset to the portfolio
@@ -78,7 +96,7 @@ exports.getPortfolio = async (req, res) => {
 exports.addAsset = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { assetId, assetType, quantity, purchasePrice, symbol, name, image } = req.body;
+    const { assetId, assetType, quantity, purchasePrice, symbol, name, image, collection } = req.body;
 
     // Validate required fields
     if (!assetId || !assetType) {
@@ -88,11 +106,35 @@ exports.addAsset = async (req, res) => {
       });
     }
 
-    // Check if asset already exists in user's portfolio
-    const existingAsset = await Portfolio.findOne({ userId, assetId, assetType });
+    // If no collection specified, get user's default collection
+    let targetCollection = collection;
+    if (!targetCollection) {
+      const PortfolioCollection = require('../models/portfolioCollection.model');
+      const defaultCollection = await PortfolioCollection.findOne({
+        user: userId,
+        isDefault: true
+      });
+
+      if (!defaultCollection) {
+        return res.status(400).json({
+          success: false,
+          message: 'No default portfolio found. Please create a portfolio first.'
+        });
+      }
+
+      targetCollection = defaultCollection._id;
+    }
+
+    // Check if asset already exists in this specific collection
+    const existingAsset = await Portfolio.findOne({
+      userId,
+      assetId,
+      assetType,
+      collection: targetCollection
+    });
 
     if (existingAsset) {
-      // Update quantity if asset already exists
+      // Update quantity if asset already exists in this collection
       existingAsset.quantity += quantity || 1;
       await existingAsset.save();
 
@@ -112,7 +154,8 @@ exports.addAsset = async (req, res) => {
       purchasePrice,
       symbol,
       name,
-      image
+      image,
+      collection: targetCollection
     });
 
     await portfolioItem.save();

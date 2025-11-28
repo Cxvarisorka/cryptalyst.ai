@@ -66,8 +66,9 @@ const portfolioSchema = new mongoose.Schema({
   timestamps: true // Adds createdAt and updatedAt
 });
 
-// Compound index for userId + assetId + assetType to prevent duplicates
-portfolioSchema.index({ userId: 1, assetId: 1, assetType: 1 }, { unique: true });
+// Compound index for userId + assetId + assetType + collection to prevent duplicates within same collection
+// This allows same asset in different collections
+portfolioSchema.index({ userId: 1, assetId: 1, assetType: 1, collection: 1 }, { unique: true });
 
 // Method to get total value (if current price is provided)
 portfolioSchema.methods.calculateValue = function(currentPrice) {

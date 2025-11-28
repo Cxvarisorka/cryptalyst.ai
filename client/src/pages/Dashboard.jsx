@@ -3,11 +3,12 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FadeIn } from "@/components/magicui/fade-in";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PortfolioSearch from "@/components/portfolio/PortfolioSearch";
 import PortfolioList from "@/components/portfolio/PortfolioList";
 import PortfolioAnalytics from "@/components/portfolio/PortfolioAnalytics";
+import PortfolioManager from "@/components/portfolio/PortfolioManager";
 import { getMarketData } from "@/services/marketDataService";
 import { getPortfolio, addAsset, removeAsset } from "@/services/portfolioService";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,23 +19,38 @@ export default function Dashboard() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [portfolio, setPortfolio] = useState([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(true);
   const [marketData, setMarketData] = useState({ crypto: [], stocks: [] });
+  const [selectedCollection, setSelectedCollection] = useState(null);
 
   useEffect(() => {
-    // Load portfolio from database
-    loadPortfolio();
+    // Don't load portfolio here - let PortfolioManager trigger it when default collection is selected
+    // Load portfolio will be called by handleCollectionChange when PortfolioManager sets default collection
 
     // Fetch market data
     fetchMarketData();
   }, []);
 
-  const loadPortfolio = async () => {
+  const loadPortfolio = async (collectionId) => {
+    setPortfolioLoading(true);
     try {
-      const portfolioData = await getPortfolio();
+      const portfolioData = await getPortfolio(collectionId);
       setPortfolio(portfolioData);
     } catch (error) {
       console.error("Error loading portfolio:", error);
+      toast({
+        title: t("dashboard.portfolio.error") || "Error",
+        description: "Failed to load portfolio",
+        variant: "destructive"
+      });
+    } finally {
+      setPortfolioLoading(false);
     }
+  };
+
+  const handleCollectionChange = async (collection) => {
+    setSelectedCollection(collection);
+    await loadPortfolio(collection?._id);
   };
 
   const fetchMarketData = async () => {
@@ -48,10 +64,15 @@ export default function Dashboard() {
 
   const handleAddAsset = async (asset) => {
     try {
-      await addAsset(asset);
+      // Add collection ID to asset if one is selected
+      const assetWithCollection = {
+        ...asset,
+        collectionId: selectedCollection?._id
+      };
+      await addAsset(assetWithCollection);
 
       // Reload portfolio to get updated data
-      await loadPortfolio();
+      await loadPortfolio(selectedCollection?._id);
 
       toast({
         title: t("dashboard.portfolio.added"),
@@ -72,7 +93,7 @@ export default function Dashboard() {
       await removeAsset(asset._id);
 
       // Reload portfolio to get updated data
-      await loadPortfolio();
+      await loadPortfolio(selectedCollection?._id);
 
       toast({
         title: t("dashboard.portfolio.removed"),
@@ -124,19 +145,32 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
       <div className="container mx-auto px-4 py-10">
         <FadeIn className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">{t("dashboard.title")}</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">{t("dashboard.subtitle")}</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">{t("dashboard.title")}</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">{t("dashboard.subtitle")}</p>
+            </div>
+            <PortfolioManager onCollectionChange={handleCollectionChange} />
+          </div>
         </FadeIn>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-muted/60 w-full h-auto flex flex-wrap justify-start sm:justify-center gap-1 p-1">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.overview")}</TabsTrigger>
-            <TabsTrigger value="portfolio" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.portfolio")}</TabsTrigger>
-            <TabsTrigger value="search" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.search")}</TabsTrigger>
-            <TabsTrigger value="analytics" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.analytics")}</TabsTrigger>
-          </TabsList>
+        {portfolioLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading portfolio...</p>
+            </div>
+          </div>
+        ) : (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="bg-muted/60 w-full h-auto flex flex-wrap justify-start sm:justify-center gap-1 p-1">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.overview")}</TabsTrigger>
+              <TabsTrigger value="portfolio" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.portfolio")}</TabsTrigger>
+              <TabsTrigger value="search" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.search")}</TabsTrigger>
+              <TabsTrigger value="analytics" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.analytics")}</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="overview" className="mt-6">
+            <TabsContent value="overview" className="mt-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
               <Card className="bg-card border-border/60">
                 <CardHeader>
@@ -278,6 +312,7 @@ export default function Dashboard() {
             <PortfolioAnalytics portfolio={portfolio} />
           </TabsContent>
         </Tabs>
+        )}
       </div>
     </div>
   );

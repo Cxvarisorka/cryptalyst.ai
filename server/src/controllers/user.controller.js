@@ -112,8 +112,12 @@ exports.getUserProfile = async (req, res) => {
       });
     }
 
-    // Check if profile is public
-    if (user.settings?.privacy?.profileVisibility !== 'public') {
+    // Check if the requesting user is viewing their own profile
+    const isOwnProfile = req.user && String(req.user.id) === String(userId);
+
+    // If it's the user's own profile, always allow access
+    // Otherwise, check if profile is public
+    if (!isOwnProfile && user.settings?.privacy?.profileVisibility !== 'public') {
       return res.status(403).json({
         success: false,
         message: 'This profile is private',

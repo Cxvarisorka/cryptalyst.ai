@@ -8,10 +8,12 @@ import { FadeIn } from "@/components/magicui/fade-in";
 import { GradientText } from "@/components/magicui/gradient-text";
 import { Search, Users, TrendingUp, Loader2, Eye, EyeOff, Wallet } from "lucide-react";
 import userService from "@/services/user.service";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Community() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,7 +27,9 @@ export default function Community() {
     setLoading(true);
     try {
       const response = await userService.getPublicUsers();
-      setUsers(response.data || []);
+      // Filter out current user from the list
+      const filteredUsers = (response.data || []).filter(user => user._id !== currentUser?.id);
+      setUsers(filteredUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
       setUsers([]);
@@ -39,7 +43,9 @@ export default function Community() {
     setSearching(true);
     try {
       const response = await userService.getPublicUsers(searchQuery);
-      setUsers(response.data || []);
+      // Filter out current user from the list
+      const filteredUsers = (response.data || []).filter(user => user._id !== currentUser?.id);
+      setUsers(filteredUsers);
     } catch (error) {
       console.error("Error searching users:", error);
       setUsers([]);

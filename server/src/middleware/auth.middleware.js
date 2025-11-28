@@ -61,7 +61,36 @@ const adminOnly = (req, res, next) => {
   }
 };
 
+// Optional auth middleware - attaches user if token exists, but doesn't fail if it doesn't
+const optionalAuth = async (req, res, next) => {
+  try {
+    const token = req.cookies.token;
+
+    // If no token, just continue without attaching user
+    if (!token) {
+      return next();
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Get user from database (without password)
+    const user = await User.findById(decoded.id).select('-password');
+
+    // Attach user if found and active
+    if (user && user.isActive) {
+      req.user = user;
+    }
+
+    next();
+  } catch (error) {
+    // If token is invalid or expired, just continue without user
+    next();
+  }
+};
+
 module.exports = {
   protect,
-  adminOnly
+  adminOnly,
+  optionalAuth
 };
