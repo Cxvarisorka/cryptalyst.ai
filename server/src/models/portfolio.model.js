@@ -68,7 +68,8 @@ const portfolioSchema = new mongoose.Schema({
 
 // Compound index for userId + assetId + assetType + collection to prevent duplicates within same collection
 // This allows same asset in different collections
-portfolioSchema.index({ userId: 1, assetId: 1, assetType: 1, collection: 1 }, { unique: true });
+// Using sparse: true to allow multiple null collection values
+portfolioSchema.index({ userId: 1, assetId: 1, assetType: 1, collection: 1 }, { unique: true, sparse: true });
 
 // Method to get total value (if current price is provided)
 portfolioSchema.methods.calculateValue = function(currentPrice) {
