@@ -53,6 +53,17 @@ const portfolioCollectionService = {
     );
     return response.data;
   },
+
+  // Get a single public collection with its assets
+  getPublicCollection: async (collectionId) => {
+    const response = await axios.get(
+      `${API_URL}/portfolio-collections/public/${collectionId}`,
+      {
+        withCredentials: true,
+      }
+    );
+    return response.data;
+  },
 };
 
 export default portfolioCollectionService;

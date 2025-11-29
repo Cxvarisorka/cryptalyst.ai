@@ -3,25 +3,27 @@ const router = express.Router();
 const portfolioCollectionController = require('../controllers/portfolioCollection.controller');
 const { protect } = require('../middleware/auth.middleware');
 
-// Protected routes (require authentication)
-router.use(protect);
+// Public routes (accessible to all authenticated users)
+// Get public collections for a user
+router.get('/user/:userId/public', protect, portfolioCollectionController.getUserPublicCollections);
 
+// Get a single public collection with its assets
+router.get('/public/:collectionId', protect, portfolioCollectionController.getPublicCollection);
+
+// Protected routes (require authentication and ownership)
 // Get all collections for authenticated user
-router.get('/', portfolioCollectionController.getCollections);
+router.get('/', protect, portfolioCollectionController.getCollections);
 
 // Create new collection
-router.post('/', portfolioCollectionController.createCollection);
+router.post('/', protect, portfolioCollectionController.createCollection);
 
 // Get single collection
-router.get('/:id', portfolioCollectionController.getCollection);
+router.get('/:id', protect, portfolioCollectionController.getCollection);
 
 // Update collection
-router.put('/:id', portfolioCollectionController.updateCollection);
+router.put('/:id', protect, portfolioCollectionController.updateCollection);
 
 // Delete collection
-router.delete('/:id', portfolioCollectionController.deleteCollection);
-
-// Get public collections for a user (can be accessed by other users)
-router.get('/user/:userId/public', portfolioCollectionController.getUserPublicCollections);
+router.delete('/:id', protect, portfolioCollectionController.deleteCollection);
 
 module.exports = router;

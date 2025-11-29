@@ -349,7 +349,11 @@ export default function UserProfile() {
                 {portfolioCollections.length > 0 ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {portfolioCollections.map((collection) => (
-                      <Card key={collection._id} className="bg-card border-border/60 hover:border-primary/50 transition-colors">
+                      <Card
+                        key={collection._id}
+                        className="bg-card border-border/60 hover:border-primary/50 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/portfolio/${collection._id}`)}
+                      >
                         <CardHeader>
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-3">

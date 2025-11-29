@@ -18,6 +18,7 @@ import Settings from "@/pages/Settings";
 import Community from "@/pages/Community";
 import UserProfile from "@/pages/UserProfile";
 import SocialFeed from "@/pages/SocialFeed";
+import PortfolioView from "@/pages/PortfolioView";
 
 function App() {
   return (
@@ -84,6 +85,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <SocialFeed />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/portfolio/:collectionId"
+                  element={
+                    <ProtectedRoute>
+                      <PortfolioView />
                     </ProtectedRoute>
                   }
                 />

@@ -20,10 +20,10 @@ const {
  * @returns {Promise<Object>} Created post
  */
 const createPost = async (postData, files = []) => {
-  try {
-    // Upload images to Cloudinary
-    const uploadedImages = [];
+  // Upload images to Cloudinary
+  const uploadedImages = [];
 
+  try {
     if (files && files.length > 0) {
       for (const file of files) {
         const uploadResult = await uploadToCloudinary(file.buffer);
