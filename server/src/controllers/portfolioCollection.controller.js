@@ -1,5 +1,6 @@
 const PortfolioCollection = require('../models/portfolioCollection.model');
 const Portfolio = require('../models/portfolio.model');
+const marketDataService = require('../services/marketData.service');
 
 /**
  * Utility: Get asset counts for collections (fast, single aggregation)
@@ -61,9 +62,48 @@ exports.getCollection = async (req, res) => {
       collection: collection._id,
     }).sort({ createdAt: -1 });
 
+    // Get market data to enrich assets with current prices
+    const cryptoData = marketDataService.getCryptoData(1000);
+    const stockData = marketDataService.getStockData(1000);
+
+    // Enrich portfolio with current market data
+    const enrichedAssets = assets.map(asset => {
+      let currentPrice = 0;
+      let change24h = 0;
+      let marketData = null;
+
+      if (asset.assetType === 'crypto') {
+        marketData = cryptoData.data.find(c => c.id === asset.assetId);
+        if (marketData) {
+          currentPrice = marketData.price;
+          change24h = marketData.change24h || 0;
+        }
+      } else if (asset.assetType === 'stock') {
+        marketData = stockData.data.find(s => s.symbol === asset.assetId);
+        if (marketData) {
+          currentPrice = marketData.price;
+          change24h = marketData.change24h || 0;
+        }
+      }
+
+      return {
+        _id: asset._id,
+        assetId: asset.assetId,
+        assetType: asset.assetType,
+        quantity: asset.quantity,
+        purchasePrice: asset.purchasePrice || 0,
+        name: asset.name || (marketData ? marketData.name : asset.assetId),
+        symbol: asset.symbol || (marketData ? marketData.symbol : asset.assetId),
+        image: asset.image || (marketData ? marketData.image : null),
+        currentPrice: currentPrice,
+        change24h: change24h,
+        purchaseDate: asset.createdAt
+      };
+    });
+
     res.json({
       success: true,
-      data: { ...collection, assets }
+      data: { ...collection, assets: enrichedAssets }
     });
   } catch (error) {
     console.error("Error fetching portfolio collection:", error);
@@ -275,5 +315,76 @@ exports.getUserPublicCollections = async (req, res) => {
   } catch (error) {
     console.error("Error fetching public portfolio collections:", error);
     res.status(500).json({ success: false, message: "Failed to fetch portfolio collections" });
+  }
+};
+
+/**
+ * Get a single public collection with its assets
+ */
+exports.getPublicCollection = async (req, res) => {
+  try {
+    const collection = await PortfolioCollection.findOne({
+      _id: req.params.collectionId,
+      visibility: "public",
+    }).populate('user', 'name avatar email').lean();
+
+    if (!collection) {
+      return res.status(404).json({
+        success: false,
+        message: "Portfolio collection not found or is private"
+      });
+    }
+
+    const assets = await Portfolio.find({
+      userId: collection.user._id,
+      collection: collection._id,
+    }).sort({ createdAt: -1 });
+
+    // Get market data to enrich assets with current prices
+    const cryptoData = marketDataService.getCryptoData(1000);
+    const stockData = marketDataService.getStockData(1000);
+
+    // Enrich portfolio with current market data
+    const enrichedAssets = assets.map(asset => {
+      let currentPrice = 0;
+      let change24h = 0;
+      let marketData = null;
+
+      if (asset.assetType === 'crypto') {
+        marketData = cryptoData.data.find(c => c.id === asset.assetId);
+        if (marketData) {
+          currentPrice = marketData.price;
+          change24h = marketData.change24h || 0;
+        }
+      } else if (asset.assetType === 'stock') {
+        marketData = stockData.data.find(s => s.symbol === asset.assetId);
+        if (marketData) {
+          currentPrice = marketData.price;
+          change24h = marketData.change24h || 0;
+        }
+      }
+
+      return {
+        _id: asset._id,
+        assetId: asset.assetId,
+        assetType: asset.assetType,
+        quantity: asset.quantity,
+        purchasePrice: asset.purchasePrice || 0,
+        name: asset.name || (marketData ? marketData.name : asset.assetId),
+        symbol: asset.symbol || (marketData ? marketData.symbol : asset.assetId),
+        image: asset.image || (marketData ? marketData.image : null),
+        currentPrice: currentPrice,
+        change24h: change24h,
+        purchaseDate: asset.createdAt
+      };
+    });
+
+    res.json({
+      success: true,
+      data: { ...collection, assets: enrichedAssets }
+    });
+  } catch (error) {
+    console.error("Error fetching public portfolio collection:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch portfolio collection" });
   }
 };
