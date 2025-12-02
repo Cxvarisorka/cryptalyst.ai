@@ -4,6 +4,7 @@
     "dashboard": "Dashboard",
     "feed": "Feed",
     "community": "Community",
+    "priceAlerts": "Price Alerts",
     "about": "About",
     "pricing": "Pricing",
     "getStarted": "Get Started"
@@ -557,6 +558,9 @@
     "joined": "Joined",
     "privateAccount": "Private Account",
     "publicProfile": "Public Profile",
+    "yourProfile": "Your Profile",
+    "userProfile": "User Profile",
+    "privateProfile": "Private Profile",
     "privateTitle": "This profile is private",
     "privateMessage": "{{name}} has chosen to keep their profile and portfolio private.",
     "totalValue": "Total Portfolio Value",
@@ -589,6 +593,7 @@
     "notFound": "Portfolio not found or is private",
     "noAssets": "No assets in this portfolio",
     "analyzeWithAI": "Analyze Portfolio with AI",
+    "aiAnalysis": "AI Analysis",
     "aiAnalysisTitle": "AI Portfolio Analysis",
     "aiAnalysisDescription": "Comprehensive analysis powered by AI (simulated)",
     "analyzing": "Analyzing portfolio...",
@@ -629,5 +634,81 @@
     "saving": "Saving...",
     "success": "Privacy settings updated successfully",
     "error": "Failed to update privacy settings"
+  },
+  "priceAlerts": {
+    "title": "Price Alerts",
+    "subtitle": "Get notified when your favorite assets reach target prices",
+    "createAlert": "Create Alert",
+    "createNewAlert": "Create New Alert",
+    "stats": {
+      "active": "Active Alerts",
+      "triggered": "Triggered",
+      "total": "Total Alerts"
+    },
+    "tabs": {
+      "active": "Active",
+      "triggered": "Triggered",
+      "all": "All Alerts"
+    },
+    "empty": {
+      "noActive": "No active alerts",
+      "noActiveDesc": "Create your first price alert to get started",
+      "noTriggered": "No triggered alerts",
+      "noTriggeredDesc": "Triggered alerts will appear here",
+      "noAlerts": "No alerts yet",
+      "noAlertsDesc": "Create your first price alert to get started"
+    },
+    "status": {
+      "triggered": "Triggered",
+      "active": "Active",
+      "paused": "Paused"
+    },
+    "alert": {
+      "currentPrice": "Current Price",
+      "target": "Target",
+      "email": "Email",
+      "inApp": "In-App",
+      "triggeredAt": "Triggered"
+    },
+    "buttons": {
+      "clearAllTriggered": "Clear All Triggered"
+    },
+    "modal": {
+      "title": "Create Price Alert",
+      "description": "Get notified when an asset reaches your target price",
+      "selectAsset": "Select Asset",
+      "searchAssets": "Search assets...",
+      "cryptocurrency": "Cryptocurrency",
+      "stocks": "Stocks",
+      "alertType": "Alert Type",
+      "priceRisesAbove": "Price rises above target",
+      "priceFallsBelow": "Price falls below target",
+      "targetPrice": "Target Price ($)",
+      "enterTargetPrice": "Enter target price",
+      "notificationPreferences": "Notification Preferences",
+      "email": "Email",
+      "inApp": "In-App",
+      "creating": "Creating...",
+      "cancel": "Cancel",
+      "current": "Current"
+    },
+    "toast": {
+      "error": "Error",
+      "success": "Success",
+      "fetchFailed": "Failed to fetch price alerts",
+      "loadAssetsFailed": "Failed to load available assets",
+      "selectAsset": "Please select an asset",
+      "enterTargetPrice": "Please enter a target price",
+      "createSuccess": "Price alert created successfully",
+      "createFailed": "Failed to create price alert",
+      "deleteSuccess": "Alert deleted successfully",
+      "deleteFailed": "Failed to delete alert",
+      "activated": "activated",
+      "deactivated": "deactivated",
+      "updateSuccess": "Alert {{status}} successfully",
+      "updateFailed": "Failed to update alert",
+      "clearSuccess": "All triggered alerts deleted successfully",
+      "clearFailed": "Failed to delete triggered alerts"
+    }
   }
 }
