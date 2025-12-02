@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -19,15 +20,17 @@ import Community from "@/pages/Community";
 import UserProfile from "@/pages/UserProfile";
 import SocialFeed from "@/pages/SocialFeed";
 import PortfolioView from "@/pages/PortfolioView";
+import PriceAlerts from "@/pages/PriceAlerts";
 
 function App() {
   return (
     <ThemeProvider>
       <Router>
         <AuthProvider>
-          <div className="min-h-screen bg-background flex flex-col ">
-            <Navbar />
-            <main className="flex-1 bg-gradient-to-br from-background via-muted to-background">
+          <NotificationProvider>
+            <div className="min-h-screen bg-background flex flex-col ">
+              <Navbar />
+              <main className="flex-1 bg-gradient-to-br from-background via-muted to-background">
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/signup" element={<Signup />} />
@@ -96,14 +99,23 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/price-alerts"
+                  element={
+                    <ProtectedRoute>
+                      <PriceAlerts />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/about" element={<About />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
-            <Footer />
-            <Toaster />
-          </div>
+              <Footer />
+              <Toaster />
+            </div>
+          </NotificationProvider>
         </AuthProvider>
       </Router>
     </ThemeProvider>
