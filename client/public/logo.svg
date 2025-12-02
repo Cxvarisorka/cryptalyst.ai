@@ -1,0 +1,40 @@
+<svg width="200" height="40" viewBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gradient Definitions -->
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Logo Icon - Stylized C with coin/chart element -->
+  <g transform="translate(2, 5)">
+    <!-- Outer Circle/C -->
+    <path d="M 20 15 A 10 10 0 1 1 20 25 L 20 30 A 15 15 0 1 0 20 10 Z"
+          fill="url(#logoGradient)" opacity="0.3"/>
+
+    <!-- Inner C Shape -->
+    <path d="M 25 20 A 8 8 0 0 0 13 15 A 8 8 0 0 0 13 25 A 8 8 0 0 0 25 20 Z M 23 20 A 6 6 0 0 1 15 24 A 6 6 0 0 1 15 16 A 6 6 0 0 1 23 20 Z"
+          fill="url(#logoGradient)"/>
+
+    <!-- Chart bars inside -->
+    <rect x="16" y="22" width="2" height="4" fill="url(#logoGradient)" opacity="0.8"/>
+    <rect x="19" y="19" width="2" height="7" fill="url(#logoGradient)" opacity="0.9"/>
+    <rect x="22" y="21" width="2" height="5" fill="url(#logoGradient)"/>
+
+    <!-- AI Sparkle -->
+    <circle cx="28" cy="12" r="1.5" fill="#ec4899" opacity="0.8"/>
+    <path d="M 28 9 L 28 15 M 25 12 L 31 12" stroke="#ec4899" stroke-width="0.5" opacity="0.6"/>
+  </g>
+
+  <!-- Text: Cryptalyst.ai -->
+  <text x="42" y="27" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" fill="url(#textGradient)">
+    Cryptalyst<tspan font-size="16" font-weight="400">.ai</tspan>
+  </text>
+</svg>
