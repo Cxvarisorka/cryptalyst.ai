@@ -278,28 +278,74 @@ class MarketDataService {
    * Get cached crypto data from Redis
    */
   async getCryptoData(limit = 5) {
-    const data = await cache.get(this.CRYPTO_CACHE_KEY) || [];
-    const lastUpdate = await cache.get(this.CRYPTO_UPDATE_KEY);
+    try {
+      const data = await cache.get(this.CRYPTO_CACHE_KEY);
+      const lastUpdate = await cache.get(this.CRYPTO_UPDATE_KEY);
 
-    return {
-      data: data.slice(0, limit),
-      lastUpdate: lastUpdate,
-      cached: true
-    };
+      // If no data in cache, return fallback data
+      if (!data || data.length === 0) {
+        console.log('⚠️ No crypto data in cache, using fallback');
+        const fallbackData = this.getFallbackCryptoData();
+        // Try to populate cache in background
+        this.updateCryptoData().catch(err => console.error('Background crypto update failed:', err));
+        return {
+          data: fallbackData.slice(0, limit),
+          lastUpdate: new Date().toISOString(),
+          cached: false
+        };
+      }
+
+      return {
+        data: data.slice(0, limit),
+        lastUpdate: lastUpdate,
+        cached: true
+      };
+    } catch (error) {
+      console.error('Error getting crypto data:', error.message);
+      // Return fallback on any error
+      return {
+        data: this.getFallbackCryptoData().slice(0, limit),
+        lastUpdate: new Date().toISOString(),
+        cached: false
+      };
+    }
   }
 
   /**
    * Get cached stock data from Redis
    */
   async getStockData(limit = 5) {
-    const data = await cache.get(this.STOCK_CACHE_KEY) || [];
-    const lastUpdate = await cache.get(this.STOCK_UPDATE_KEY);
+    try {
+      const data = await cache.get(this.STOCK_CACHE_KEY);
+      const lastUpdate = await cache.get(this.STOCK_UPDATE_KEY);
 
-    return {
-      data: data.slice(0, limit),
-      lastUpdate: lastUpdate,
-      cached: true
-    };
+      // If no data in cache, return fallback data
+      if (!data || data.length === 0) {
+        console.log('⚠️ No stock data in cache, using fallback');
+        const fallbackData = this.getFallbackStockData();
+        // Try to populate cache in background
+        this.updateStockData().catch(err => console.error('Background stock update failed:', err));
+        return {
+          data: fallbackData.slice(0, limit),
+          lastUpdate: new Date().toISOString(),
+          cached: false
+        };
+      }
+
+      return {
+        data: data.slice(0, limit),
+        lastUpdate: lastUpdate,
+        cached: true
+      };
+    } catch (error) {
+      console.error('Error getting stock data:', error.message);
+      // Return fallback on any error
+      return {
+        data: this.getFallbackStockData().slice(0, limit),
+        lastUpdate: new Date().toISOString(),
+        cached: false
+      };
+    }
   }
 
   /**

@@ -6,7 +6,9 @@ const redisConfig = {
   port: process.env.REDIS_PORT || 6379,
   password: process.env.REDIS_PASSWORD || undefined,
   username: process.env.REDIS_USERNAME || undefined, // For Redis 6+ ACL
-  tls: process.env.REDIS_TLS === 'true' ? {} : undefined, // Enable TLS for cloud Redis
+  tls: process.env.REDIS_TLS === 'true' ? {
+    rejectUnauthorized: false // Allow self-signed certificates for cloud Redis
+  } : undefined,
   retryStrategy(times) {
     const delay = Math.min(times * 50, 2000);
     return delay;
@@ -14,6 +16,8 @@ const redisConfig = {
   maxRetriesPerRequest: 3,
   enableReadyCheck: true,
   lazyConnect: false,
+  connectTimeout: 10000, // 10 second connection timeout
+  keepAlive: 30000 // Keep connection alive
 };
 
 // Create Redis client
