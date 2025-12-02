@@ -41,9 +41,9 @@ exports.getPublicUsers = async (req, res) => {
         console.log(`[Portfolio Debug] User ${user.name} (${user._id}): Found ${portfolio.length} assets`);
 
         // Get market data
-        const cryptoData = marketDataService.getCryptoData(1000);
-        const stockData = marketDataService.getStockData(1000);
-        console.log(`[Market Data] Crypto: ${cryptoData.data.length} items, Stock: ${stockData.data.length} items`);
+        const cryptoData = await marketDataService.getCryptoData(1000);
+        const stockData = await marketDataService.getStockData(1000);
+        console.log(`[Market Data] Crypto: ${cryptoData?.data?.length || 0} items, Stock: ${stockData?.data?.length || 0} items`);
 
         // Calculate total value by fetching current prices
         let totalValue = 0;
@@ -52,11 +52,11 @@ exports.getPublicUsers = async (req, res) => {
           console.log(`[Asset] Processing: ${asset.assetId} (${asset.assetType}), Quantity: ${asset.quantity}`);
 
           if (asset.assetType === 'crypto') {
-            const crypto = cryptoData.data.find(c => c.id === asset.assetId);
+            const crypto = cryptoData?.data?.find(c => c.id === asset.assetId);
             currentPrice = crypto ? crypto.price : 0;
             console.log(`[Crypto Match] ${asset.assetId}: ${crypto ? `Found - Price: $${crypto.price}` : 'NOT FOUND'}`);
           } else if (asset.assetType === 'stock') {
-            const stock = stockData.data.find(s => s.symbol === asset.assetId);
+            const stock = stockData?.data?.find(s => s.symbol === asset.assetId);
             currentPrice = stock ? stock.price : 0;
             console.log(`[Stock Match] ${asset.assetId}: ${stock ? `Found - Price: $${stock.price}` : 'NOT FOUND'}`);
           }
@@ -136,9 +136,9 @@ exports.getUserProfile = async (req, res) => {
       console.log(`[Profile Debug] User ${user.name} (${user._id}): Found ${portfolio.length} assets`);
 
       // Get market data
-      const cryptoData = marketDataService.getCryptoData(1000);
-      const stockData = marketDataService.getStockData(1000);
-      console.log(`[Profile Market Data] Crypto: ${cryptoData.data.length} items, Stock: ${stockData.data.length} items`);
+      const cryptoData = await marketDataService.getCryptoData(1000);
+      const stockData = await marketDataService.getStockData(1000);
+      console.log(`[Profile Market Data] Crypto: ${cryptoData?.data?.length || 0} items, Stock: ${stockData?.data?.length || 0} items`);
 
       // Enrich portfolio with current market data
       const enrichedAssets = portfolio.map(asset => {
@@ -148,7 +148,7 @@ exports.getUserProfile = async (req, res) => {
         console.log(`[Profile Asset] Processing: ${asset.assetId} (${asset.assetType}), Quantity: ${asset.quantity}`);
 
         if (asset.assetType === 'crypto') {
-          marketData = cryptoData.data.find(c => c.id === asset.assetId);
+          marketData = cryptoData?.data?.find(c => c.id === asset.assetId);
           if (marketData) {
             currentPrice = marketData.price;
             change24h = marketData.change24h || 0;
@@ -157,7 +157,7 @@ exports.getUserProfile = async (req, res) => {
             console.log(`[Profile Crypto Match] ${asset.assetId}: NOT FOUND in market data`);
           }
         } else if (asset.assetType === 'stock') {
-          marketData = stockData.data.find(s => s.symbol === asset.assetId);
+          marketData = stockData?.data?.find(s => s.symbol === asset.assetId);
           if (marketData) {
             currentPrice = marketData.price;
             change24h = marketData.change24h || 0;

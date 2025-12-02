@@ -6,13 +6,13 @@ const marketDataService = require('../services/marketData.service');
  * Get technical analysis for a crypto asset
  * GET /api/analysis/crypto/:id
  */
-exports.getCryptoAnalysis = (req, res) => {
+exports.getCryptoAnalysis = async (req, res) => {
   try {
     const { id } = req.params;
-    const cryptoData = marketDataService.getCryptoData(100);
+    const cryptoData = await marketDataService.getCryptoData(100);
 
     // Find the specific crypto
-    const crypto = cryptoData.data.find(c => c.id === id);
+    const crypto = cryptoData?.data?.find(c => c.id === id);
 
     if (!crypto) {
       return res.status(404).json({
@@ -45,13 +45,13 @@ exports.getCryptoAnalysis = (req, res) => {
  * Get technical analysis for a stock asset
  * GET /api/analysis/stock/:symbol
  */
-exports.getStockAnalysis = (req, res) => {
+exports.getStockAnalysis = async (req, res) => {
   try {
     const { symbol } = req.params;
-    const stockData = marketDataService.getStockData(100);
+    const stockData = await marketDataService.getStockData(100);
 
     // Find the specific stock
-    const stock = stockData.data.find(s => s.symbol === symbol);
+    const stock = stockData?.data?.find(s => s.symbol === symbol);
 
     if (!stock) {
       return res.status(404).json({
@@ -85,18 +85,18 @@ exports.getStockAnalysis = (req, res) => {
  * GET /api/analysis/price-history/:type/:id
  * Query params: timeframe (24H, 7D, 1M, 1Y)
  */
-exports.getPriceHistory = (req, res) => {
+exports.getPriceHistory = async (req, res) => {
   try {
     const { type, id } = req.params;
     const { timeframe = '1M' } = req.query;
 
     let asset;
     if (type === 'crypto') {
-      const cryptoData = marketDataService.getCryptoData(100);
-      asset = cryptoData.data.find(c => c.id === id);
+      const cryptoData = await marketDataService.getCryptoData(100);
+      asset = cryptoData?.data?.find(c => c.id === id);
     } else if (type === 'stock') {
-      const stockData = marketDataService.getStockData(100);
-      asset = stockData.data.find(s => s.symbol === id);
+      const stockData = await marketDataService.getStockData(100);
+      asset = stockData?.data?.find(s => s.symbol === id);
     }
 
     if (!asset) {
@@ -158,7 +158,7 @@ exports.getPriceHistory = (req, res) => {
  * Get complete asset details with analysis and price history
  * GET /api/analysis/complete/:type/:id
  */
-exports.getCompleteAnalysis = (req, res) => {
+exports.getCompleteAnalysis = async (req, res) => {
   try {
     const { type, id } = req.params;
     const { timeframe = '1M' } = req.query;
@@ -167,14 +167,14 @@ exports.getCompleteAnalysis = (req, res) => {
     let analysis;
 
     if (type === 'crypto') {
-      const cryptoData = marketDataService.getCryptoData(100);
-      asset = cryptoData.data.find(c => c.id === id);
+      const cryptoData = await marketDataService.getCryptoData(100);
+      asset = cryptoData?.data?.find(c => c.id === id);
       if (asset) {
         analysis = technicalAnalysisService.getCryptoTechnicalAnalysis(asset);
       }
     } else if (type === 'stock') {
-      const stockData = marketDataService.getStockData(100);
-      asset = stockData.data.find(s => s.symbol === id);
+      const stockData = await marketDataService.getStockData(100);
+      asset = stockData?.data?.find(s => s.symbol === id);
       if (asset) {
         analysis = technicalAnalysisService.getStockTechnicalAnalysis(asset);
       }

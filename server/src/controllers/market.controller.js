@@ -7,7 +7,7 @@ const marketDataService = require('../services/marketData.service');
 exports.getCryptoData = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 5;
-    const data = marketDataService.getCryptoData(limit);
+    const data = await marketDataService.getCryptoData(limit);
 
     res.json({
       success: true,
@@ -30,7 +30,7 @@ exports.getCryptoData = async (req, res) => {
 exports.getStockData = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 5;
-    const data = marketDataService.getStockData(limit);
+    const data = await marketDataService.getStockData(limit);
 
     res.json({
       success: true,
@@ -54,7 +54,7 @@ exports.getAllMarketData = async (req, res) => {
   try {
     const cryptoLimit = parseInt(req.query.cryptoLimit) || 100;
     const stockLimit = parseInt(req.query.stockLimit) || 100;
-    const data = marketDataService.getAllMarketData(cryptoLimit, stockLimit);
+    const data = await marketDataService.getAllMarketData(cryptoLimit, stockLimit);
 
     res.json({
       success: true,
@@ -77,7 +77,7 @@ exports.getAllMarketData = async (req, res) => {
  */
 exports.getHealth = async (req, res) => {
   try {
-    const data = marketDataService.getCryptoData(1);
+    const data = await marketDataService.getCryptoData(1);
 
     res.json({
       success: true,

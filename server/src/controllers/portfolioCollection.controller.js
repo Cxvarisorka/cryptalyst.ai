@@ -63,8 +63,8 @@ exports.getCollection = async (req, res) => {
     }).sort({ createdAt: -1 });
 
     // Get market data to enrich assets with current prices
-    const cryptoData = marketDataService.getCryptoData(1000);
-    const stockData = marketDataService.getStockData(1000);
+    const cryptoData = await marketDataService.getCryptoData(1000);
+    const stockData = await marketDataService.getStockData(1000);
 
     // Enrich portfolio with current market data
     const enrichedAssets = assets.map(asset => {
@@ -73,13 +73,13 @@ exports.getCollection = async (req, res) => {
       let marketData = null;
 
       if (asset.assetType === 'crypto') {
-        marketData = cryptoData.data.find(c => c.id === asset.assetId);
+        marketData = cryptoData?.data?.find(c => c.id === asset.assetId);
         if (marketData) {
           currentPrice = marketData.price;
           change24h = marketData.change24h || 0;
         }
       } else if (asset.assetType === 'stock') {
-        marketData = stockData.data.find(s => s.symbol === asset.assetId);
+        marketData = stockData?.data?.find(s => s.symbol === asset.assetId);
         if (marketData) {
           currentPrice = marketData.price;
           change24h = marketData.change24h || 0;
@@ -341,8 +341,8 @@ exports.getPublicCollection = async (req, res) => {
     }).sort({ createdAt: -1 });
 
     // Get market data to enrich assets with current prices
-    const cryptoData = marketDataService.getCryptoData(1000);
-    const stockData = marketDataService.getStockData(1000);
+    const cryptoData = await marketDataService.getCryptoData(1000);
+    const stockData = await marketDataService.getStockData(1000);
 
     // Enrich portfolio with current market data
     const enrichedAssets = assets.map(asset => {
@@ -351,13 +351,13 @@ exports.getPublicCollection = async (req, res) => {
       let marketData = null;
 
       if (asset.assetType === 'crypto') {
-        marketData = cryptoData.data.find(c => c.id === asset.assetId);
+        marketData = cryptoData?.data?.find(c => c.id === asset.assetId);
         if (marketData) {
           currentPrice = marketData.price;
           change24h = marketData.change24h || 0;
         }
       } else if (asset.assetType === 'stock') {
-        marketData = stockData.data.find(s => s.symbol === asset.assetId);
+        marketData = stockData?.data?.find(s => s.symbol === asset.assetId);
         if (marketData) {
           currentPrice = marketData.price;
           change24h = marketData.change24h || 0;
