@@ -10,14 +10,29 @@ const redisConfig = {
     rejectUnauthorized: false // Allow self-signed certificates for cloud Redis
   } : undefined,
   retryStrategy(times) {
-    const delay = Math.min(times * 50, 2000);
+    if (times > 10) {
+      console.error('❌ Redis max retry attempts reached, stopping retries');
+      return null; // Stop retrying after 10 attempts
+    }
+    const delay = Math.min(times * 100, 3000);
+    console.log(`🔄 Redis retry attempt ${times}, waiting ${delay}ms`);
     return delay;
   },
-  maxRetriesPerRequest: 3,
+  maxRetriesPerRequest: 5, // Increase from 3 to 5
   enableReadyCheck: true,
   lazyConnect: false,
-  connectTimeout: 10000, // 10 second connection timeout
-  keepAlive: 30000 // Keep connection alive
+  connectTimeout: 15000, // Increase to 15 seconds
+  keepAlive: 30000, // Keep connection alive
+  enableOfflineQueue: true, // Queue commands when disconnected
+  reconnectOnError(err) {
+    // Reconnect on specific errors
+    const targetError = 'READONLY';
+    if (err.message.includes(targetError)) {
+      console.log('🔄 Reconnecting due to READONLY error');
+      return true;
+    }
+    return false;
+  }
 };
 
 // Create Redis client
@@ -51,6 +66,12 @@ const cache = {
    */
   async set(key, value, ttl = null) {
     try {
+      // Check if Redis is ready
+      if (redisClient.status !== 'ready' && redisClient.status !== 'connect') {
+        console.warn(`⚠️ Redis not ready (status: ${redisClient.status}), skipping SET for key ${key}`);
+        return false;
+      }
+
       const stringValue = JSON.stringify(value);
       if (ttl) {
         await redisClient.setex(key, ttl, stringValue);
@@ -59,7 +80,7 @@ const cache = {
       }
       return true;
     } catch (error) {
-      console.error(`Redis SET error for key ${key}:`, error.message);
+      console.error(`❌ Redis SET error for key ${key}:`, error.message);
       return false;
     }
   },
@@ -69,10 +90,16 @@ const cache = {
    */
   async get(key) {
     try {
+      // Check if Redis is ready
+      if (redisClient.status !== 'ready' && redisClient.status !== 'connect') {
+        console.warn(`⚠️ Redis not ready (status: ${redisClient.status}), skipping GET for key ${key}`);
+        return null;
+      }
+
       const value = await redisClient.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      console.error(`Redis GET error for key ${key}:`, error.message);
+      console.error(`❌ Redis GET error for key ${key}:`, error.message);
       return null;
     }
   },
