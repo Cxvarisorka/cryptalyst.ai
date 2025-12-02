@@ -22,6 +22,7 @@ import {
   PieChart,
 } from "lucide-react";
 import portfolioCollectionService from "@/services/portfolioCollection.service";
+import Hero from "@/components/layout/Hero";
 
 export default function PortfolioView() {
   const { t } = useTranslation();
@@ -201,13 +202,46 @@ export default function PortfolioView() {
   const totalChange = getTotalChange();
   const changePercentage = getChangePercentage();
 
+  const heroIcons = [
+    { Icon: Briefcase, gradient: `${portfolio.color ? `bg-[${portfolio.color}]` : 'bg-gradient-money'}` }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background pt-20">
-      <div className="container mx-auto px-4 py-6 sm:py-10">
-        <Button onClick={() => navigate(-1)} variant="outline" className="mb-4 sm:mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
+      {/* Hero Section */}
+      <Hero
+        title={portfolio.name}
+        subtitle={portfolio.description || t("portfolio.publicView")}
+        icons={heroIcons}
+        showSingleIcon={true}
+        align="left"
+        size="medium"
+      >
+        <Button onClick={() => navigate(-1)} variant="outline">
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t("profile.back")}
         </Button>
+        <Button
+          onClick={generateAIAnalysis}
+          disabled={analyzing}
+          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white"
+        >
+          {analyzing ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              {t("portfolio.analyzing")}
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 mr-2" />
+              {t("portfolio.aiAnalysis")}
+            </>
+          )}
+        </Button>
+      </Hero>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-6 sm:py-10">
 
         <FadeIn className="space-y-4 sm:space-y-6">
           {/* Portfolio Header */}

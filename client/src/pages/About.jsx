@@ -32,11 +32,14 @@ export default function About() {
         subtitle={t("about.subtitle")}
         icons={heroIcons}
         showSingleIcon={false}
+        align="left"
+        size="medium"
       />
 
+      {/* Main Content - Static spacing from hero */}
       <div className="container mx-auto px-4">
         {/* Stats */}
-        <FadeIn className="my-20">
+        <FadeIn className="pt-16 md:pt-20">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
@@ -54,7 +57,7 @@ export default function About() {
         </FadeIn>
 
         {/* Mission & Technology */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16 md:mt-20">
           <FadeIn>
             <Card className="bg-card border-border/60 h-full">
               <CardHeader>
@@ -83,7 +86,7 @@ export default function About() {
         </div>
 
         {/* Key Features */}
-        <FadeIn delay={0.2} className="my-20">
+        <FadeIn delay={0.2} className="mt-16 md:mt-20">
           <h2 className="text-3xl font-bold text-center mb-8">
             <GradientText>{t("about.keyFeatures.title")}</GradientText>
           </h2>
@@ -127,7 +130,7 @@ export default function About() {
         </FadeIn>
 
         {/* Values */}
-        <FadeIn delay={0.3} className="my-20">
+        <FadeIn delay={0.3} className="mt-16 md:mt-20 mb-20 md:mb-24">
           <h2 className="text-3xl font-bold text-center mb-8">
             <GradientText>{t("about.values.title")}</GradientText>
           </h2>

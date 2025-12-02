@@ -12,6 +12,7 @@ import { GradientText } from "@/components/magicui/gradient-text";
 import { FadeIn } from "@/components/magicui/fade-in";
 import settingsService from "@/services/settings.service";
 import { User, Lock, Settings as SettingsIcon, Mail, Globe, Calendar, Palette, Shield, Eye, EyeOff } from "lucide-react";
+import Hero from "@/components/layout/Hero";
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -160,15 +161,24 @@ export default function Settings() {
     }
   };
 
+  const heroIcons = [
+    { Icon: SettingsIcon, gradient: 'bg-gradient-to-r from-purple-500 to-blue-500' }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
+      {/* Hero Section */}
+      <Hero
+        title={t('settings.title')}
+        subtitle={t('settings.subtitle')}
+        icons={heroIcons}
+        showSingleIcon={true}
+        align="left"
+        size="medium"
+      />
+
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-10">
-        <FadeIn className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            <GradientText>{t('settings.title')}</GradientText>
-          </h1>
-          <p className="text-muted-foreground">{t('settings.subtitle')}</p>
-        </FadeIn>
 
         <Tabs defaultValue="profile" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

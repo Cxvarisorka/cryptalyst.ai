@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Filter, TrendingUp, Search, X, Tag } from 'lucide-react';
+import { Plus, Filter, TrendingUp, Search, X, Tag, MessageSquare } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -11,6 +11,7 @@ import CommentSection from '../components/posts/CommentSection';
 import postService from '../services/post.service';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
+import Hero from '../components/layout/Hero';
 
 /**
  * SocialFeed Page
@@ -133,18 +134,46 @@ const SocialFeed = () => {
     }
   };
 
+  const heroIcons = [
+    { Icon: MessageSquare, gradient: 'bg-gradient-to-r from-green-500 to-emerald-500' }
+  ];
+
   return (
-    <div className="min-h-screen bg-background pt-16 sm:pt-20">
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <Hero
+        title={t('feed.title') || 'Community Feed'}
+        subtitle={t('feed.subtitle') || 'Share your insights and connect with other traders'}
+        icons={heroIcons}
+        showSingleIcon={true}
+        align="left"
+        size="medium"
+      >
+        {user && (
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-money">
+                <Plus className="w-4 h-4 mr-2" />
+                {t('feed.createPost') || 'Create Post'}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl bg-popover border-border max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-foreground">
+                  {t('feed.newPost') || 'Create New Post'}
+                </DialogTitle>
+              </DialogHeader>
+              <PostCreationForm
+                onPostCreated={handlePostCreated}
+                onCancel={() => setShowCreateDialog(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+      </Hero>
+
+      {/* Main Content */}
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        {/* Header - Full width */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2">
-            {t('feed.title') || 'Community Feed'}
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            {t('feed.subtitle') || 'Share your insights and connect with other traders'}
-          </p>
-        </div>
 
         {/* Actions & Filters - Full width */}
         <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">

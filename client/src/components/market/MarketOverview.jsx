@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { getMarketData } from "@/services/marketDataService";
 import { FadeIn } from "@/components/magicui/fade-in";
+import socketService from "@/services/socket.service";
 
 export default function MarketOverview() {
   const { t } = useTranslation();
@@ -12,6 +13,35 @@ export default function MarketOverview() {
 
   useEffect(() => {
     fetchMarketData();
+  }, []);
+
+  // Set up Socket.io listeners for real-time price updates
+  useEffect(() => {
+    const handleCryptoPriceUpdate = (updateData) => {
+      console.log('📡 Received crypto price update in MarketOverview');
+      setMarketData((prev) => ({
+        ...prev,
+        crypto: updateData.data
+      }));
+    };
+
+    const handleStockPriceUpdate = (updateData) => {
+      console.log('📡 Received stock price update in MarketOverview');
+      setMarketData((prev) => ({
+        ...prev,
+        stocks: updateData.data
+      }));
+    };
+
+    // Subscribe to price updates
+    socketService.onCryptoPriceUpdate(handleCryptoPriceUpdate);
+    socketService.onStockPriceUpdate(handleStockPriceUpdate);
+
+    // Cleanup listeners on unmount
+    return () => {
+      socketService.offCryptoPriceUpdate(handleCryptoPriceUpdate);
+      socketService.offStockPriceUpdate(handleStockPriceUpdate);
+    };
   }, []);
 
   const fetchMarketData = async () => {

@@ -11,6 +11,9 @@ import { getCryptoNews } from "@/services/newsService";
 import PriceChart from "@/components/charts/PriceChart";
 import NewsSection from "@/components/news/NewsSection";
 import AIAnalysis from "@/components/analysis/AIAnalysis";
+import CreatePriceAlertButton from "@/components/alerts/CreatePriceAlertButton";
+import AssetPriceAlerts from "@/components/alerts/AssetPriceAlerts";
+import Hero from "@/components/layout/Hero";
 
 export default function CryptoDetail() {
   const { id } = useParams();
@@ -146,13 +149,37 @@ export default function CryptoDetail() {
     change30d: null
   };
 
+  const heroIcons = [
+    { Icon: Activity, gradient: 'bg-gradient-money' }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
-      <div className="container mx-auto px-4 py-10">
-        <Button onClick={() => navigate(-1)} variant="outline" className="mb-6">
+      {/* Hero Section */}
+      <Hero
+        title={crypto.name}
+        subtitle={`${t("crypto.detailedAnalysis") || "Detailed analysis and insights for"} ${crypto.symbol}`}
+        icons={heroIcons}
+        showSingleIcon={true}
+        align="left"
+        size="medium"
+      >
+        <Button onClick={() => navigate(-1)} variant="outline">
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t("common.back")}
         </Button>
+          <CreatePriceAlertButton
+            assetType="crypto"
+            assetId={crypto.id}
+            assetName={crypto.name}
+            assetSymbol={crypto.symbol}
+            currentPrice={crypto.price}
+            assetImage={crypto.image}
+          />
+        </Hero>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-10">
 
         <FadeIn className="space-y-6">
           {/* Price Chart */}
@@ -330,6 +357,14 @@ export default function CryptoDetail() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Price Alerts for this Asset */}
+          <AssetPriceAlerts
+            assetType="crypto"
+            assetId={crypto.id}
+            assetSymbol={crypto.symbol}
+            currentPrice={crypto.price}
+          />
 
           {/* AI Analysis Section */}
           {crypto && priceHistory.length > 0 && stats && (

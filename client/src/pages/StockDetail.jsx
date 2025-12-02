@@ -11,6 +11,9 @@ import { getStockNews } from "@/services/newsService";
 import PriceChart from "@/components/charts/PriceChart";
 import NewsSection from "@/components/news/NewsSection";
 import AIAnalysis from "@/components/analysis/AIAnalysis";
+import CreatePriceAlertButton from "@/components/alerts/CreatePriceAlertButton";
+import AssetPriceAlerts from "@/components/alerts/AssetPriceAlerts";
+import Hero from "@/components/layout/Hero";
 
 export default function StockDetail() {
   const { symbol } = useParams();
@@ -153,13 +156,37 @@ export default function StockDetail() {
     sharesOutstanding: null
   };
 
+  const heroIcons = [
+    { Icon: DollarSign, gradient: 'bg-gradient-to-r from-blue-500 to-purple-500' }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
-      <div className="container mx-auto px-4 py-10">
-        <Button onClick={() => navigate(-1)} variant="outline" className="mb-6">
+      {/* Hero Section */}
+      <Hero
+        title={stock.name}
+        subtitle={`${t("stock.detailedAnalysis") || "Detailed analysis and insights for"} ${stock.symbol}`}
+        icons={heroIcons}
+        showSingleIcon={true}
+        align="left"
+        size="medium"
+      >
+        <Button onClick={() => navigate(-1)} variant="outline">
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t("common.back")}
         </Button>
+          <CreatePriceAlertButton
+            assetType="stock"
+            assetId={stock.symbol}
+            assetName={stock.name}
+            assetSymbol={stock.symbol}
+            currentPrice={stock.price}
+            assetImage={stock.image}
+          />
+        </Hero>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-10">
 
         <FadeIn className="space-y-6">
           {/* Price Chart */}
@@ -424,6 +451,14 @@ export default function StockDetail() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Price Alerts for this Asset */}
+          <AssetPriceAlerts
+            assetType="stock"
+            assetId={stock.symbol}
+            assetSymbol={stock.symbol}
+            currentPrice={stock.price}
+          />
 
           {/* AI Analysis Section */}
           {stock && priceHistory.length > 0 && stats && (

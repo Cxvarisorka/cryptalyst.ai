@@ -9,6 +9,7 @@ import { GradientText } from "@/components/magicui/gradient-text";
 import { Search, Users, TrendingUp, Loader2, Eye, EyeOff, Wallet } from "lucide-react";
 import userService from "@/services/user.service";
 import { useAuth } from "@/contexts/AuthContext";
+import Hero from "@/components/layout/Hero";
 
 export default function Community() {
   const { t } = useTranslation();
@@ -70,6 +71,10 @@ export default function Community() {
     return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  const heroIcons = [
+    { Icon: Users, gradient: 'bg-gradient-money' }
+  ];
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background flex items-center justify-center">
@@ -80,19 +85,19 @@ export default function Community() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
+      {/* Hero Section */}
+      <Hero
+        title={t("community.title")}
+        subtitle={t("community.subtitle")}
+        icons={heroIcons}
+        showSingleIcon={true}
+        align="left"
+        size="medium"
+      />
+
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-6 sm:py-10">
         <FadeIn className="mb-6 sm:mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-money flex items-center justify-center">
-              <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">
-                <GradientText>{t("community.title")}</GradientText>
-              </h1>
-              <p className="text-sm sm:text-base text-muted-foreground">{t("community.subtitle")}</p>
-            </div>
-          </div>
 
           {/* Search Bar */}
           <Card className="bg-card border-border/60">

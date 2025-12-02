@@ -63,10 +63,13 @@ export default function Pricing() {
         subtitle={t("pricing.subtitle")}
         icons={heroIcons}
         showSingleIcon={false}
+        align="left"
+        size="medium"
       />
 
+      {/* Main Content - Static spacing from hero */}
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-16 md:pt-20">
           {plans.map((p, index) => (
             <FadeIn key={p.key} delay={0.1 * (index + 1)}>
               <Card className={`bg-card border-border/60 h-full flex flex-col transition-all duration-500 ${p.featured ? "ring-2 ring-primary shadow-lg" : ""}`}>
@@ -101,7 +104,7 @@ export default function Pricing() {
         </div>
 
         {/* FAQ Section */}
-        <FadeIn delay={0.4} className="my-20 max-w-6xl mx-auto">
+        <FadeIn delay={0.4} className="mt-16 md:mt-20 max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-10">
             <GradientText>{t("pricing.faq.title")}</GradientText>
           </h2>
@@ -116,7 +119,7 @@ export default function Pricing() {
         </FadeIn>
 
         {/* CTA */}
-        <FadeIn delay={0.5} className="text-center my-20 mb-32">
+        <FadeIn delay={0.5} className="text-center mt-16 md:mt-20 mb-20 md:mb-24">
           <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 transition-all duration-500">
             <CardContent className="p-10">
               <h2 className="text-2xl md:text-3xl font-bold mb-4">{t("pricing.cta.title")}</h2>

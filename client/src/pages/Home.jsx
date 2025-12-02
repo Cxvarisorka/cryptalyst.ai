@@ -69,10 +69,11 @@ export default function Home() {
         </Button>
       </Hero>
 
+      {/* Main Content - Static spacing from hero */}
       <div className="container mx-auto px-4">
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-20">
+        {/* Features Grid - Consistent top spacing */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-16 md:pt-20">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
@@ -99,10 +100,12 @@ export default function Home() {
         </div>
 
         {/* Market Overview - Crypto & Stocks */}
-        <MarketOverview />
+        <div className="mt-16 md:mt-20">
+          <MarketOverview />
+        </div>
 
         {/* Why Choose Us Section */}
-        <FadeIn delay={0.3} className="my-20">
+        <FadeIn delay={0.3} className="mt-16 md:mt-20">
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               <GradientText>{t('home.whyChoose.title')}</GradientText>
@@ -128,7 +131,7 @@ export default function Home() {
         </FadeIn>
 
         {/* CTA Section */}
-        <FadeIn delay={0.4} className="my-20 mb-32">
+        <FadeIn delay={0.4} className="mt-16 md:mt-20 mb-20 md:mb-24">
           <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 transition-all duration-500">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">

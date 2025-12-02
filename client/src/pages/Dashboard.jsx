@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FadeIn } from "@/components/magicui/fade-in";
-import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Loader2, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PortfolioSearch from "@/components/portfolio/PortfolioSearch";
 import PortfolioList from "@/components/portfolio/PortfolioList";
@@ -12,6 +12,8 @@ import PortfolioManager from "@/components/portfolio/PortfolioManager";
 import { getMarketData } from "@/services/marketDataService";
 import { getPortfolio, addAsset, removeAsset } from "@/services/portfolioService";
 import { useToast } from "@/components/ui/use-toast";
+import Hero from "@/components/layout/Hero";
+import socketService from "@/services/socket.service";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -29,6 +31,35 @@ export default function Dashboard() {
 
     // Fetch market data
     fetchMarketData();
+  }, []);
+
+  // Set up Socket.io listeners for real-time price updates
+  useEffect(() => {
+    const handleCryptoPriceUpdate = (updateData) => {
+      console.log('📡 Received crypto price update');
+      setMarketData((prev) => ({
+        ...prev,
+        crypto: updateData.data
+      }));
+    };
+
+    const handleStockPriceUpdate = (updateData) => {
+      console.log('📡 Received stock price update');
+      setMarketData((prev) => ({
+        ...prev,
+        stocks: updateData.data
+      }));
+    };
+
+    // Subscribe to price updates
+    socketService.onCryptoPriceUpdate(handleCryptoPriceUpdate);
+    socketService.onStockPriceUpdate(handleStockPriceUpdate);
+
+    // Cleanup listeners on unmount
+    return () => {
+      socketService.offCryptoPriceUpdate(handleCryptoPriceUpdate);
+      socketService.offStockPriceUpdate(handleStockPriceUpdate);
+    };
   }, []);
 
   const loadPortfolio = async (collectionId) => {
@@ -141,18 +172,26 @@ export default function Dashboard() {
     return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  const heroIcons = [
+    { Icon: BarChart3, gradient: 'bg-gradient-money' }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
+      {/* Hero Section */}
+      <Hero
+        title={t("dashboard.title")}
+        subtitle={t("dashboard.subtitle")}
+        icons={heroIcons}
+        showSingleIcon={true}
+        align="left"
+        size="medium"
+      >
+        <PortfolioManager onCollectionChange={handleCollectionChange} />
+      </Hero>
+
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-10">
-        <FadeIn className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">{t("dashboard.title")}</h1>
-              <p className="text-sm sm:text-base text-muted-foreground">{t("dashboard.subtitle")}</p>
-            </div>
-            <PortfolioManager onCollectionChange={handleCollectionChange} />
-          </div>
-        </FadeIn>
 
         {portfolioLoading ? (
           <div className="flex items-center justify-center py-20">

@@ -28,6 +28,7 @@ import portfolioCollectionService from "@/services/portfolioCollection.service";
 import postService from "@/services/post.service";
 import { useAuth } from "@/contexts/AuthContext";
 import PostCard from "@/components/posts/PostCard";
+import Hero from "@/components/layout/Hero";
 
 export default function UserProfile() {
   const { t } = useTranslation();
@@ -184,13 +185,45 @@ export default function UserProfile() {
     );
   }
 
+  const heroIcons = [
+    { Icon: Users, gradient: 'bg-gradient-to-r from-blue-500 to-cyan-500' }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background pt-20">
-      <div className="container mx-auto px-4 py-6 sm:py-10">
-        <Button onClick={() => navigate(-1)} variant="outline" className="mb-4 sm:mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
+      {/* Hero Section */}
+      <Hero
+        title={profile.name}
+        subtitle={isPrivate ? t("profile.privateProfile") : isOwnProfile ? t("profile.yourProfile") : t("profile.userProfile")}
+        icons={heroIcons}
+        showSingleIcon={true}
+        align="left"
+        size="medium"
+      >
+        <Button onClick={() => navigate(-1)} variant="outline">
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t("profile.back")}
         </Button>
+        {!isOwnProfile && !isPrivate && (
+          <Button
+            onClick={handleFollowToggle}
+            disabled={followLoading}
+            className={isFollowing ? "bg-muted hover:bg-muted/80" : "bg-gradient-money"}
+          >
+            {followLoading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : isFollowing ? (
+              <UserMinus className="w-4 h-4 mr-2" />
+            ) : (
+              <UserPlus className="w-4 h-4 mr-2" />
+            )}
+            {isFollowing ? t("profile.unfollow") : t("profile.follow")}
+          </Button>
+        )}
+      </Hero>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-6 sm:py-10">
 
         <FadeIn className="space-y-4 sm:space-y-6">
           {/* Profile Header */}
