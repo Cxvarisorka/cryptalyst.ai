@@ -1,10 +1,12 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const connectDB = require('./src/config/database');
+const { initializeSocket } = require('./src/config/socket');
 
 // Import routes
 const authRoutes = require('./src/routes/auth.routes');
@@ -20,14 +22,25 @@ const postRoutes = require('./src/routes/post.routes');
 const commentRoutes = require('./src/routes/comment.routes');
 const likeRoutes = require('./src/routes/like.routes');
 const followRoutes = require('./src/routes/follow.routes');
+const notificationRoutes = require('./src/routes/notification.routes');
+const priceAlertRoutes = require('./src/routes/priceAlert.routes');
 
 // Import services
 const marketDataService = require('./src/services/marketData.service');
+const priceAlertService = require('./src/services/priceAlert.service');
+const { shutdown: redisShutdown } = require('./src/config/redis');
 
 const app = express();
+const httpServer = http.createServer(app);
 
 // Connect to database
 connectDB();
+
+// Initialize Socket.io
+const io = initializeSocket(httpServer);
+
+// Set Socket.io instance in market data service for real-time updates
+marketDataService.setSocketIO(io);
 
 // Middleware
 app.use(helmet());
@@ -59,6 +72,8 @@ app.use('/api/posts', postRoutes); // Post routes
 app.use('/api', commentRoutes); // Comment routes
 app.use('/api', likeRoutes); // Like routes
 app.use('/api', followRoutes); // Follow routes
+app.use('/api', notificationRoutes); // Notification routes
+app.use('/api/price-alerts', priceAlertRoutes); // Price alert routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -77,21 +92,29 @@ app.use((err, req, res, next) => {
 // Start market data service
 marketDataService.startPeriodicUpdate();
 
+// Start price alert service (check every 5 minutes)
+priceAlertService.startPriceChecking(5);
+
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...');
   marketDataService.stopPeriodicUpdate();
+  priceAlertService.stopPriceChecking();
+  await redisShutdown();
   process.exit(0);
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully...');
   marketDataService.stopPeriodicUpdate();
+  priceAlertService.stopPriceChecking();
+  await redisShutdown();
   process.exit(0);
 });
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Socket.io initialized`);
 });
