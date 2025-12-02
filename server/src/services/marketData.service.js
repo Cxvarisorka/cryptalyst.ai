@@ -1,14 +1,19 @@
 const axios = require('axios');
+const { cache } = require('../config/redis');
 
 class MarketDataService {
   constructor() {
-    this.cryptoCache = [];
-    this.stockCache = [];
-    this.lastCryptoUpdate = null;
-    this.lastStockUpdate = null;
     this.updateInterval = 10000; // 10 seconds
     this.isUpdatingCrypto = false;
     this.isUpdatingStocks = false;
+    this.io = null; // Socket.io instance
+
+    // Redis cache keys
+    this.CRYPTO_CACHE_KEY = 'market:crypto:all';
+    this.STOCK_CACHE_KEY = 'market:stock:all';
+    this.CRYPTO_UPDATE_KEY = 'market:crypto:lastUpdate';
+    this.STOCK_UPDATE_KEY = 'market:stock:lastUpdate';
+    this.CACHE_TTL = 3600; // 1 hour TTL for cache
 
     // CoinGecko API configuration
     this.coinGeckoAPI = 'https://api.coingecko.com/api/v3';
@@ -34,6 +39,14 @@ class MarketDataService {
       // Other Major Companies
       'BRK.B', 'TSM', 'ASML', 'NVO', 'LLY', 'PG', 'JNJ', 'WMT', 'XOM', 'UNH'
     ];
+  }
+
+  /**
+   * Set Socket.io instance for real-time updates
+   */
+  setSocketIO(io) {
+    this.io = io;
+    console.log('✅ Socket.io instance set in MarketDataService');
   }
 
   /**
@@ -100,7 +113,7 @@ class MarketDataService {
       });
 
       if (response.data && response.data.length > 0) {
-        this.cryptoCache = response.data.map(coin => ({
+        const cryptoData = response.data.map(coin => ({
           id: coin.id,
           symbol: coin.symbol.toUpperCase(),
           name: coin.name,
@@ -112,19 +125,36 @@ class MarketDataService {
           type: 'crypto'
         }));
 
-        this.lastCryptoUpdate = new Date();
-        console.log(`✅ Crypto data updated: ${this.cryptoCache.length} coins at ${this.lastCryptoUpdate.toLocaleTimeString()}`);
+        const now = new Date();
+
+        // Store in Redis cache
+        await cache.set(this.CRYPTO_CACHE_KEY, cryptoData, this.CACHE_TTL);
+        await cache.set(this.CRYPTO_UPDATE_KEY, now.toISOString(), this.CACHE_TTL);
+
+        console.log(`✅ Crypto data updated in Redis: ${cryptoData.length} coins at ${now.toLocaleTimeString()}`);
+
+        // Emit Socket.io event for real-time updates
+        if (this.io) {
+          this.io.emit('market:crypto:update', {
+            data: cryptoData.slice(0, 100), // Send top 100 to all clients
+            lastUpdate: now.toISOString()
+          });
+          console.log('📡 Emitted crypto price updates to all clients');
+        }
       } else {
         console.warn('⚠️ No crypto data received from CoinGecko');
       }
     } catch (error) {
       console.error('❌ Error updating crypto data:', error.message);
 
-      // If cache is empty, use fallback data
-      if (this.cryptoCache.length === 0) {
+      // Check if we have cached data
+      const cachedData = await cache.get(this.CRYPTO_CACHE_KEY);
+      if (!cachedData || cachedData.length === 0) {
+        // Use fallback data if no cache exists
         console.log('📦 Using fallback crypto data');
-        this.cryptoCache = this.getFallbackCryptoData();
-        this.lastCryptoUpdate = new Date();
+        const fallbackData = this.getFallbackCryptoData();
+        await cache.set(this.CRYPTO_CACHE_KEY, fallbackData, this.CACHE_TTL);
+        await cache.set(this.CRYPTO_UPDATE_KEY, new Date().toISOString(), this.CACHE_TTL);
       }
     } finally {
       this.isUpdatingCrypto = false;
@@ -203,58 +233,88 @@ class MarketDataService {
         }
       }
 
+      const now = new Date();
+
       // If we got less than 10 stocks, use fallback data
       if (validResults.length < 10) {
         console.warn(`⚠️ Only got ${validResults.length} stocks from Finnhub, using fallback data`);
-        this.stockCache = this.getFallbackStockData();
-        this.lastStockUpdate = new Date();
+        const fallbackData = this.getFallbackStockData();
+        await cache.set(this.STOCK_CACHE_KEY, fallbackData, this.CACHE_TTL);
+        await cache.set(this.STOCK_UPDATE_KEY, now.toISOString(), this.CACHE_TTL);
       } else {
-        this.stockCache = validResults;
-        this.lastStockUpdate = new Date();
-        console.log(`✅ Stock data updated: ${this.stockCache.length} stocks at ${this.lastStockUpdate.toLocaleTimeString()}`);
+        // Store in Redis cache
+        await cache.set(this.STOCK_CACHE_KEY, validResults, this.CACHE_TTL);
+        await cache.set(this.STOCK_UPDATE_KEY, now.toISOString(), this.CACHE_TTL);
+
+        console.log(`✅ Stock data updated in Redis: ${validResults.length} stocks at ${now.toLocaleTimeString()}`);
+
+        // Emit Socket.io event for real-time updates
+        if (this.io) {
+          this.io.emit('market:stock:update', {
+            data: validResults,
+            lastUpdate: now.toISOString()
+          });
+          console.log('📡 Emitted stock price updates to all clients');
+        }
       }
     } catch (error) {
       console.error('❌ Error updating stock data:', error.message);
 
-      // Use fallback data on error
-      console.log('📦 Using fallback stock data due to error');
-      this.stockCache = this.getFallbackStockData();
-      this.lastStockUpdate = new Date();
+      // Check if we have cached data
+      const cachedData = await cache.get(this.STOCK_CACHE_KEY);
+      if (!cachedData || cachedData.length === 0) {
+        // Use fallback data if no cache exists
+        console.log('📦 Using fallback stock data due to error');
+        const fallbackData = this.getFallbackStockData();
+        await cache.set(this.STOCK_CACHE_KEY, fallbackData, this.CACHE_TTL);
+        await cache.set(this.STOCK_UPDATE_KEY, new Date().toISOString(), this.CACHE_TTL);
+      }
     } finally {
       this.isUpdatingStocks = false;
     }
   }
 
   /**
-   * Get cached crypto data
+   * Get cached crypto data from Redis
    */
-  getCryptoData(limit = 5) {
+  async getCryptoData(limit = 5) {
+    const data = await cache.get(this.CRYPTO_CACHE_KEY) || [];
+    const lastUpdate = await cache.get(this.CRYPTO_UPDATE_KEY);
+
     return {
-      data: this.cryptoCache.slice(0, limit),
-      lastUpdate: this.lastCryptoUpdate,
+      data: data.slice(0, limit),
+      lastUpdate: lastUpdate,
       cached: true
     };
   }
 
   /**
-   * Get cached stock data
+   * Get cached stock data from Redis
    */
-  getStockData(limit = 5) {
+  async getStockData(limit = 5) {
+    const data = await cache.get(this.STOCK_CACHE_KEY) || [];
+    const lastUpdate = await cache.get(this.STOCK_UPDATE_KEY);
+
     return {
-      data: this.stockCache.slice(0, limit),
-      lastUpdate: this.lastStockUpdate,
+      data: data.slice(0, limit),
+      lastUpdate: lastUpdate,
       cached: true
     };
   }
 
   /**
-   * Get all cached market data
+   * Get all cached market data from Redis
    */
-  getAllMarketData(cryptoLimit = 100, stockLimit = 100) {
+  async getAllMarketData(cryptoLimit = 100, stockLimit = 100) {
+    const crypto = await cache.get(this.CRYPTO_CACHE_KEY) || [];
+    const stocks = await cache.get(this.STOCK_CACHE_KEY) || [];
+    const cryptoUpdate = await cache.get(this.CRYPTO_UPDATE_KEY);
+    const stockUpdate = await cache.get(this.STOCK_UPDATE_KEY);
+
     return {
-      crypto: this.cryptoCache.slice(0, cryptoLimit),
-      stocks: this.stockCache.slice(0, stockLimit),
-      lastUpdate: this.lastCryptoUpdate || this.lastStockUpdate
+      crypto: crypto.slice(0, cryptoLimit),
+      stocks: stocks.slice(0, stockLimit),
+      lastUpdate: cryptoUpdate || stockUpdate
     };
   }
 
@@ -262,10 +322,11 @@ class MarketDataService {
    * Get single crypto by ID (checks cache first, then API)
    */
   async getCryptoById(id) {
-    // First check cache
-    const cached = this.cryptoCache.find(c => c.id === id);
+    // First check Redis cache
+    const cryptoCache = await cache.get(this.CRYPTO_CACHE_KEY) || [];
+    const cached = cryptoCache.find(c => c.id === id);
     if (cached) {
-      console.log(`✅ Crypto ${id} found in cache`);
+      console.log(`✅ Crypto ${id} found in Redis cache`);
       return cached;
     }
 
@@ -313,10 +374,11 @@ class MarketDataService {
    * Get single stock by symbol (checks cache first, then API)
    */
   async getStockBySymbol(symbol) {
-    // First check cache
-    const cached = this.stockCache.find(s => s.symbol === symbol);
+    // First check Redis cache
+    const stockCache = await cache.get(this.STOCK_CACHE_KEY) || [];
+    const cached = stockCache.find(s => s.symbol === symbol);
     if (cached) {
-      console.log(`✅ Stock ${symbol} found in cache`);
+      console.log(`✅ Stock ${symbol} found in Redis cache`);
       return cached;
     }
 

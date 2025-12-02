@@ -113,10 +113,10 @@ const updatePassword = async (req, res) => {
   }
 };
 
-// Update user preferences (currency, timezone, dateFormat)
+// Update user preferences (currency, timezone, dateFormat, theme, language)
 const updatePreferences = async (req, res) => {
   try {
-    const { currency, timezone, dateFormat, theme } = req.body;
+    const { currency, timezone, dateFormat, theme, language } = req.body;
     const user = await User.findById(req.user.id);
 
     if (!user) {
@@ -133,6 +133,7 @@ const updatePreferences = async (req, res) => {
     if (timezone) user.settings.timezone = timezone;
     if (dateFormat) user.settings.dateFormat = dateFormat;
     if (theme) user.settings.theme = theme;
+    if (language) user.settings.language = language;
 
     await user.save();
 

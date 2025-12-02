@@ -85,6 +85,11 @@ const userSchema = new mongoose.Schema({
       type: String,
       enum: ['light', 'dark', 'system'],
       default: 'system'
+    },
+    language: {
+      type: String,
+      enum: ['en', 'ka'], // en = English, ka = Georgian
+      default: 'en'
     }
   }
 }, {

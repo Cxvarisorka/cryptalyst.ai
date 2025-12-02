@@ -1,5 +1,6 @@
 const Follow = require('../models/follow.model');
 const User = require('../models/user.model');
+const notificationService = require('../services/notification.service');
 
 /**
  * Follow a user
@@ -45,6 +46,17 @@ exports.followUser = async (req, res) => {
     });
 
     await follow.save();
+
+    // Create notification for the followed user
+    try {
+      await notificationService.createFollowNotification(
+        req.user._id,
+        userId
+      );
+    } catch (notificationError) {
+      console.error('Error creating follow notification:', notificationError);
+      // Don't fail the follow request if notification fails
+    }
 
     res.status(201).json({
       success: true,

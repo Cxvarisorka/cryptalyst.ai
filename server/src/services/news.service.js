@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { cache } = require('../config/redis');
 
 class NewsService {
   constructor() {
@@ -7,9 +8,8 @@ class NewsService {
     this.marketauxApiKey = process.env.MARKETAUX_API_KEY || '';
     this.marketauxApiUrl = 'https://api.marketaux.com/v1';
 
-    // Cache for news articles (15 minutes TTL)
-    this.newsCache = new Map();
-    this.cacheTTL = 15 * 60 * 1000; // 15 minutes
+    // Redis cache TTL for news articles (15 minutes)
+    this.cacheTTL = 15 * 60; // 15 minutes in seconds for Redis
   }
 
   /**
@@ -19,12 +19,12 @@ class NewsService {
    * @returns {Promise<Array>} Array of news articles
    */
   async getCryptoNews(symbol, limit = 10) {
-    const cacheKey = `crypto_${symbol}_${limit}`;
+    const cacheKey = `news:crypto:${symbol}:${limit}`;
 
-    // Check cache first
-    const cached = this.getCachedNews(cacheKey);
+    // Check Redis cache first
+    const cached = await cache.get(cacheKey);
     if (cached) {
-      console.log(`✅ Crypto news for ${symbol} found in cache`);
+      console.log(`✅ Crypto news for ${symbol} found in Redis cache`);
       return cached;
     }
 
@@ -33,7 +33,7 @@ class NewsService {
       if (this.marketauxApiKey) {
         const marketauxResults = await this.fetchFromMarketaux(symbol, 'crypto', limit);
         if (marketauxResults && marketauxResults.length > 0) {
-          this.cacheNews(cacheKey, marketauxResults);
+          await cache.set(cacheKey, marketauxResults, this.cacheTTL);
           console.log(`✅ Fetched ${marketauxResults.length} news from Marketaux for ${symbol}`);
           return marketauxResults;
         }
@@ -44,7 +44,7 @@ class NewsService {
       // Fallback to mock data
       console.log(`⚠️ Using mock news for ${symbol}`);
       const mockNews = this.getMockCryptoNews(symbol, limit);
-      this.cacheNews(cacheKey, mockNews);
+      await cache.set(cacheKey, mockNews, this.cacheTTL);
       return mockNews;
     } catch (error) {
       console.error(`❌ Error fetching crypto news for ${symbol}:`, error.message);
@@ -60,12 +60,12 @@ class NewsService {
    * @returns {Promise<Array>} Array of news articles
    */
   async getStockNews(symbol, companyName = '', limit = 10) {
-    const cacheKey = `stock_${symbol}_${limit}`;
+    const cacheKey = `news:stock:${symbol}:${limit}`;
 
-    // Check cache first
-    const cached = this.getCachedNews(cacheKey);
+    // Check Redis cache first
+    const cached = await cache.get(cacheKey);
     if (cached) {
-      console.log(`✅ Stock news for ${symbol} found in cache`);
+      console.log(`✅ Stock news for ${symbol} found in Redis cache`);
       return cached;
     }
 
@@ -74,7 +74,7 @@ class NewsService {
         const marketauxResults = await this.fetchFromMarketaux(symbol, 'stock', limit, companyName);
 
         if (marketauxResults && marketauxResults.length > 0) {
-          this.cacheNews(cacheKey, marketauxResults);
+          await cache.set(cacheKey, marketauxResults, this.cacheTTL);
           console.log(`✅ Fetched ${marketauxResults.length} news from Marketaux for ${symbol}`);
           return marketauxResults;
         }
@@ -83,7 +83,7 @@ class NewsService {
       // Return mock data if API key not available or no results
       console.log(`⚠️ Using mock news for ${symbol}`);
       const mockNews = this.getMockStockNews(symbol, companyName, limit);
-      this.cacheNews(cacheKey, mockNews);
+      await cache.set(cacheKey, mockNews, this.cacheTTL);
       return mockNews;
     } catch (error) {
       console.error(`❌ Error fetching stock news for ${symbol}:`, error.message);
@@ -156,26 +156,6 @@ class NewsService {
     }
   }
 
-  /**
-   * Get cached news if available and not expired
-   */
-  getCachedNews(key) {
-    const cached = this.newsCache.get(key);
-    if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
-      return cached.data;
-    }
-    return null;
-  }
-
-  /**
-   * Cache news articles
-   */
-  cacheNews(key, data) {
-    this.newsCache.set(key, {
-      data,
-      timestamp: Date.now()
-    });
-  }
 
   /**
    * Mock crypto news for fallback
@@ -234,25 +214,9 @@ class NewsService {
     return mockArticles.slice(0, limit);
   }
 
-  /**
-   * Clear expired cache entries (run periodically)
-   */
-  clearExpiredCache() {
-    const now = Date.now();
-    for (const [key, value] of this.newsCache.entries()) {
-      if (now - value.timestamp >= this.cacheTTL) {
-        this.newsCache.delete(key);
-      }
-    }
-  }
 }
 
 // Create singleton instance
 const newsService = new NewsService();
-
-// Clear expired cache every 30 minutes
-setInterval(() => {
-  newsService.clearExpiredCache();
-}, 30 * 60 * 1000);
 
 module.exports = newsService;
