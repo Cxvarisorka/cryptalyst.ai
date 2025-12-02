@@ -5,6 +5,7 @@ import { GradientText } from "@/components/magicui/gradient-text";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import NotificationBell from "@/components/notifications/NotificationBell";
 import { Menu, X, Coins, LogOut, Moon, Sun, Settings, ChevronDown, Users } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export default function Navbar() {
     ...(isAuthenticated ? [{ name: t('nav.dashboard'), path: "/dashboard" }] : []),
     ...(isAuthenticated ? [{ name: t('nav.feed'), path: "/feed" }] : []),
     ...(isAuthenticated ? [{ name: t('nav.community'), path: "/community" }] : []),
+    ...(isAuthenticated ? [{ name: t('nav.priceAlerts'), path: "/price-alerts" }] : []),
     ...(!isAuthenticated ? [{ name: t('nav.pricing'), path: "/pricing" }] : []),
     ...(!isAuthenticated ? [{ name: t('nav.about'), path: "/about" }] : []),
   ];
@@ -87,6 +89,9 @@ export default function Navbar() {
               </Button>
               <LanguageSwitcher />
             </div>
+
+            {/* Notification Bell - only for authenticated users */}
+            {isAuthenticated && <NotificationBell />}
 
             {/* Divider */}
             {isAuthenticated && (
