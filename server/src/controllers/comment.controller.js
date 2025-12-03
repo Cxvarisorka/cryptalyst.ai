@@ -1,5 +1,7 @@
 const { body, validationResult } = require('express-validator');
 const Comment = require('../models/comment.model');
+const Post = require('../models/post.model');
+const notificationService = require('../services/notification.service');
 
 /**
  * Comment Controller
@@ -17,7 +19,7 @@ const createCommentValidation = [
     .isLength({ max: 2000 })
     .withMessage('Comment cannot exceed 2000 characters'),
   body('parentCommentId')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .isMongoId()
     .withMessage('Invalid parent comment ID'),
 ];
@@ -28,15 +30,24 @@ const createCommentValidation = [
  */
 const createComment = async (req, res, next) => {
   try {
+    console.log('Comment request received:', {
+      postId: req.params.postId,
+      body: req.body,
+      userId: req.user?._id
+    });
+
     // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.error('Comment validation failed:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
         errors: errors.array(),
       });
     }
+
+    console.log('Creating comment - Post ID:', req.params.postId, 'User ID:', req.user._id);
 
     const comment = new Comment({
       postId: req.params.postId,
@@ -48,12 +59,31 @@ const createComment = async (req, res, next) => {
     await comment.save();
     await comment.populate('userId', 'name avatar email');
 
+    console.log('Comment created successfully:', comment._id);
+
+    // Get post owner for notification (only for top-level comments)
+    if (!req.body.parentCommentId) {
+      const post = await Post.findById(req.params.postId).select('userId').lean();
+      if (post && post.userId) {
+        // Create notification (runs async, don't wait)
+        notificationService.createCommentNotification(
+          req.user._id,
+          post.userId,
+          req.params.postId,
+          comment._id
+        ).catch(err => {
+          console.error('Error creating comment notification:', err);
+        });
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: 'Comment created successfully',
       data: comment,
     });
   } catch (error) {
+    console.error('Error creating comment:', error);
     next(error);
   }
 };
@@ -68,6 +98,7 @@ const getCommentsByPost = async (req, res, next) => {
       page: parseInt(req.query.page) || 1,
       limit: parseInt(req.query.limit) || 20,
       includeReplies: req.query.includeReplies !== 'false',
+      userId: req.user?._id || null, // Pass user ID for like status
     };
 
     const result = await Comment.getCommentsForPost(

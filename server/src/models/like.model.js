@@ -59,9 +59,9 @@ likeSchema.post('save', async function () {
 });
 
 /**
- * Middleware to update counts on deletion
+ * Helper function to decrement like counts
  */
-likeSchema.post('findOneAndDelete', async function (doc) {
+async function decrementLikeCounts(doc) {
   if (!doc) return;
 
   if (doc.postId) {
@@ -77,7 +77,13 @@ likeSchema.post('findOneAndDelete', async function (doc) {
       $inc: { likesCount: -1 },
     });
   }
-});
+}
+
+/**
+ * Middleware to update counts on deletion
+ */
+likeSchema.post('findOneAndDelete', decrementLikeCounts);
+likeSchema.post('findByIdAndDelete', decrementLikeCounts);
 
 /**
  * Static method to check if user has liked a post

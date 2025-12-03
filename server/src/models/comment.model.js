@@ -121,7 +121,7 @@ commentSchema.statics.getCommentsForPost = async function (
   postId,
   options = {}
 ) {
-  const { page = 1, limit = 20, includeReplies = true } = options;
+  const { page = 1, limit = 20, includeReplies = true, userId = null } = options;
 
   const skip = (page - 1) * limit;
 
@@ -165,6 +165,42 @@ commentSchema.statics.getCommentsForPost = async function (
 
     comments.forEach((comment) => {
       comment.replies = repliesMap[comment._id.toString()] || [];
+    });
+  }
+
+  // Add like status for authenticated user
+  if (userId) {
+    const Like = require('./like.model');
+
+    // Collect all comment IDs (including replies)
+    const allCommentIds = [];
+    comments.forEach((comment) => {
+      allCommentIds.push(comment._id);
+      if (comment.replies && comment.replies.length > 0) {
+        comment.replies.forEach((reply) => {
+          allCommentIds.push(reply._id);
+        });
+      }
+    });
+
+    // Find all likes by this user for these comments
+    const likes = await Like.find({
+      commentId: { $in: allCommentIds },
+      userId: userId,
+    }).select('commentId').lean();
+
+    // Create a set of liked comment IDs for fast lookup
+    const likedCommentIds = new Set(likes.map(like => like.commentId.toString()));
+
+    // Add isLikedByUser field to each comment and reply
+    comments.forEach((comment) => {
+      comment.isLikedByUser = likedCommentIds.has(comment._id.toString());
+
+      if (comment.replies && comment.replies.length > 0) {
+        comment.replies.forEach((reply) => {
+          reply.isLikedByUser = likedCommentIds.has(reply._id.toString());
+        });
+      }
     });
   }
 

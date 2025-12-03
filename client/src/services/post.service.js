@@ -11,51 +11,23 @@ axios.defaults.withCredentials = true;
  */
 const postService = {
   /**
-   * Create a new post with images
+   * Create a new post
    * @param {Object} postData - Post data
-   * @param {FileList} images - Images to upload
    * @returns {Promise} API response
    */
-  createPost: async (postData, images = []) => {
-    const formData = new FormData();
-
-    // Append post data
-    formData.append('asset[symbol]', postData.asset.symbol);
-    formData.append('asset[name]', postData.asset.name);
-    formData.append('asset[type]', postData.asset.type);
-    if (postData.asset.image) {
-      formData.append('asset[image]', postData.asset.image);
-    }
-    formData.append('content', postData.content);
-    if (postData.visibility) {
-      formData.append('visibility', postData.visibility);
-    }
-    if (postData.sentiment) {
-      formData.append('sentiment', postData.sentiment);
-    }
-
-    // Append tags
-    if (postData.tags && postData.tags.length > 0) {
-      postData.tags.forEach((tag, index) => {
-        formData.append(`tags[${index}]`, tag);
-      });
-    }
-
-    // Append images
-    if (images && images.length > 0) {
-      Array.from(images).forEach((image) => {
-        formData.append('images', image);
-      });
-    }
-
-    const response = await axios.post(`${API_BASE_URL}/posts`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+  createPost: async (postData) => {
+    const response = await axios.post(`${API_BASE_URL}/posts`, {
+      asset: postData.asset,
+      content: postData.content,
+      tags: postData.tags || [],
+      visibility: postData.visibility || 'public',
+      sentiment: postData.sentiment || 'neutral',
     });
 
     return response.data;
   },
+
+
 
   /**
    * Get feed posts with filters

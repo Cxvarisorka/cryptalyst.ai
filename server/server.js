@@ -49,8 +49,8 @@ app.use(cors({
   credentials: true // Allow cookies to be sent
 }));
 app.use(morgan('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' })); // Increase limit for large requests
+app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Increase limit
 app.use(cookieParser()); // Parse cookies from requests
 
 // Routes

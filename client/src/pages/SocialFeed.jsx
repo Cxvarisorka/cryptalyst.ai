@@ -63,11 +63,21 @@ const SocialFeed = () => {
 
       const response = await postService.getFeed(params);
 
+      // Filter out posts without asset data and add defaults for safety
+      const validPosts = (response.data || []).map(post => ({
+        ...post,
+        asset: post.asset || { symbol: 'UNKNOWN', name: 'Unknown Asset', type: 'crypto', image: null },
+        content: post.content || '',
+        tags: post.tags || [],
+        visibility: post.visibility || 'public',
+        sentiment: post.sentiment || 'neutral'
+      }));
+
       if (reset) {
-        setPosts(response.data);
+        setPosts(validPosts);
         setPage(1);
       } else {
-        setPosts((prev) => [...prev, ...response.data]);
+        setPosts((prev) => [...prev, ...validPosts]);
       }
 
       setHasMore(response.pagination.page < response.pagination.pages);
@@ -84,7 +94,23 @@ const SocialFeed = () => {
   };
 
   const handlePostCreated = (newPost) => {
-    setPosts((prev) => [newPost, ...prev]);
+    // newPost should already have all data from backend, only add defaults if truly missing
+    if (!newPost || !newPost._id) {
+      console.error('Invalid post data received:', newPost);
+      return;
+    }
+
+    const postWithDefaults = {
+      ...newPost,
+      asset: newPost.asset || { symbol: 'UNKNOWN', name: 'Unknown Asset', type: 'crypto', image: null },
+      content: newPost.content || '',
+      tags: newPost.tags || [],
+      visibility: newPost.visibility || 'public',
+      sentiment: newPost.sentiment || 'neutral',
+      userId: newPost.userId || null
+    };
+
+    setPosts((prev) => [postWithDefaults, ...prev]);
     setShowCreateDialog(false);
   };
 
@@ -124,7 +150,18 @@ const SocialFeed = () => {
         page: 1,
         limit: 10,
       });
-      setPosts(response.data);
+
+      // Ensure all posts have required data
+      const validPosts = (response.data || []).map(post => ({
+        ...post,
+        asset: post.asset || { symbol: 'UNKNOWN', name: 'Unknown Asset', type: 'crypto', image: null },
+        content: post.content || '',
+        tags: post.tags || [],
+        visibility: post.visibility || 'public',
+        sentiment: post.sentiment || 'neutral'
+      }));
+
+      setPosts(validPosts);
       setHasMore(response.pagination.page < response.pagination.pages);
       setPage(1);
     } catch (error) {

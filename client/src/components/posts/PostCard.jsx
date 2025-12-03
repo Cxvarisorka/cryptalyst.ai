@@ -25,7 +25,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
   const [loading, setLoading] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [editContent, setEditContent] = useState(post.content);
+  const [editContent, setEditContent] = useState(post.content || '');
   const [editVisibility, setEditVisibility] = useState(post.visibility || 'public');
   const [editTags, setEditTags] = useState((post.tags || []).join(', '));
 
@@ -33,6 +33,16 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
   const isAuthor = user && post.userId && (
     String(post.userId._id || post.userId.id) === String(user._id || user.id)
   );
+
+  /**
+   * Initialize like status from post data
+   */
+  React.useEffect(() => {
+    // If post includes isLikedByUser field, use it
+    if (typeof post.isLikedByUser === 'boolean') {
+      setLiked(post.isLikedByUser);
+    }
+  }, [post.isLikedByUser]);
 
   /**
    * Handle like toggle
@@ -71,7 +81,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
 
       if (navigator.share) {
         await navigator.share({
-          title: `${post.userId?.name || 'User'}'s post about ${post.asset.symbol}`,
+          title: `${post.userId?.name || 'User'}'s post about ${post.asset?.symbol || 'asset'}`,
           text: post.content.substring(0, 200),
           url: window.location.href,
         });
@@ -227,19 +237,19 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
                 <span className="flex-shrink-0">{getVisibilityIcon()}</span>
               </div>
               <div className="flex items-center gap-1 sm:gap-2 mt-1 flex-wrap">
-                {post.asset.image && (
+                {post.asset?.image && (
                   <img
                     src={post.asset.image}
-                    alt={post.asset.symbol}
+                    alt={post.asset?.symbol || 'Asset'}
                     className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0"
                   />
                 )}
                 <span className="text-primary text-xs sm:text-sm font-medium">
-                  ${post.asset.symbol}
+                  ${post.asset?.symbol || 'N/A'}
                 </span>
-                <span className="text-muted-foreground text-xs sm:text-sm hidden sm:inline">{post.asset.name}</span>
+                <span className="text-muted-foreground text-xs sm:text-sm hidden sm:inline">{post.asset?.name || 'Unknown'}</span>
                 <span className="text-xs text-muted-foreground px-1.5 sm:px-2 py-0.5 bg-muted rounded">
-                  {post.asset.type}
+                  {post.asset?.type || 'unknown'}
                 </span>
                 {getSentimentBadge()}
               </div>
@@ -279,7 +289,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
 
       <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6">
         {/* Content */}
-        <p className="text-card-foreground whitespace-pre-wrap text-sm sm:text-base">{post.content}</p>
+        <p className="text-card-foreground whitespace-pre-wrap text-sm sm:text-base">{post.content || ''}</p>
 
         {/* Tags */}
         {post.tags && post.tags.length > 0 && (

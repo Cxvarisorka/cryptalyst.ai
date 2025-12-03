@@ -12,24 +12,50 @@ import { formatDistanceToNow } from 'date-fns';
  * Displays a single comment with replies
  */
 const CommentItem = ({ comment, onDelete, onReply, currentUserId }) => {
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(comment.isLikedByUser || false);
   const [likesCount, setLikesCount] = useState(comment.likesCount || 0);
   const [showReplies, setShowReplies] = useState(false);
+  const [liking, setLiking] = useState(false);
 
   const isAuthor = currentUserId && comment.userId?._id === currentUserId;
 
+  // Update liked state when comment data changes
+  React.useEffect(() => {
+    if (typeof comment.isLikedByUser === 'boolean') {
+      setLiked(comment.isLikedByUser);
+    }
+    setLikesCount(comment.likesCount || 0);
+  }, [comment.isLikedByUser, comment.likesCount]);
+
   const handleLike = async () => {
+    if (liking) return; // Prevent multiple clicks
+
     try {
+      setLiking(true);
+
+      // Optimistic update
+      const wasLiked = liked;
+      setLiked(!liked);
+      setLikesCount((prev) => wasLiked ? prev - 1 : prev + 1);
+
       const response = await postService.toggleCommentLike(comment._id);
-      if (response.data.liked) {
-        setLiked(true);
-        setLikesCount((prev) => prev + 1);
+
+      // Update with server response
+      setLiked(response.data.liked);
+      if (response.data.liked !== wasLiked) {
+        // Already updated optimistically, no need to change again
       } else {
-        setLiked(false);
-        setLikesCount((prev) => prev - 1);
+        // Revert if server response doesn't match optimistic update
+        setLiked(wasLiked);
+        setLikesCount(comment.likesCount || 0);
       }
     } catch (error) {
       console.error('Error toggling comment like:', error);
+      // Revert on error
+      setLiked(!liked);
+      setLikesCount(comment.likesCount || 0);
+    } finally {
+      setLiking(false);
     }
   };
 
@@ -92,7 +118,10 @@ const CommentItem = ({ comment, onDelete, onReply, currentUserId }) => {
           <div className="flex items-center gap-4 px-2">
             <button
               onClick={handleLike}
-              className="flex items-center gap-1 text-muted-foreground hover:text-danger transition-colors"
+              disabled={liking}
+              className={`flex items-center gap-1 text-muted-foreground hover:text-danger transition-colors ${
+                liking ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               <Heart
                 className={`w-4 h-4 ${
@@ -211,8 +240,12 @@ const CommentSection = ({ postId, initialCommentsCount = 0 }) => {
 
       const commentData = {
         content: newComment,
-        parentCommentId: replyTo?._id || null,
       };
+
+      // Only add parentCommentId if it's a reply
+      if (replyTo?._id) {
+        commentData.parentCommentId = replyTo._id;
+      }
 
       const response = await postService.createComment(postId, commentData);
 
@@ -236,7 +269,15 @@ const CommentSection = ({ postId, initialCommentsCount = 0 }) => {
       setReplyTo(null);
     } catch (error) {
       console.error('Error creating comment:', error);
-      alert('Failed to post comment');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to post comment';
+      const validationErrors = error.response?.data?.errors;
+
+      if (validationErrors && validationErrors.length > 0) {
+        console.error('Validation errors:', validationErrors);
+        alert(`Validation failed: ${validationErrors.map(e => e.msg).join(', ')}`);
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setSubmitting(false);
     }

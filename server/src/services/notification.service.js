@@ -73,6 +73,85 @@ class NotificationService {
   }
 
   /**
+   * Create a like notification
+   * @param {String} likerId - ID of user who liked
+   * @param {String} postOwnerId - ID of post owner
+   * @param {String} postId - ID of the post
+   */
+  async createLikeNotification(likerId, postOwnerId, postId) {
+    // Don't create notification if user likes their own post
+    if (likerId === postOwnerId || likerId.toString() === postOwnerId.toString()) {
+      return null;
+    }
+
+    const message = 'liked your post';
+
+    return this.createNotification({
+      recipient: postOwnerId,
+      sender: likerId,
+      type: 'like',
+      message,
+      relatedEntity: {
+        entityType: 'Post',
+        entityId: postId,
+      },
+    });
+  }
+
+  /**
+   * Create a comment notification
+   * @param {String} commenterId - ID of user who commented
+   * @param {String} postOwnerId - ID of post owner
+   * @param {String} postId - ID of the post
+   * @param {String} commentId - ID of the comment
+   */
+  async createCommentNotification(commenterId, postOwnerId, postId, commentId) {
+    // Don't create notification if user comments on their own post
+    if (commenterId === postOwnerId || commenterId.toString() === postOwnerId.toString()) {
+      return null;
+    }
+
+    const message = 'commented on your post';
+
+    return this.createNotification({
+      recipient: postOwnerId,
+      sender: commenterId,
+      type: 'comment',
+      message,
+      relatedEntity: {
+        entityType: 'Comment',
+        entityId: commentId,
+      },
+    });
+  }
+
+  /**
+   * Create a comment like notification
+   * @param {String} likerId - ID of user who liked the comment
+   * @param {String} commentOwnerId - ID of comment owner
+   * @param {String} commentId - ID of the comment
+   */
+  async createCommentLikeNotification(likerId, commentOwnerId, commentId) {
+    // Don't create notification if user likes their own comment
+    if (likerId === commentOwnerId || likerId.toString() === commentOwnerId.toString()) {
+      return null;
+    }
+
+    const message = 'liked your comment';
+
+    return this.createNotification({
+      recipient: commentOwnerId,
+      sender: likerId,
+      type: 'like',
+      message,
+      relatedEntity: {
+        entityType: 'Comment',
+        entityId: commentId,
+      },
+    });
+  }
+
+  /**
    * Get all notifications for a user
    * @param {String} userId - User ID
    * @param {Object} options - Query options (page, limit, unreadOnly)

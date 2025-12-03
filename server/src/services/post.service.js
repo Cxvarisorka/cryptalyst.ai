@@ -2,11 +2,39 @@ const Post = require('../models/post.model');
 const Comment = require('../models/comment.model');
 const Like = require('../models/like.model');
 const PostFilter = require('../utils/PostFilter');
-const {
-  uploadToCloudinary,
-  deleteFromCloudinary,
-  deleteMultipleFromCloudinary,
-} = require('../config/cloudinary');
+
+/**
+ * Add like status to posts for a specific user
+ * @param {Array} posts - Array of posts
+ * @param {string} userId - User ID to check likes for
+ * @returns {Promise<Array>} Posts with isLikedByUser field
+ */
+const enrichPostsWithLikeStatus = async (posts, userId) => {
+  if (!userId || !posts || posts.length === 0) {
+    return posts.map(post => ({ ...post, isLikedByUser: false }));
+  }
+
+  // Get all post IDs
+  const postIds = posts.map(post => post._id || post.id);
+
+  // Find all likes by this user for these posts
+  const likes = await Like.find({
+    postId: { $in: postIds },
+    userId: userId,
+  }).select('postId').lean();
+
+  // Create a set of liked post IDs for fast lookup
+  const likedPostIds = new Set(likes.map(like => like.postId.toString()));
+
+  // Add isLikedByUser field to each post
+  return posts.map(post => {
+    const postId = (post._id || post.id).toString();
+    return {
+      ...post,
+      isLikedByUser: likedPostIds.has(postId),
+    };
+  });
+};
 
 /**
  * Post Service
@@ -16,28 +44,14 @@ const {
 /**
  * Create a new post
  * @param {Object} postData - Post data including userId, asset, content, tags
- * @param {Array} files - Uploaded image files (multer files)
  * @returns {Promise<Object>} Created post
  */
-const createPost = async (postData, files = []) => {
-  // Upload images to Cloudinary
-  const uploadedImages = [];
-
+const createPost = async (postData) => {
   try {
-    if (files && files.length > 0) {
-      for (const file of files) {
-        const uploadResult = await uploadToCloudinary(file.buffer);
-        uploadedImages.push({
-          url: uploadResult.url,
-          publicId: uploadResult.publicId,
-        });
-      }
-    }
-
-    // Create post with uploaded images
+    // Create post without images
     const post = new Post({
       ...postData,
-      images: uploadedImages,
+      images: [], // No images
     });
 
     await post.save();
@@ -47,11 +61,7 @@ const createPost = async (postData, files = []) => {
 
     return post;
   } catch (error) {
-    // Cleanup uploaded images if post creation fails
-    if (uploadedImages.length > 0) {
-      const publicIds = uploadedImages.map((img) => img.publicId);
-      await deleteMultipleFromCloudinary(publicIds).catch(console.error);
-    }
+    console.error('Error in createPost service:', error);
     throw error;
   }
 };
@@ -59,9 +69,10 @@ const createPost = async (postData, files = []) => {
 /**
  * Get feed posts with filters and pagination
  * @param {Object} query - Query parameters from request
+ * @param {string} userId - Optional user ID to check like status
  * @returns {Promise<Object>} Posts with pagination
  */
-const getFeedPosts = async (query = {}) => {
+const getFeedPosts = async (query = {}, userId = null) => {
   try {
     // Create filter instance with query parameters
     const postFilter = new PostFilter(query);
@@ -72,8 +83,14 @@ const getFeedPosts = async (query = {}) => {
     // Build and execute query using the FilterBuilder's execute method
     const result = await postFilter.execute(Post);
 
+    // Enrich posts with like status if user is authenticated
+    let posts = result.data;
+    if (userId) {
+      posts = await enrichPostsWithLikeStatus(posts, userId);
+    }
+
     return {
-      posts: result.data,
+      posts: posts,
       pagination: result.pagination
     };
   } catch (error) {
@@ -148,12 +165,6 @@ const deletePost = async (postId, userId) => {
   // Check authorization
   if (post.userId.toString() !== userId.toString()) {
     throw new Error('Unauthorized to delete this post');
-  }
-
-  // Delete images from Cloudinary
-  if (post.images && post.images.length > 0) {
-    const publicIds = post.images.map((img) => img.publicId);
-    await deleteMultipleFromCloudinary(publicIds).catch(console.error);
   }
 
   // Delete associated comments and likes

@@ -1,10 +1,5 @@
-const { body, param, query, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const postService = require('../services/post.service');
-
-/**
- * Post Controller
- * Handles HTTP requests for post operations
- */
 
 /**
  * Validation rules for creating a post
@@ -52,10 +47,17 @@ const createPostValidation = [
 
 /**
  * Create a new post
- * POST /api/posts
  */
 const createPost = async (req, res, next) => {
   try {
+    // Parse JSON fields if multipart/form-data
+    if (req.body.asset && typeof req.body.asset === 'string') {
+      req.body.asset = JSON.parse(req.body.asset);
+    }
+    if (req.body.tags && typeof req.body.tags === 'string') {
+      req.body.tags = JSON.parse(req.body.tags);
+    }
+
     // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -66,21 +68,23 @@ const createPost = async (req, res, next) => {
       });
     }
 
+    const asset = req.body.asset || {};
+
     const postData = {
       userId: req.user._id,
       asset: {
-        symbol: req.body.asset.symbol.toUpperCase(),
-        name: req.body.asset.name,
-        type: req.body.asset.type,
-        image: req.body.asset.image || null,
+        symbol: (asset.symbol || '').toUpperCase(),
+        name: asset.name || '',
+        type: asset.type || '',
+        image: asset.image || null,
       },
-      content: req.body.content,
-      tags: req.body.tags || [],
+      content: req.body.content || '',
+      tags: Array.isArray(req.body.tags) ? req.body.tags : [],
       visibility: req.body.visibility || 'public',
       sentiment: req.body.sentiment || 'neutral',
     };
 
-    const post = await postService.createPost(postData, req.files);
+    const post = await postService.createPost(postData);
 
     res.status(201).json({
       success: true,
@@ -88,20 +92,16 @@ const createPost = async (req, res, next) => {
       data: post,
     });
   } catch (error) {
+    console.error('Error creating post:', error);
     next(error);
   }
 };
 
-/**
- * Get feed posts with filters
- * GET /api/posts/feed
- * Query params: page, limit, assetType, assetSymbol, userId, tag, sentiment, sortBy, sortOrder, search
- */
+// Other controllers (getFeed, getPostById, updatePost, deletePost, sharePost, etc.)
 const getFeed = async (req, res, next) => {
   try {
-    // Pass all query parameters to the service
-    // PostFilter class will handle parsing and validation
-    const result = await postService.getFeedPosts(req.query);
+    const currentUserId = req.user?._id;
+    const result = await postService.getFeedPosts(req.query, currentUserId);
 
     res.status(200).json({
       success: true,
@@ -113,10 +113,6 @@ const getFeed = async (req, res, next) => {
   }
 };
 
-/**
- * Get a single post by ID
- * GET /api/posts/:id
- */
 const getPostById = async (req, res, next) => {
   try {
     const post = await postService.getPostById(req.params.id);
@@ -127,32 +123,21 @@ const getPostById = async (req, res, next) => {
     });
   } catch (error) {
     if (error.message === 'Post not found') {
-      return res.status(404).json({
-        success: false,
-        message: error.message,
-      });
+      return res.status(404).json({ success: false, message: error.message });
     }
     next(error);
   }
 };
 
-/**
- * Update a post
- * PATCH /api/posts/:id
- */
 const updatePost = async (req, res, next) => {
   try {
     const updateData = {
       content: req.body.content,
-      tags: req.body.tags,
+      tags: Array.isArray(req.body.tags) ? req.body.tags : [],
       visibility: req.body.visibility,
     };
 
-    const post = await postService.updatePost(
-      req.params.id,
-      req.user._id,
-      updateData
-    );
+    const post = await postService.updatePost(req.params.id, req.user._id, updateData);
 
     res.status(200).json({
       success: true,
@@ -173,18 +158,10 @@ const updatePost = async (req, res, next) => {
   }
 };
 
-/**
- * Delete a post
- * DELETE /api/posts/:id
- */
 const deletePost = async (req, res, next) => {
   try {
     await postService.deletePost(req.params.id, req.user._id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Post deleted successfully',
-    });
+    res.status(200).json({ success: true, message: 'Post deleted successfully' });
   } catch (error) {
     if (
       error.message === 'Post not found' ||
@@ -199,14 +176,9 @@ const deletePost = async (req, res, next) => {
   }
 };
 
-/**
- * Increment share count
- * POST /api/posts/:id/share
- */
 const sharePost = async (req, res, next) => {
   try {
     const post = await postService.incrementShareCount(req.params.id);
-
     res.status(200).json({
       success: true,
       message: 'Share count incremented',
@@ -214,19 +186,12 @@ const sharePost = async (req, res, next) => {
     });
   } catch (error) {
     if (error.message === 'Post not found') {
-      return res.status(404).json({
-        success: false,
-        message: error.message,
-      });
+      return res.status(404).json({ success: false, message: error.message });
     }
     next(error);
   }
 };
 
-/**
- * Get posts by asset
- * GET /api/posts/asset/:symbol
- */
 const getPostsByAsset = async (req, res, next) => {
   try {
     const options = {
@@ -234,25 +199,14 @@ const getPostsByAsset = async (req, res, next) => {
       limit: parseInt(req.query.limit) || 20,
     };
 
-    const result = await postService.getPostsByAsset(
-      req.params.symbol,
-      options
-    );
+    const result = await postService.getPostsByAsset(req.params.symbol, options);
 
-    res.status(200).json({
-      success: true,
-      data: result.posts,
-      pagination: result.pagination,
-    });
+    res.status(200).json({ success: true, data: result.posts, pagination: result.pagination });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * Get posts by user
- * GET /api/posts/user/:userId
- */
 const getPostsByUser = async (req, res, next) => {
   try {
     const options = {
@@ -262,29 +216,17 @@ const getPostsByUser = async (req, res, next) => {
 
     const result = await postService.getPostsByUser(req.params.userId, options);
 
-    res.status(200).json({
-      success: true,
-      data: result.posts,
-      pagination: result.pagination,
-    });
+    res.status(200).json({ success: true, data: result.posts, pagination: result.pagination });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * Search posts
- * GET /api/posts/search
- */
 const searchPosts = async (req, res, next) => {
   try {
     const query = req.query.q;
-
     if (!query) {
-      return res.status(400).json({
-        success: false,
-        message: 'Search query is required',
-      });
+      return res.status(400).json({ success: false, message: 'Search query is required' });
     }
 
     const options = {
@@ -294,11 +236,7 @@ const searchPosts = async (req, res, next) => {
 
     const result = await postService.searchPosts(query, options);
 
-    res.status(200).json({
-      success: true,
-      data: result.posts,
-      pagination: result.pagination,
-    });
+    res.status(200).json({ success: true, data: result.posts, pagination: result.pagination });
   } catch (error) {
     next(error);
   }

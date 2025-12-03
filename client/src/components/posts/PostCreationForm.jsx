@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Image as ImageIcon, Hash, Globe, Lock, Users, TrendingUp, TrendingDown, Search, Check } from 'lucide-react';
+import { X, Hash, Globe, Lock, Users, TrendingUp, TrendingDown, Search, Check } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Label } from '../ui/label';
@@ -41,8 +41,6 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
   });
 
   const [tagInput, setTagInput] = useState('');
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
 
   /**
    * Load market data for asset selection
@@ -113,46 +111,6 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
     }));
   };
 
-  /**
-   * Handle image selection
-   */
-  const handleImageSelect = (e) => {
-    const files = Array.from(e.target.files);
-
-    if (selectedImages.length + files.length > 4) {
-      setError(t('feed.postForm.errors.maxImages'));
-      return;
-    }
-
-    const validFiles = files.filter((file) => {
-      if (!file.type.startsWith('image/')) {
-        setError(t('feed.postForm.errors.onlyImages'));
-        return false;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        setError(t('feed.postForm.errors.imageSize'));
-        return false;
-      }
-      return true;
-    });
-
-    const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
-
-    setSelectedImages((prev) => [...prev, ...validFiles]);
-    setImagePreviews((prev) => [...prev, ...newPreviews]);
-    setError('');
-  };
-
-  /**
-   * Remove selected image
-   */
-  const removeImage = (index) => {
-    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => {
-      URL.revokeObjectURL(prev[index]);
-      return prev.filter((_, i) => i !== index);
-    });
-  };
 
   /**
    * Add tag
@@ -195,6 +153,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
     setError('');
 
     try {
+      // Validation
       if (!formData.asset.symbol || !formData.asset.name) {
         throw new Error(t('feed.postForm.errors.selectAsset'));
       }
@@ -205,9 +164,11 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
         throw new Error(t('feed.postForm.errors.contentTooLong'));
       }
 
-      const response = await postService.createPost(formData, selectedImages);
+      // Call API without images
+      const response = await postService.createPost(formData);
 
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      console.log('Post created - Full response:', response);
+      console.log('Post created - Post data:', response.data);
 
       if (onPostCreated) {
         onPostCreated(response.data);
@@ -219,6 +180,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
       setLoading(false);
     }
   };
+
 
   const filteredCrypto = filterAssets(marketAssets.crypto);
   const filteredStocks = filterAssets(marketAssets.stocks);
@@ -491,56 +453,6 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
             <div className="text-right text-sm text-muted-foreground">
               {formData.content.length} / 5000
             </div>
-          </div>
-
-          {/* Image Upload */}
-          <div className="space-y-2">
-            <Label className="text-card-foreground">{t('feed.postForm.images')}</Label>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => document.getElementById('image-upload').click()}
-                disabled={selectedImages.length >= 4}
-                className="border-border hover:bg-muted"
-              >
-                <ImageIcon className="w-4 h-4 mr-2" />
-                {t('feed.postForm.addImages')}
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {selectedImages.length} / 4 {t('feed.postForm.selected')}
-              </span>
-            </div>
-            <input
-              id="image-upload"
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageSelect}
-              className="hidden"
-            />
-
-            {imagePreviews.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
-                {imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative aspect-square">
-                    <img
-                      src={preview}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 p-1 bg-danger hover:bg-danger/90 rounded-full"
-                    >
-                      <X className="w-3 h-3 text-danger-foreground" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Tags */}

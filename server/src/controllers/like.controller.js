@@ -1,4 +1,6 @@
 const Like = require('../models/like.model');
+const Post = require('../models/post.model');
+const notificationService = require('../services/notification.service');
 
 /**
  * Like Controller
@@ -14,14 +16,12 @@ const toggleLike = async (req, res, next) => {
     const { postId } = req.params;
     const userId = req.user._id;
 
-    // Check if like exists
-    const existingLike = await Like.findOne({ postId, userId });
-
-    console.log(existingLike)
+    // Check if like exists - use lean() for faster query
+    const existingLike = await Like.findOne({ postId, userId }).lean();
 
     if (existingLike) {
       // Unlike: Remove the like
-      await Like.findOneAndDelete({ _id: existingLike._id });
+      await Like.findByIdAndDelete(existingLike._id);
 
       return res.status(200).json({
         success: true,
@@ -32,6 +32,15 @@ const toggleLike = async (req, res, next) => {
       // Like: Create new like
       const like = new Like({ postId, userId });
       await like.save();
+
+      // Get post owner for notification
+      const post = await Post.findById(postId).select('userId').lean();
+      if (post && post.userId) {
+        // Create notification (runs async, don't wait)
+        notificationService.createLikeNotification(userId, post.userId, postId).catch(err => {
+          console.error('Error creating like notification:', err);
+        });
+      }
 
       return res.status(201).json({
         success: true,
@@ -48,6 +57,7 @@ const toggleLike = async (req, res, next) => {
         data: { liked: true },
       });
     }
+    console.error('Error toggling like:', error);
     next(error);
   }
 };
@@ -112,12 +122,15 @@ const toggleCommentLike = async (req, res, next) => {
     const { commentId } = req.params;
     const userId = req.user._id;
 
-    // Check if like exists
-    const existingLike = await Like.findOne({ commentId, userId });
+    console.log('Toggle comment like - Comment ID:', commentId, 'User ID:', userId);
+
+    // Check if like exists - use lean() for faster query
+    const existingLike = await Like.findOne({ commentId, userId }).lean();
 
     if (existingLike) {
       // Unlike: Remove the like
-      await existingLike.deleteOne();
+      console.log('Unlike comment - removing existing like:', existingLike._id);
+      await Like.findByIdAndDelete(existingLike._id);
 
       return res.status(200).json({
         success: true,
@@ -127,21 +140,31 @@ const toggleCommentLike = async (req, res, next) => {
     } else {
       // Like: Create new like (need to find the postId from comment)
       const Comment = require('../models/comment.model');
-      const comment = await Comment.findById(commentId);
+      const comment = await Comment.findById(commentId).select('postId userId').lean();
 
       if (!comment) {
+        console.error('Comment not found:', commentId);
         return res.status(404).json({
           success: false,
           message: 'Comment not found',
         });
       }
 
+      console.log('Like comment - creating new like');
       const like = new Like({
         postId: comment.postId,
         userId,
         commentId,
       });
       await like.save();
+      console.log('Comment like created successfully:', like._id);
+
+      // Create notification for comment owner
+      if (comment.userId) {
+        notificationService.createCommentLikeNotification(userId, comment.userId, commentId).catch(err => {
+          console.error('Error creating comment like notification:', err);
+        });
+      }
 
       return res.status(201).json({
         success: true,
@@ -152,12 +175,14 @@ const toggleCommentLike = async (req, res, next) => {
   } catch (error) {
     // Handle duplicate key error (race condition)
     if (error.code === 11000) {
+      console.log('Duplicate like attempt detected, treating as already liked');
       return res.status(200).json({
         success: true,
         message: 'Comment already liked',
         data: { liked: true },
       });
     }
+    console.error('Error toggling comment like:', error);
     next(error);
   }
 };

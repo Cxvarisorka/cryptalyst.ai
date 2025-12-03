@@ -18,6 +18,13 @@ cloudinary.config({
  */
 const uploadToCloudinary = (fileBuffer, folder = 'posts') => {
   return new Promise((resolve, reject) => {
+    if (!fileBuffer || fileBuffer.length === 0) {
+      reject(new Error('Empty file buffer provided'));
+      return;
+    }
+
+    console.log('Cloudinary - Starting upload, buffer size:', fileBuffer.length);
+
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder,
@@ -30,8 +37,10 @@ const uploadToCloudinary = (fileBuffer, folder = 'posts') => {
       },
       (error, result) => {
         if (error) {
+          console.error('Cloudinary upload error:', error);
           reject(error);
         } else {
+          console.log('Cloudinary upload successful:', result.public_id);
           resolve({
             url: result.secure_url,
             publicId: result.public_id,

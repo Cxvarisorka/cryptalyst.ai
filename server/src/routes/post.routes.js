@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const postController = require('../controllers/post.controller');
 const { protect } = require('../middleware/auth.middleware');
-const { uploadMultiple, handleMulterError } = require('../middleware/upload.middleware');
 
 /**
  * Post Routes
@@ -20,8 +19,6 @@ router.get('/:id', postController.getPostById); // Get single post
 router.post(
   '/',
   protect,
-  uploadMultiple,
-  handleMulterError,
   postController.createPostValidation,
   postController.createPost
 ); // Create post
