@@ -4,13 +4,13 @@ const Post = require('../models/post.model');
 const notificationService = require('../services/notification.service');
 
 /**
- * Comment Controller
- * Handles HTTP requests for comment operations
+ * COMMENT CONTROLLER
+ * Handles all comment-related operations
  */
 
-/**
- * Validation rules for creating a comment
- */
+/* ------------------------------------
+ * VALIDATION RULES
+ * ---------------------------------- */
 const createCommentValidation = [
   body('content')
     .trim()
@@ -18,28 +18,21 @@ const createCommentValidation = [
     .withMessage('Comment content is required')
     .isLength({ max: 2000 })
     .withMessage('Comment cannot exceed 2000 characters'),
+
   body('parentCommentId')
     .optional({ nullable: true, checkFalsy: true })
     .isMongoId()
     .withMessage('Invalid parent comment ID'),
 ];
 
-/**
- * Create a new comment
+/* ------------------------------------
+ * CREATE COMMENT
  * POST /api/posts/:postId/comments
- */
+ * ---------------------------------- */
 const createComment = async (req, res, next) => {
   try {
-    console.log('Comment request received:', {
-      postId: req.params.postId,
-      body: req.body,
-      userId: req.user?._id
-    });
-
-    // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.error('Comment validation failed:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -47,37 +40,29 @@ const createComment = async (req, res, next) => {
       });
     }
 
-    console.log('Creating comment - Post ID:', req.params.postId, 'User ID:', req.user._id);
+    const { postId } = req.params;
+    const { content, parentCommentId } = req.body;
 
-    const comment = new Comment({
-      postId: req.params.postId,
+    const comment = await Comment.create({
+      postId,
       userId: req.user._id,
-      content: req.body.content,
-      parentCommentId: req.body.parentCommentId || null,
+      content,
+      parentCommentId: parentCommentId || null,
     });
 
-    await comment.save();
     await comment.populate('userId', 'name avatar email');
 
-    console.log('Comment created successfully:', comment._id);
-
-    // Get post owner for notification (only for top-level comments)
-    if (!req.body.parentCommentId) {
-      const post = await Post.findById(req.params.postId).select('userId').lean();
-      if (post && post.userId) {
-        // Create notification (runs async, don't wait)
-        notificationService.createCommentNotification(
-          req.user._id,
-          post.userId,
-          req.params.postId,
-          comment._id
-        ).catch(err => {
-          console.error('Error creating comment notification:', err);
-        });
+    // Notify post owner only for top-level comments
+    if (!parentCommentId) {
+      const post = await Post.findById(postId).select('userId');
+      if (post?.userId) {
+        notificationService
+          .createCommentNotification(req.user._id, post.userId, postId, comment._id)
+          .catch((err) => console.error('Notification error:', err));
       }
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: 'Comment created successfully',
       data: comment,
@@ -88,38 +73,35 @@ const createComment = async (req, res, next) => {
   }
 };
 
-/**
- * Get comments for a post
+/* ------------------------------------
+ * GET COMMENTS BY POST
  * GET /api/posts/:postId/comments
- */
+ * ---------------------------------- */
 const getCommentsByPost = async (req, res, next) => {
   try {
     const options = {
       page: parseInt(req.query.page) || 1,
       limit: parseInt(req.query.limit) || 20,
+      userId: req.user?._id || null,
       includeReplies: req.query.includeReplies !== 'false',
-      userId: req.user?._id || null, // Pass user ID for like status
     };
 
-    const result = await Comment.getCommentsForPost(
-      req.params.postId,
-      options
-    );
+    const response = await Comment.getCommentsForPost(req.params.postId, options);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      data: result.comments,
-      pagination: result.pagination,
+      data: response.comments,
+      pagination: response.pagination,
     });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * Update a comment
+/* ------------------------------------
+ * UPDATE COMMENT
  * PATCH /api/comments/:id
- */
+ * ---------------------------------- */
 const updateComment = async (req, res, next) => {
   try {
     const comment = await Comment.findById(req.params.id);
@@ -131,7 +113,6 @@ const updateComment = async (req, res, next) => {
       });
     }
 
-    // Check authorization
     if (comment.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -139,11 +120,11 @@ const updateComment = async (req, res, next) => {
       });
     }
 
-    comment.content = req.body.content || comment.content;
+    comment.content = req.body.content?.trim() || comment.content;
     await comment.save();
     await comment.populate('userId', 'name avatar email');
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'Comment updated successfully',
       data: comment,
@@ -153,10 +134,10 @@ const updateComment = async (req, res, next) => {
   }
 };
 
-/**
- * Delete a comment
+/* ------------------------------------
+ * DELETE COMMENT
  * DELETE /api/comments/:id
- */
+ * ---------------------------------- */
 const deleteComment = async (req, res, next) => {
   try {
     const comment = await Comment.findById(req.params.id);
@@ -168,7 +149,6 @@ const deleteComment = async (req, res, next) => {
       });
     }
 
-    // Check authorization
     if (comment.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -176,13 +156,13 @@ const deleteComment = async (req, res, next) => {
       });
     }
 
-    // Delete all replies to this comment
+    // Delete replies
     await Comment.deleteMany({ parentCommentId: comment._id });
 
-    // Delete the comment
+    // Delete main comment
     await comment.deleteOne();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'Comment deleted successfully',
     });
@@ -191,13 +171,13 @@ const deleteComment = async (req, res, next) => {
   }
 };
 
-/**
- * Get replies for a comment
+/* ------------------------------------
+ * GET REPLIES FOR A COMMENT
  * GET /api/comments/:id/replies
- */
+ * ---------------------------------- */
 const getReplies = async (req, res, next) => {
   try {
-    const replies = await Comment.find({
+    let replies = await Comment.find({
       parentCommentId: req.params.id,
       isHidden: false,
     })
@@ -205,7 +185,26 @@ const getReplies = async (req, res, next) => {
       .populate('userId', 'name avatar email')
       .lean();
 
-    res.status(200).json({
+    // Like status for logged in users
+    if (req.user?._id) {
+      const Like = require('../models/like.model');
+
+      const replyIds = replies.map((r) => r._id);
+
+      const liked = await Like.find({
+        userId: req.user._id,
+        commentId: { $in: replyIds },
+      }).select('commentId');
+
+      const likedSet = new Set(liked.map((l) => l.commentId.toString()));
+
+      replies = replies.map((reply) => ({
+        ...reply,
+        isLikedByUser: likedSet.has(reply._id.toString()),
+      }));
+    }
+
+    return res.status(200).json({
       success: true,
       data: replies,
     });
@@ -214,6 +213,9 @@ const getReplies = async (req, res, next) => {
   }
 };
 
+/* ------------------------------------
+ * EXPORT
+ * ---------------------------------- */
 module.exports = {
   createComment,
   createCommentValidation,

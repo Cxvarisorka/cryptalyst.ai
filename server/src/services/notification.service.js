@@ -152,6 +152,36 @@ class NotificationService {
   }
 
   /**
+   * Create a new post notification for followers
+   * @param {String} postOwnerId - ID of user who created the post
+   * @param {String} postId - ID of the post
+   * @param {Array} followerIds - Array of follower IDs to notify
+   */
+  async createNewPostNotifications(postOwnerId, postId, followerIds) {
+    if (!followerIds || followerIds.length === 0) {
+      return [];
+    }
+
+    const message = 'shared a new post';
+
+    // Create notifications for all followers
+    const notifications = followerIds.map((followerId) =>
+      this.createNotification({
+        recipient: followerId,
+        sender: postOwnerId,
+        type: 'post',
+        message,
+        relatedEntity: {
+          entityType: 'Post',
+          entityId: postId,
+        },
+      })
+    );
+
+    return Promise.all(notifications);
+  }
+
+  /**
    * Get all notifications for a user
    * @param {String} userId - User ID
    * @param {Object} options - Query options (page, limit, unreadOnly)

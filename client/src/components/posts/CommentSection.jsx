@@ -7,10 +7,36 @@ import { useAuth } from '../../contexts/AuthContext';
 import postService from '../../services/post.service';
 import { formatDistanceToNow } from 'date-fns';
 
-/**
- * CommentItem Component
- * Displays a single comment with replies
- */
+/* ========================================================================
+   Helper: recursively insert a reply under any nested parent comment
+   ======================================================================== */
+const insertReply = (list, parentId, reply) => {
+  return list.map((c) => {
+    if (c._id === parentId) {
+      return { ...c, replies: [...(c.replies || []), reply] };
+    }
+    if (c.replies?.length) {
+      return { ...c, replies: insertReply(c.replies, parentId, reply) };
+    }
+    return c;
+  });
+};
+
+/* ========================================================================
+   Helper: recursively delete any nested comment by ID
+   ======================================================================== */
+const deleteNested = (list, id) => {
+  return list
+    .filter((c) => c._id !== id)
+    .map((c) => ({
+      ...c,
+      replies: c.replies ? deleteNested(c.replies, id) : []
+    }));
+};
+
+/* ========================================================================
+   Comment Item Component
+   ======================================================================== */
 const CommentItem = ({ comment, onDelete, onReply, currentUserId }) => {
   const [liked, setLiked] = useState(comment.isLikedByUser || false);
   const [likesCount, setLikesCount] = useState(comment.likesCount || 0);
@@ -19,49 +45,44 @@ const CommentItem = ({ comment, onDelete, onReply, currentUserId }) => {
 
   const isAuthor = currentUserId && comment.userId?._id === currentUserId;
 
-  // Update liked state when comment data changes
-  React.useEffect(() => {
-    if (typeof comment.isLikedByUser === 'boolean') {
-      setLiked(comment.isLikedByUser);
-    }
+  useEffect(() => {
+    setLiked(comment.isLikedByUser || false);
     setLikesCount(comment.likesCount || 0);
-  }, [comment.isLikedByUser, comment.likesCount]);
+  }, [comment._id, comment.isLikedByUser, comment.likesCount]);
 
   const handleLike = async () => {
-    if (liking) return; // Prevent multiple clicks
+    if (liking) return;
+
+    const prevLiked = liked;
+    const prevLikes = likesCount;
 
     try {
       setLiking(true);
 
-      // Optimistic update
-      const wasLiked = liked;
-      setLiked(!liked);
-      setLikesCount((prev) => wasLiked ? prev - 1 : prev + 1);
+      setLiked(!prevLiked);
+      setLikesCount(prevLiked ? prevLikes - 1 : prevLikes + 1);
 
-      const response = await postService.toggleCommentLike(comment._id);
+      const res = await postService.toggleCommentLike(comment._id);
 
-      // Update with server response
-      setLiked(response.data.liked);
-      if (response.data.liked !== wasLiked) {
-        // Already updated optimistically, no need to change again
-      } else {
-        // Revert if server response doesn't match optimistic update
-        setLiked(wasLiked);
-        setLikesCount(comment.likesCount || 0);
+      setLiked(res.data.liked);
+      if (res.data.likesCount !== undefined) {
+        setLikesCount(res.data.likesCount);
       }
-    } catch (error) {
-      console.error('Error toggling comment like:', error);
-      // Revert on error
-      setLiked(!liked);
-      setLikesCount(comment.likesCount || 0);
+    } catch (err) {
+      setLiked(prevLiked);
+      setLikesCount(prevLikes);
+
+      if (err.response?.status === 401) {
+        alert('Please sign in to like comments');
+      }
     } finally {
       setLiking(false);
     }
   };
 
-  const formatTime = (timestamp) => {
+  const formatTime = (t) => {
     try {
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+      return formatDistanceToNow(new Date(t), { addSuffix: true });
     } catch {
       return 'recently';
     }
@@ -90,7 +111,9 @@ const CommentItem = ({ comment, onDelete, onReply, currentUserId }) => {
                 <span className="text-sm font-medium text-foreground">
                   {comment.userId?.name || 'Unknown User'}
                 </span>
-                <span className="text-xs text-muted-foreground">{formatTime(comment.createdAt)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {formatTime(comment.createdAt)}
+                </span>
               </div>
 
               {isAuthor && (
@@ -112,6 +135,7 @@ const CommentItem = ({ comment, onDelete, onReply, currentUserId }) => {
                 </DropdownMenu>
               )}
             </div>
+
             <p className="text-sm text-card-foreground">{comment.content}</p>
           </div>
 
@@ -123,11 +147,7 @@ const CommentItem = ({ comment, onDelete, onReply, currentUserId }) => {
                 liking ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              <Heart
-                className={`w-4 h-4 ${
-                  liked ? 'fill-danger text-danger' : ''
-                }`}
-              />
+              <Heart className={`w-4 h-4 ${liked ? 'fill-danger text-danger' : ''}`} />
               <span className="text-xs">{likesCount > 0 && likesCount}</span>
             </button>
 
@@ -141,7 +161,7 @@ const CommentItem = ({ comment, onDelete, onReply, currentUserId }) => {
           </div>
 
           {/* Replies */}
-          {comment.replies && comment.replies.length > 0 && (
+          {comment.replies?.length > 0 && (
             <div className="mt-2">
               <button
                 onClick={() => setShowReplies(!showReplies)}
@@ -172,11 +192,10 @@ const CommentItem = ({ comment, onDelete, onReply, currentUserId }) => {
   );
 };
 
-/**
- * CommentSection Component
- * Displays comments for a post and allows adding new comments
- */
-const CommentSection = ({ postId, initialCommentsCount = 0 }) => {
+/* ========================================================================
+   Main CommentSection Component
+   ======================================================================== */
+const CommentSection = ({ postId }) => {
   const { user } = useAuth();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -187,22 +206,23 @@ const CommentSection = ({ postId, initialCommentsCount = 0 }) => {
   const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
+    setPage(1);
     loadComments();
   }, [postId]);
 
   const loadComments = async () => {
     try {
       setLoading(true);
-      const response = await postService.getComments(postId, {
+      const res = await postService.getComments(postId, {
         page: 1,
         limit: 20,
-        includeReplies: true,
+        includeReplies: true
       });
 
-      setComments(response.data);
-      setHasMore(response.pagination.page < response.pagination.pages);
-    } catch (error) {
-      console.error('Error loading comments:', error);
+      setComments(res.data);
+      setHasMore(res.pagination.page < res.pagination.pages);
+    } catch (err) {
+      console.error('Error loading comments:', err);
     } finally {
       setLoading(false);
     }
@@ -211,95 +231,60 @@ const CommentSection = ({ postId, initialCommentsCount = 0 }) => {
   const loadMore = async () => {
     try {
       const nextPage = page + 1;
-      const response = await postService.getComments(postId, {
+      setPage((p) => p + 1);
+
+      const res = await postService.getComments(postId, {
         page: nextPage,
         limit: 20,
-        includeReplies: true,
+        includeReplies: true
       });
 
-      setComments((prev) => [...prev, ...response.data]);
-      setPage(nextPage);
-      setHasMore(response.pagination.page < response.pagination.pages);
-    } catch (error) {
-      console.error('Error loading more comments:', error);
+      setComments((prev) => [...prev, ...res.data]);
+      setHasMore(res.pagination.page < res.pagination.pages);
+    } catch (err) {
+      console.error('Error loading more comments:', err);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!user) {
-      alert('Please sign in to comment');
-      return;
-    }
-
+    if (!user) return alert('Please sign in to comment');
     if (!newComment.trim()) return;
 
     try {
       setSubmitting(true);
 
-      const commentData = {
-        content: newComment,
-      };
-
-      // Only add parentCommentId if it's a reply
+      const data = { content: newComment };
       if (replyTo?._id) {
-        commentData.parentCommentId = replyTo._id;
+        data.parentCommentId = replyTo._id;
       }
 
-      const response = await postService.createComment(postId, commentData);
+      const res = await postService.createComment(postId, data);
 
       if (replyTo) {
-        setComments((prev) =>
-          prev.map((comment) => {
-            if (comment._id === replyTo._id) {
-              return {
-                ...comment,
-                replies: [...(comment.replies || []), response.data],
-              };
-            }
-            return comment;
-          })
-        );
+        setComments((prev) => insertReply(prev, replyTo._id, res.data));
       } else {
-        setComments((prev) => [response.data, ...prev]);
+        setComments((prev) => [res.data, ...prev]);
       }
 
       setNewComment('');
       setReplyTo(null);
-    } catch (error) {
-      console.error('Error creating comment:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to post comment';
-      const validationErrors = error.response?.data?.errors;
-
-      if (validationErrors && validationErrors.length > 0) {
-        console.error('Validation errors:', validationErrors);
-        alert(`Validation failed: ${validationErrors.map(e => e.msg).join(', ')}`);
-      } else {
-        alert(errorMessage);
-      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to post comment');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (commentId) => {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
+    if (!confirm('Delete comment?')) return;
 
     try {
       await postService.deleteComment(commentId);
-
-      setComments((prev) =>
-        prev.filter((comment) => {
-          if (comment._id === commentId) return false;
-          if (comment.replies) {
-            comment.replies = comment.replies.filter((reply) => reply._id !== commentId);
-          }
-          return true;
-        })
-      );
-    } catch (error) {
-      console.error('Error deleting comment:', error);
+      setComments((prev) => deleteNested(prev, commentId));
+    } catch (err) {
+      console.error('Error deleting comment:', err);
       alert('Failed to delete comment');
     }
   };
@@ -330,7 +315,7 @@ const CommentSection = ({ postId, initialCommentsCount = 0 }) => {
           <div className="flex gap-3">
             <Avatar className="w-8 h-8 bg-muted text-foreground flex-shrink-0">
               {user?.avatar ? (
-                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-xs">{user?.name?.charAt(0) || 'U'}</span>
               )}
@@ -344,7 +329,6 @@ const CommentSection = ({ postId, initialCommentsCount = 0 }) => {
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder={replyTo ? `Reply to ${replyTo.userId?.name}...` : 'Write a comment...'}
                 className="flex-1 px-4 py-2 bg-background border border-border rounded-full text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                maxLength={2000}
               />
               <Button
                 type="submit"
@@ -359,13 +343,11 @@ const CommentSection = ({ postId, initialCommentsCount = 0 }) => {
         </form>
       )}
 
-      {/* Comments List */}
+      {/* Comments */}
       {loading ? (
         <div className="text-center py-8 text-muted-foreground">Loading comments...</div>
       ) : comments.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          No comments yet. Be the first to comment!
-        </div>
+        <div className="text-center py-8 text-muted-foreground">No comments yet.</div>
       ) : (
         <div className="space-y-4">
           {comments.map((comment) => (
@@ -380,11 +362,7 @@ const CommentSection = ({ postId, initialCommentsCount = 0 }) => {
 
           {hasMore && (
             <div className="text-center pt-4">
-              <Button
-                variant="outline"
-                onClick={loadMore}
-                className="border-border hover:bg-muted"
-              >
+              <Button variant="outline" onClick={loadMore} className="border-border hover:bg-muted">
                 Load More Comments
               </Button>
             </div>
