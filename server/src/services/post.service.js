@@ -2,6 +2,8 @@ const Post = require('../models/post.model');
 const Comment = require('../models/comment.model');
 const Like = require('../models/like.model');
 const PostFilter = require('../utils/PostFilter');
+const { deleteMultipleFromCloudinary } = require('../config/cloudinary');
+const Follow = require('../models/follow.model');
 
 /**
  * Add like status to posts for a specific user
@@ -43,15 +45,15 @@ const enrichPostsWithLikeStatus = async (posts, userId) => {
 
 /**
  * Create a new post
- * @param {Object} postData - Post data including userId, asset, content, tags
+ * @param {Object} postData - Post data including userId, asset, content, tags, images
  * @returns {Promise<Object>} Created post
  */
 const createPost = async (postData) => {
   try {
-    // Create post without images
+    // Create post with images
     const post = new Post({
       ...postData,
-      images: [], // No images
+      images: postData.images || [],
     });
 
     await post.save();
@@ -167,6 +169,24 @@ const deletePost = async (postId, userId) => {
     throw new Error('Unauthorized to delete this post');
   }
 
+  // Delete images from Cloudinary if they exist
+  if (post.images && post.images.length > 0) {
+    const publicIds = post.images
+      .filter(img => img.publicId) // Only delete images with publicId
+      .map(img => img.publicId);
+
+    if (publicIds.length > 0) {
+      try {
+        console.log(`Deleting ${publicIds.length} images from Cloudinary:`, publicIds);
+        await deleteMultipleFromCloudinary(publicIds);
+        console.log('Images deleted successfully from Cloudinary');
+      } catch (error) {
+        console.error('Error deleting images from Cloudinary:', error);
+        // Continue with post deletion even if image deletion fails
+      }
+    }
+  }
+
   // Delete associated comments and likes
   await Promise.all([
     Comment.deleteMany({ postId }),
@@ -231,6 +251,63 @@ const searchPosts = async (searchQuery, query = {}) => {
   return await getFeedPosts({ ...query, search: searchQuery });
 };
 
+/**
+ * Get posts from users that the current user is following
+ * @param {string} userId - Current user ID
+ * @param {Object} query - Query parameters
+ * @returns {Promise<Object>} Posts with pagination
+ */
+const getFollowingFeed = async (userId, query = {}) => {
+  try {
+    // Get list of users that the current user is following
+    const follows = await Follow.find({ follower: userId })
+      .select('following')
+      .lean();
+
+    const followingIds = follows.map((f) => f.following);
+
+    if (followingIds.length === 0) {
+      // User is not following anyone, return empty result
+      return {
+        posts: [],
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 0,
+          pages: 0,
+          hasMore: false,
+        },
+      };
+    }
+
+    // Create filter instance with query parameters
+    const postFilter = new PostFilter(query);
+
+    // Add filter to only show posts from followed users
+    postFilter.addFilter('userId', followingIds, 'in');
+
+    // Exclude hidden posts
+    postFilter.excludeHidden();
+
+    // Build and execute query
+    const result = await postFilter.execute(Post);
+
+    // Enrich posts with like status if user is authenticated
+    let posts = result.data;
+    if (userId) {
+      posts = await enrichPostsWithLikeStatus(posts, userId);
+    }
+
+    return {
+      posts: posts,
+      pagination: result.pagination,
+    };
+  } catch (error) {
+    console.error('Error in getFollowingFeed:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   createPost,
   getFeedPosts,
@@ -242,4 +319,5 @@ module.exports = {
   getPostsByUser,
   getPostsByTag,
   searchPosts,
+  getFollowingFeed,
 };

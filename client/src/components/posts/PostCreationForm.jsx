@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Hash, Globe, Lock, Users, TrendingUp, TrendingDown, Search, Check } from 'lucide-react';
+import { X, Hash, Globe, Lock, Users, TrendingUp, TrendingDown, Search, ImagePlus } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
+import { Card } from '../ui/card';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 
 /**
  * PostCreationForm Component
- * Form for creating new posts about coins/stocks with sentiment analysis
+ * Clean, simple form for creating new posts with image upload
  */
 const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) => {
   const { user } = useAuth();
@@ -41,6 +41,8 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
   });
 
   const [tagInput, setTagInput] = useState('');
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
   /**
    * Load market data for asset selection
@@ -111,6 +113,87 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
     }));
   };
 
+  /**
+   * Handle image selection
+   */
+  const handleImageChange = (e) => {
+    console.log('🖼️ Image selection triggered');
+    const files = Array.from(e.target.files);
+    console.log('📁 Files selected:', files.length, files);
+
+    if (files.length === 0) {
+      console.log('⚠️ No files selected');
+      return;
+    }
+
+    // Validate max 4 images
+    if (files.length + selectedImages.length > 4) {
+      console.log('❌ Too many images:', files.length + selectedImages.length);
+      setError(t('feed.postForm.errors.maxImages') || 'Maximum 4 images allowed');
+      e.target.value = '';
+      return;
+    }
+
+    // Validate file types
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const invalidFiles = files.filter(file => !validTypes.includes(file.type));
+
+    if (invalidFiles.length > 0) {
+      console.log('❌ Invalid file types:', invalidFiles);
+      setError('Only JPEG, PNG, and WebP images are allowed');
+      e.target.value = '';
+      return;
+    }
+
+    // Validate file sizes (5MB max)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const oversizedFiles = files.filter(file => file.size > maxSize);
+
+    if (oversizedFiles.length > 0) {
+      console.log('❌ Files too large:', oversizedFiles);
+      setError('Image size must be less than 5MB');
+      e.target.value = '';
+      return;
+    }
+
+    // Update selected images
+    const newImages = [...selectedImages, ...files].slice(0, 4);
+    setSelectedImages(newImages);
+    console.log('✅ Updated selectedImages:', newImages.length);
+
+    // Create preview URLs
+    const newFilePreviews = files.map(file => {
+      const url = URL.createObjectURL(file);
+      console.log('🎨 Created preview URL:', url);
+      return url;
+    });
+    const allPreviews = [...imagePreviews, ...newFilePreviews].slice(0, 4);
+    setImagePreviews(allPreviews);
+    console.log('✅ Updated imagePreviews:', allPreviews);
+
+    setError('');
+    e.target.value = '';
+  };
+
+  /**
+   * Remove selected image
+   */
+  const removeImage = (index) => {
+    URL.revokeObjectURL(imagePreviews[index]);
+    const newImages = selectedImages.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setSelectedImages(newImages);
+    setImagePreviews(newPreviews);
+  };
+
+  /**
+   * Cleanup preview URLs on unmount
+   */
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   /**
    * Add tag
@@ -149,6 +232,10 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('📤 Form submission started');
+    console.log('📊 Form data:', formData);
+    console.log('🖼️ Selected images:', selectedImages.length, selectedImages);
+
     setLoading(true);
     setError('');
 
@@ -164,196 +251,57 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
         throw new Error(t('feed.postForm.errors.contentTooLong'));
       }
 
-      // Call API without images
-      const response = await postService.createPost(formData);
+      console.log('✅ Validation passed, calling API with images:', selectedImages.length);
 
-      console.log('Post created - Full response:', response);
-      console.log('Post created - Post data:', response.data);
+      // Call API with images
+      const response = await postService.createPost(formData, selectedImages);
+
+      console.log('✅ Post created - Full response:', response);
+      console.log('📝 Post created - Post data:', response.data);
+      console.log('🖼️ Images in response:', response.data.images?.length || 0);
+
+      // Cleanup preview URLs after successful submission
+      imagePreviews.forEach(url => URL.revokeObjectURL(url));
 
       if (onPostCreated) {
         onPostCreated(response.data);
       }
     } catch (err) {
-      console.error('Error creating post:', err);
+      console.error('❌ Error creating post:', err);
+      console.error('❌ Error response:', err.response?.data);
       setError(err.response?.data?.message || err.message || t('feed.postForm.errors.createFailed'));
     } finally {
       setLoading(false);
+      console.log('📤 Form submission ended');
     }
   };
-
 
   const filteredCrypto = filterAssets(marketAssets.crypto);
   const filteredStocks = filterAssets(marketAssets.stocks);
 
   return (
-    <Card className="w-full bg-card border-border">
-      <CardContent className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} encType="multipart/form-data" className="flex flex-col max-h-[calc(100vh-200px)]">
+      {/* Scrollable Form Area */}
+      <div className="overflow-y-auto px-6 py-4">
+        <div className="space-y-6">
+
           {/* Asset Selection */}
-          <div className="space-y-2">
-            <Label className="text-card-foreground">{t('feed.postForm.selectAssetRequired')}</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">{t('feed.postForm.selectAssetRequired')}</Label>
 
             {!formData.asset.symbol ? (
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowAssetSelector(true)}
-                  disabled={!!preselectedAsset}
-                  className="w-full justify-start border-border hover:bg-muted text-muted-foreground"
-                >
-                  {t('feed.postForm.chooseAsset')}
-                </Button>
-
-                {/* Asset Selector Modal */}
-                {showAssetSelector && (
-                  <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <Card className="w-full max-w-2xl max-h-[80vh] bg-card border-border overflow-hidden">
-                      <div className="p-4 border-b border-border">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold text-foreground">{t('feed.postForm.selectAsset')}</h3>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setShowAssetSelector(false);
-                              setAssetSearch('');
-                            }}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-
-                        {/* Search Bar */}
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            type="text"
-                            placeholder={t('feed.postForm.searchAssets')}
-                            value={assetSearch}
-                            onChange={(e) => setAssetSearch(e.target.value)}
-                            className="pl-10 bg-background border-border text-foreground"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Tabs */}
-                      <Tabs value={activeAssetTab} onValueChange={setActiveAssetTab} className="w-full">
-                        <div className="px-4 pt-2">
-                          <TabsList className="grid w-full grid-cols-2 bg-muted">
-                            <TabsTrigger value="crypto" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                              {t('feed.postForm.cryptocurrency')} ({filteredCrypto.length})
-                            </TabsTrigger>
-                            <TabsTrigger value="stocks" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                              {t('feed.stocks')} ({filteredStocks.length})
-                            </TabsTrigger>
-                          </TabsList>
-                        </div>
-
-                        <div className="overflow-y-auto max-h-[50vh] p-4">
-                          {loadingAssets ? (
-                            <div className="text-center py-8 text-muted-foreground">{t('feed.postForm.loadingAssets')}</div>
-                          ) : (
-                            <>
-                              <TabsContent value="crypto" className="mt-0 space-y-2">
-                                {filteredCrypto.length === 0 ? (
-                                  <div className="text-center py-8 text-muted-foreground">{t('feed.postForm.noCrypto')}</div>
-                                ) : (
-                                  <div className="grid gap-2">
-                                    {filteredCrypto.map((crypto) => (
-                                      <button
-                                        key={crypto.id}
-                                        type="button"
-                                        onClick={() => handleAssetSelect(crypto, 'crypto')}
-                                        className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-left w-full"
-                                      >
-                                        {crypto.image && (
-                                          <img
-                                            src={crypto.image}
-                                            alt={crypto.symbol}
-                                            className="w-8 h-8 rounded-full"
-                                          />
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-semibold text-foreground">{crypto.symbol}</span>
-                                            <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded">
-                                              #{crypto.market_cap_rank || 'N/A'}
-                                            </span>
-                                          </div>
-                                          <p className="text-sm text-muted-foreground truncate">{crypto.name}</p>
-                                        </div>
-                                        <div className="text-right">
-                                          <p className="text-sm font-medium text-foreground">
-                                            ${crypto.price?.toLocaleString() || 'N/A'}
-                                          </p>
-                                          <p className={`text-xs ${
-                                            crypto.change24h >= 0
-                                              ? 'text-success'
-                                              : 'text-danger'
-                                          }`}>
-                                            {crypto.change24h?.toFixed(2)}%
-                                          </p>
-                                        </div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </TabsContent>
-
-                              <TabsContent value="stocks" className="mt-0 space-y-2">
-                                {filteredStocks.length === 0 ? (
-                                  <div className="text-center py-8 text-muted-foreground">{t('feed.postForm.noStocks')}</div>
-                                ) : (
-                                  <div className="grid gap-2">
-                                    {filteredStocks.map((stock) => (
-                                      <button
-                                        key={stock.symbol}
-                                        type="button"
-                                        onClick={() => handleAssetSelect(stock, 'stock')}
-                                        className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-left w-full"
-                                      >
-                                        {stock.image && (
-                                          <img
-                                            src={stock.image}
-                                            alt={stock.symbol}
-                                            className="w-8 h-8 rounded-full"
-                                          />
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-semibold text-foreground">{stock.symbol}</span>
-                                          </div>
-                                          <p className="text-sm text-muted-foreground truncate">{stock.name}</p>
-                                        </div>
-                                        <div className="text-right">
-                                          <p className="text-sm font-medium text-foreground">
-                                            ${stock.price?.toLocaleString() || 'N/A'}
-                                          </p>
-                                          <p className={`text-xs ${
-                                            stock.change24h >= 0
-                                              ? 'text-success'
-                                              : 'text-danger'
-                                          }`}>
-                                            {stock.change24h?.toFixed(2)}%
-                                          </p>
-                                        </div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </TabsContent>
-                            </>
-                          )}
-                        </div>
-                      </Tabs>
-                    </Card>
-                  </div>
-                )}
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAssetSelector(true)}
+                disabled={!!preselectedAsset}
+                className="w-full justify-start h-12"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                {t('feed.postForm.chooseAsset')}
+              </Button>
             ) : (
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border border-border">
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border">
                 {formData.asset.image && (
                   <img
                     src={formData.asset.image}
@@ -362,26 +310,18 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                   />
                 )}
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-primary font-semibold text-lg">${formData.asset.symbol}</span>
-                    <span className="text-xs text-muted-foreground px-2 py-0.5 bg-background rounded">
-                      {formData.asset.type}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{formData.asset.name}</p>
+                  <div className="font-semibold">${formData.asset.symbol}</div>
+                  <div className="text-sm text-muted-foreground">{formData.asset.name}</div>
                 </div>
                 {!preselectedAsset && (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        asset: { symbol: '', name: '', type: 'crypto', image: '' },
-                      }));
-                    }}
-                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => setFormData((prev) => ({
+                      ...prev,
+                      asset: { symbol: '', name: '', type: 'crypto', image: '' },
+                    }))}
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -390,19 +330,15 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
             )}
           </div>
 
-          {/* Sentiment Buttons */}
-          <div className="space-y-2">
-            <Label className="text-card-foreground">{t('feed.postForm.sentiment')}</Label>
+          {/* Sentiment */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">{t('feed.postForm.sentiment')}</Label>
             <div className="grid grid-cols-3 gap-2">
               <Button
                 type="button"
                 variant={formData.sentiment === 'bullish' ? 'default' : 'outline'}
                 onClick={() => handleSentimentChange('bullish')}
-                className={`${
-                  formData.sentiment === 'bullish'
-                    ? 'bg-success hover:bg-success/90 text-success-foreground'
-                    : 'border-border hover:bg-muted'
-                }`}
+                className={formData.sentiment === 'bullish' ? 'bg-success hover:bg-success/90' : ''}
               >
                 <TrendingUp className="w-4 h-4 mr-2" />
                 {t('feed.postForm.bullish')}
@@ -411,11 +347,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                 type="button"
                 variant={formData.sentiment === 'bearish' ? 'default' : 'outline'}
                 onClick={() => handleSentimentChange('bearish')}
-                className={`${
-                  formData.sentiment === 'bearish'
-                    ? 'bg-danger hover:bg-danger/90 text-danger-foreground'
-                    : 'border-border hover:bg-muted'
-                }`}
+                className={formData.sentiment === 'bearish' ? 'bg-danger hover:bg-danger/90' : ''}
               >
                 <TrendingDown className="w-4 h-4 mr-2" />
                 {t('feed.postForm.bearish')}
@@ -424,11 +356,6 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                 type="button"
                 variant={formData.sentiment === 'neutral' ? 'default' : 'outline'}
                 onClick={() => handleSentimentChange('neutral')}
-                className={`${
-                  formData.sentiment === 'neutral'
-                    ? 'bg-muted-foreground hover:bg-muted-foreground/90 text-background'
-                    : 'border-border hover:bg-muted'
-                }`}
               >
                 {t('feed.postForm.neutral')}
               </Button>
@@ -436,54 +363,104 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
           </div>
 
           {/* Content */}
-          <div className="space-y-2">
-            <Label htmlFor="content" className="text-card-foreground">
-              {t('feed.postForm.content')}
-            </Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">{t('feed.postForm.content')}</Label>
             <textarea
-              id="content"
               rows={6}
               placeholder={t('feed.postForm.contentPlaceholder')}
               value={formData.content}
               onChange={handleContentChange}
               required
               maxLength={5000}
-              className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              className="w-full px-4 py-3 bg-background border rounded-lg resize-none focus:ring-2 focus:ring-primary"
             />
-            <div className="text-right text-sm text-muted-foreground">
+            <div className="text-xs text-muted-foreground text-right">
               {formData.content.length} / 5000
             </div>
           </div>
 
+          {/* Image Upload - REDESIGNED */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">{t('feed.postForm.images') || 'Images'}</Label>
+              <span className="text-xs text-muted-foreground font-medium">
+                {selectedImages.length} / 4
+              </span>
+            </div>
+
+            {/* Image Previews */}
+            {imagePreviews.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 p-4 bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/20">
+                {imagePreviews.map((preview, index) => (
+                  <div key={index} className="relative aspect-video group">
+                    <img
+                      src={preview}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-full object-cover rounded-lg"
+                      onLoad={() => console.log(`✅ Image ${index + 1} loaded`)}
+                      onError={() => console.error(`❌ Image ${index + 1} failed`)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-2 right-2 bg-destructive text-white rounded-full p-1.5 hover:scale-110 transition-transform shadow-lg"
+                      title="Remove"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                      #{index + 1}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Upload Button */}
+            {selectedImages.length < 4 && (
+              <div>
+                <input
+                  type="file"
+                  id="images-upload"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  multiple
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                <Label
+                  htmlFor="images-upload"
+                  className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <ImagePlus className="w-8 h-8 text-muted-foreground" />
+                  <span className="font-medium">{t('feed.postForm.addImages') || 'Add Images'}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t('feed.postForm.imageHint') || 'PNG, JPG, WebP - Max 5MB each'}
+                  </span>
+                </Label>
+              </div>
+            )}
+          </div>
+
           {/* Tags */}
-          <div className="space-y-2">
-            <Label htmlFor="tags" className="text-card-foreground">{t('feed.postForm.tags')}</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">{t('feed.postForm.tags')}</Label>
             <div className="flex gap-2">
               <Input
-                id="tags"
                 type="text"
                 placeholder={t('feed.postForm.tagsPlaceholder')}
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    addTag(e);
-                  }
+                  if (e.key === 'Enter') addTag(e);
                 }}
-                className="bg-background border-border text-foreground placeholder:text-muted-foreground"
+                className="flex-1"
               />
-              <Button
-                type="button"
-                onClick={addTag}
-                variant="outline"
-                className="border-border hover:bg-muted"
-              >
+              <Button type="button" onClick={addTag} variant="outline">
                 <Hash className="w-4 h-4" />
               </Button>
             </div>
-
             {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2">
                 {formData.tags.map((tag) => (
                   <span
                     key={tag}
@@ -493,7 +470,7 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
                     <button
                       type="button"
                       onClick={() => removeTag(tag)}
-                      className="hover:text-primary-light"
+                      className="hover:text-primary-dark"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -504,16 +481,14 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
           </div>
 
           {/* Visibility */}
-          <div className="space-y-2">
-            <Label htmlFor="visibility" className="text-card-foreground">{t('feed.postForm.visibility')}</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">{t('feed.postForm.visibility')}</Label>
             <Select
               value={formData.visibility}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, visibility: value }))
-              }
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, visibility: value }))}
             >
-              <SelectTrigger className="bg-background border-border text-foreground">
-                <SelectValue placeholder={t('feed.postForm.selectVisibility')} />
+              <SelectTrigger>
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="public">
@@ -540,35 +515,149 @@ const PostCreationForm = ({ onPostCreated, onCancel, preselectedAsset = null }) 
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/50 rounded-md">
+            <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
               <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
+        </div>
+      </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4">
-            {onCancel && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                disabled={loading}
-                className="border-border hover:bg-muted"
-              >
-                {t('feed.postForm.cancel')}
-              </Button>
-            )}
+      {/* Fixed Footer with Actions */}
+      <div className="border-t px-6 py-4 bg-muted/30">
+        <div className="flex justify-end gap-3">
+          {onCancel && (
             <Button
-              type="submit"
-              disabled={loading || !formData.asset.symbol}
-              className="bg-primary hover:bg-primary-dark text-primary-foreground"
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={loading}
             >
-              {loading ? t('feed.postForm.posting') : t('feed.postForm.post')}
+              {t('feed.postForm.cancel')}
             </Button>
+          )}
+          <Button
+            type="submit"
+            disabled={loading || !formData.asset.symbol}
+            className="min-w-[120px]"
+          >
+            {loading ? t('feed.postForm.posting') : t('feed.postForm.post')}
+          </Button>
+        </div>
+      </div>
+
+      {/* Asset Selector Modal - Inside Dialog */}
+      {showAssetSelector && (
+        <div className="absolute inset-0 bg-background z-50 flex flex-col">
+          <div className="w-full h-full overflow-hidden">
+            <div className="p-6 border-b">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold">{t('feed.postForm.selectAsset')}</h3>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowAssetSelector(false);
+                    setAssetSearch('');
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={t('feed.postForm.searchAssets')}
+                  value={assetSearch}
+                  onChange={(e) => setAssetSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <Tabs value={activeAssetTab} onValueChange={setActiveAssetTab} className="w-full">
+              <div className="px-4 pt-2">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="crypto">
+                    {t('feed.postForm.cryptocurrency')} ({filteredCrypto.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="stocks">
+                    {t('feed.stocks')} ({filteredStocks.length})
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              <div className="overflow-y-auto max-h-[50vh] p-4">
+                {loadingAssets ? (
+                  <div className="text-center py-8 text-muted-foreground">{t('feed.postForm.loadingAssets')}</div>
+                ) : (
+                  <>
+                    <TabsContent value="crypto" className="mt-0 space-y-2">
+                      {filteredCrypto.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">{t('feed.postForm.noCrypto')}</div>
+                      ) : (
+                        filteredCrypto.map((crypto) => (
+                          <button
+                            key={crypto.id}
+                            type="button"
+                            onClick={() => handleAssetSelect(crypto, 'crypto')}
+                            className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted transition-colors w-full text-left"
+                          >
+                            {crypto.image && (
+                              <img src={crypto.image} alt={crypto.symbol} className="w-8 h-8 rounded-full" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold">{crypto.symbol}</div>
+                              <p className="text-sm text-muted-foreground truncate">{crypto.name}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium">${crypto.price?.toLocaleString() || 'N/A'}</p>
+                              <p className={`text-xs ${crypto.change24h >= 0 ? 'text-success' : 'text-danger'}`}>
+                                {crypto.change24h?.toFixed(2)}%
+                              </p>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="stocks" className="mt-0 space-y-2">
+                      {filteredStocks.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">{t('feed.postForm.noStocks')}</div>
+                      ) : (
+                        filteredStocks.map((stock) => (
+                          <button
+                            key={stock.symbol}
+                            type="button"
+                            onClick={() => handleAssetSelect(stock, 'stock')}
+                            className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted transition-colors w-full text-left"
+                          >
+                            {stock.image && (
+                              <img src={stock.image} alt={stock.symbol} className="w-8 h-8 rounded-full" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold">{stock.symbol}</div>
+                              <p className="text-sm text-muted-foreground truncate">{stock.name}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium">${stock.price?.toLocaleString() || 'N/A'}</p>
+                              <p className={`text-xs ${stock.change24h >= 0 ? 'text-success' : 'text-danger'}`}>
+                                {stock.change24h?.toFixed(2)}%
+                              </p>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </TabsContent>
+                  </>
+                )}
+              </div>
+            </Tabs>
           </div>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </form>
   );
 };
 

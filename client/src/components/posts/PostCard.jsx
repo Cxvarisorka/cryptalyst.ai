@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useAuth } from '../../contexts/AuthContext';
 import postService from '../../services/post.service';
 import { formatDistanceToNow } from 'date-fns';
+import ImageViewer from './ImageViewer';
 
 /**
  * PostCard Component
@@ -19,12 +20,14 @@ import { formatDistanceToNow } from 'date-fns';
 const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagClick }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(post.isLikedByUser || false);
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
   const [sharesCount, setSharesCount] = useState(post.sharesCount || 0);
   const [loading, setLoading] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const [imageViewerIndex, setImageViewerIndex] = useState(0);
   const [editContent, setEditContent] = useState(post.content || '');
   const [editVisibility, setEditVisibility] = useState(post.visibility || 'public');
   const [editTags, setEditTags] = useState((post.tags || []).join(', '));
@@ -36,13 +39,14 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
 
   /**
    * Initialize like status from post data
+   * Re-initialize when post changes (e.g., after refresh or navigation)
    */
   React.useEffect(() => {
-    // If post includes isLikedByUser field, use it
     if (typeof post.isLikedByUser === 'boolean') {
       setLiked(post.isLikedByUser);
     }
-  }, [post.isLikedByUser]);
+    setLikesCount(post.likesCount || 0);
+  }, [post._id, post.isLikedByUser, post.likesCount]);
 
   /**
    * Handle like toggle
@@ -330,7 +334,10 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
                   src={image.url}
                   alt={`Post image ${index + 1}`}
                   className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                  onClick={() => window.open(image.url, '_blank')}
+                  onClick={() => {
+                    setImageViewerIndex(index);
+                    setShowImageViewer(true);
+                  }}
                 />
               </div>
             ))}
@@ -479,6 +486,15 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Image Viewer */}
+    {showImageViewer && post.images && post.images.length > 0 && (
+      <ImageViewer
+        images={post.images}
+        initialIndex={imageViewerIndex}
+        onClose={() => setShowImageViewer(false)}
+      />
+    )}
     </>
   );
 };

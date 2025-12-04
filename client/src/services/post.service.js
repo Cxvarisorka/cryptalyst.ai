@@ -13,16 +13,55 @@ const postService = {
   /**
    * Create a new post
    * @param {Object} postData - Post data
+   * @param {Array<File>} images - Array of image files (max 4)
    * @returns {Promise} API response
    */
-  createPost: async (postData) => {
-    const response = await axios.post(`${API_BASE_URL}/posts`, {
-      asset: postData.asset,
-      content: postData.content,
-      tags: postData.tags || [],
-      visibility: postData.visibility || 'public',
-      sentiment: postData.sentiment || 'neutral',
+  createPost: async (postData, images = []) => {
+    console.log('🌐 POST SERVICE: Creating post');
+    console.log('📊 Post data:', postData);
+    console.log('🖼️ Images:', images.length, images);
+
+    const formData = new FormData();
+
+    // Append text fields as JSON strings
+    formData.append('asset', JSON.stringify(postData.asset));
+    formData.append('content', postData.content);
+    formData.append('tags', JSON.stringify(postData.tags || []));
+    formData.append('visibility', postData.visibility || 'public');
+    formData.append('sentiment', postData.sentiment || 'neutral');
+
+    console.log('📝 FormData text fields appended');
+
+    // Append images if provided (max 4)
+    if (images && images.length > 0) {
+      console.log(`📎 Appending ${images.length} images to FormData`);
+      images.slice(0, 4).forEach((image, index) => {
+        console.log(`  - Image ${index + 1}:`, image.name, image.type, `${(image.size / 1024).toFixed(2)} KB`);
+        formData.append('images', image);
+      });
+    } else {
+      console.log('⚠️ No images to append');
+    }
+
+    // Log FormData contents
+    console.log('📦 FormData contents:');
+    for (let pair of formData.entries()) {
+      if (pair[1] instanceof File) {
+        console.log(`  - ${pair[0]}:`, pair[1].name, pair[1].type);
+      } else {
+        console.log(`  - ${pair[0]}:`, pair[1]);
+      }
+    }
+
+    console.log('🚀 Sending POST request to:', `${API_BASE_URL}/posts`);
+
+    const response = await axios.post(`${API_BASE_URL}/posts`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
+
+    console.log('✅ POST SERVICE: Response received:', response.data);
 
     return response.data;
   },
@@ -36,6 +75,16 @@ const postService = {
    */
   getFeed: async (params = {}) => {
     const response = await axios.get(`${API_BASE_URL}/posts/feed`, { params });
+    return response.data;
+  },
+
+  /**
+   * Get following feed (posts from users you follow)
+   * @param {Object} params - Query parameters
+   * @returns {Promise} API response
+   */
+  getFollowingFeed: async (params = {}) => {
+    const response = await axios.get(`${API_BASE_URL}/posts/feed/following`, { params });
     return response.data;
   },
 

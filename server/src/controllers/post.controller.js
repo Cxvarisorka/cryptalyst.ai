@@ -1,5 +1,8 @@
 const { body, validationResult } = require('express-validator');
 const postService = require('../services/post.service');
+const { uploadToCloudinary } = require('../config/cloudinary');
+const Follow = require('../models/follow.model');
+const notificationService = require('../services/notification.service');
 
 /**
  * Validation rules for creating a post
@@ -50,17 +53,10 @@ const createPostValidation = [
  */
 const createPost = async (req, res, next) => {
   try {
-    // Parse JSON fields if multipart/form-data
-    if (req.body.asset && typeof req.body.asset === 'string') {
-      req.body.asset = JSON.parse(req.body.asset);
-    }
-    if (req.body.tags && typeof req.body.tags === 'string') {
-      req.body.tags = JSON.parse(req.body.tags);
-    }
-
-    // Check validation errors
+    // Check validation errors (JSON parsing already done in middleware)
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -68,7 +64,32 @@ const createPost = async (req, res, next) => {
       });
     }
 
+    console.log('✅ Validation passed');
+    console.log('📊 Request body:', req.body);
+    console.log('📁 Files received:', req.files?.length || 0);
+
     const asset = req.body.asset || {};
+
+    // Upload images to Cloudinary if provided
+    const uploadedImages = [];
+    if (req.files && req.files.length > 0) {
+      console.log(`Uploading ${req.files.length} images to Cloudinary...`);
+
+      for (const file of req.files) {
+        try {
+          const result = await uploadToCloudinary(file.buffer, 'posts');
+          uploadedImages.push({
+            url: result.url,
+            publicId: result.publicId,
+          });
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          // Continue with other images even if one fails
+        }
+      }
+
+      console.log(`Successfully uploaded ${uploadedImages.length} images`);
+    }
 
     const postData = {
       userId: req.user._id,
@@ -82,9 +103,24 @@ const createPost = async (req, res, next) => {
       tags: Array.isArray(req.body.tags) ? req.body.tags : [],
       visibility: req.body.visibility || 'public',
       sentiment: req.body.sentiment || 'neutral',
+      images: uploadedImages,
     };
 
     const post = await postService.createPost(postData);
+
+    // Notify followers about the new post (async, don't wait)
+    Follow.find({ following: req.user._id })
+      .select('follower')
+      .lean()
+      .then((followers) => {
+        if (followers && followers.length > 0) {
+          const followerIds = followers.map((f) => f.follower);
+          notificationService
+            .createNewPostNotifications(req.user._id, post._id, followerIds)
+            .catch((err) => console.error('Error creating post notifications:', err));
+        }
+      })
+      .catch((err) => console.error('Error finding followers:', err));
 
     res.status(201).json({
       success: true,
@@ -115,7 +151,21 @@ const getFeed = async (req, res, next) => {
 
 const getPostById = async (req, res, next) => {
   try {
-    const post = await postService.getPostById(req.params.id);
+    let post = await postService.getPostById(req.params.id);
+
+    // Add like status if user is authenticated
+    if (req.user?._id) {
+      const Like = require('../models/like.model');
+      const liked = await Like.findOne({
+        postId: req.params.id,
+        userId: req.user._id,
+      }).lean();
+
+      post = {
+        ...post,
+        isLikedByUser: !!liked,
+      };
+    }
 
     res.status(200).json({
       success: true,
@@ -242,6 +292,28 @@ const searchPosts = async (req, res, next) => {
   }
 };
 
+const getFollowingFeed = async (req, res, next) => {
+  try {
+    // Require authentication for following feed
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required to view following feed',
+      });
+    }
+
+    const result = await postService.getFollowingFeed(req.user._id, req.query);
+
+    res.status(200).json({
+      success: true,
+      data: result.posts,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createPost,
   createPostValidation,
@@ -253,4 +325,5 @@ module.exports = {
   getPostsByAsset,
   getPostsByUser,
   searchPosts,
+  getFollowingFeed,
 };
