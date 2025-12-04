@@ -27,6 +27,7 @@ const SocialFeed = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showComments, setShowComments] = useState(false);
+  const [activeTab, setActiveTab] = useState('all'); // 'all' or 'following'
 
   // Filters
   const [filters, setFilters] = useState({
@@ -39,7 +40,7 @@ const SocialFeed = () => {
 
   useEffect(() => {
     loadPosts(true);
-  }, [filters]);
+  }, [filters, activeTab]);
 
   const loadPosts = async (reset = false) => {
     try {
@@ -61,7 +62,10 @@ const SocialFeed = () => {
         params.tag = filters.tag;
       }
 
-      const response = await postService.getFeed(params);
+      // Use different endpoint based on active tab
+      const response = activeTab === 'following'
+        ? await postService.getFollowingFeed(params)
+        : await postService.getFeed(params);
 
       // Filter out posts without asset data and add defaults for safety
       const validPosts = (response.data || []).map(post => ({
@@ -194,9 +198,9 @@ const SocialFeed = () => {
                 {t('feed.createPost') || 'Create Post'}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl bg-popover border-border max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="text-foreground">
+            <DialogContent className="max-w-3xl bg-popover border-border p-0 gap-0">
+              <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+                <DialogTitle className="text-foreground text-xl">
                   {t('feed.newPost') || 'Create New Post'}
                 </DialogTitle>
               </DialogHeader>
@@ -237,26 +241,15 @@ const SocialFeed = () => {
             </form>
 
             {user && (
-              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="bg-primary hover:bg-primary-dark text-primary-foreground whitespace-nowrap">
-                    <Plus className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">{t('feed.createPost') || 'Create Post'}</span>
-                    <span className="sm:hidden">Post</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl bg-popover border-border max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="text-foreground">
-                      {t('feed.newPost') || 'Create New Post'}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <PostCreationForm
-                    onPostCreated={handlePostCreated}
-                    onCancel={() => setShowCreateDialog(false)}
-                  />
-                </DialogContent>
-              </Dialog>
+              <Button
+                size="sm"
+                onClick={() => setShowCreateDialog(true)}
+                className="bg-primary hover:bg-primary-dark text-primary-foreground whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{t('feed.createPost') || 'Create Post'}</span>
+                <span className="sm:hidden">Post</span>
+              </Button>
             )}
           </div>
 
@@ -316,7 +309,7 @@ const SocialFeed = () => {
         {/* Feed Content - Centered with max width */}
         <div className="max-w-3xl mx-auto">
           {/* Feed Tabs */}
-          <Tabs defaultValue="all" className="mb-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
             <TabsList className="bg-card border-border">
             <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               {t('feed.allPosts') || 'All Posts'}
@@ -378,9 +371,45 @@ const SocialFeed = () => {
           </TabsContent>
 
           <TabsContent value="following" className="space-y-4 mt-6">
-            <div className="text-center py-12 bg-card rounded-lg border border-border">
-              <p className="text-muted-foreground">{t('feed.followingComingSoon') || 'Following feed coming soon!'}</p>
-            </div>
+            {/* Posts List */}
+            {loading && page === 1 ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground mt-4">{t('feed.loading') || 'Loading posts...'}</p>
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="text-center py-12 bg-card rounded-lg border border-border">
+                <p className="text-muted-foreground mb-4">{t('feed.noFollowingPosts') || 'No posts from people you follow'}</p>
+                <p className="text-sm text-muted-foreground">{t('feed.followSuggestion') || 'Start following users to see their posts here!'}</p>
+              </div>
+            ) : (
+              <>
+                {posts.map((post) => (
+                  <PostCard
+                    key={post._id}
+                    post={post}
+                    onPostDeleted={handlePostDeleted}
+                    onPostUpdated={handlePostUpdated}
+                    onCommentClick={handleCommentClick}
+                    onTagClick={handleTagClick}
+                  />
+                ))}
+
+                {/* Load More */}
+                {hasMore && (
+                  <div className="text-center pt-4">
+                    <Button
+                      onClick={loadMore}
+                      disabled={loading}
+                      variant="outline"
+                      className="border-border hover:bg-muted"
+                    >
+                      {loading ? (t('feed.loading') || 'Loading...') : (t('feed.loadMore') || 'Load More Posts')}
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </TabsContent>
           </Tabs>
         </div>

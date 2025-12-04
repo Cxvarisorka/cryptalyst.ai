@@ -44,6 +44,9 @@ export default function UserProfile() {
   const [portfolioCollections, setPortfolioCollections] = useState([]);
   const [userPosts, setUserPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(false);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [followListLoading, setFollowListLoading] = useState(false);
 
   const isOwnProfile = currentUser?.id === userId;
 
@@ -140,6 +143,30 @@ export default function UserProfile() {
 
   const handlePostDeleted = (postId) => {
     setUserPosts((prev) => prev.filter((post) => post._id !== postId));
+  };
+
+  const fetchFollowers = async () => {
+    setFollowListLoading(true);
+    try {
+      const response = await followService.getFollowers(userId, 1, 50);
+      setFollowers(response.data || []);
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+    } finally {
+      setFollowListLoading(false);
+    }
+  };
+
+  const fetchFollowing = async () => {
+    setFollowListLoading(true);
+    try {
+      const response = await followService.getFollowing(userId, 1, 50);
+      setFollowing(response.data || []);
+    } catch (error) {
+      console.error("Error fetching following:", error);
+    } finally {
+      setFollowListLoading(false);
+    }
   };
 
   const formatPrice = (price) => {
@@ -334,7 +361,7 @@ export default function UserProfile() {
           {/* Content Tabs */}
           {!isPrivate && (
             <Tabs defaultValue="posts" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-card border border-border/60">
+              <TabsList className="grid w-full grid-cols-3 bg-card border border-border/60">
                 <TabsTrigger value="posts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <FileText className="w-4 h-4 mr-2" />
                   {t("profile.posts")}
@@ -342,6 +369,17 @@ export default function UserProfile() {
                 <TabsTrigger value="portfolios" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <Briefcase className="w-4 h-4 mr-2" />
                   {t("profile.portfolios")}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="connections"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  onClick={() => {
+                    if (followers.length === 0) fetchFollowers();
+                    if (following.length === 0) fetchFollowing();
+                  }}
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  {t("profile.connections") || "Connections"}
                 </TabsTrigger>
               </TabsList>
 
