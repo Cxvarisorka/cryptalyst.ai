@@ -6,8 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { Menu, X, Coins, LogOut, Moon, Sun, Settings, ChevronDown, Users } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, Coins, LogOut, Moon, Sun, Settings, Users, Shield, LayoutDashboard, Rss, MessageSquare, Bell, TrendingUp, ChevronDown, Newspaper } from "lucide-react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -20,21 +20,38 @@ import {
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isAuthenticated, user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  const navLinks = [
-    { name: t('nav.home'), path: "/" },
-    ...(isAuthenticated ? [{ name: t('nav.dashboard'), path: "/dashboard" }] : []),
-    ...(isAuthenticated ? [{ name: t('nav.feed'), path: "/feed" }] : []),
-    ...(isAuthenticated ? [{ name: t('nav.community'), path: "/community" }] : []),
-    ...(isAuthenticated ? [{ name: t('nav.priceAlerts'), path: "/price-alerts" }] : []),
-    ...(!isAuthenticated ? [{ name: t('nav.pricing'), path: "/pricing" }] : []),
-    ...(!isAuthenticated ? [{ name: t('nav.about'), path: "/about" }] : []),
-  ];
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navLinks = isAuthenticated
+    ? [
+        { name: t('nav.dashboard'), path: "/dashboard", icon: LayoutDashboard },
+        { name: t('nav.feed'), path: "/feed", icon: Rss },
+        { name: t('nav.community'), path: "/community", icon: MessageSquare },
+        { name: t('nav.news'), path: "/news", icon: Newspaper },
+        { name: t('nav.priceAlerts'), path: "/price-alerts", icon: Bell },
+      ]
+    : [
+        { name: t('nav.home'), path: "/" },
+        { name: t('nav.pricing'), path: "/pricing" },
+        { name: t('nav.about'), path: "/about" },
+      ];
+
+  // All navigation links for both desktop and mobile view
+  const primaryNavLinks = navLinks;
+  const allNavLinks = navLinks;
 
   const handleLogout = async () => {
     await logout();
@@ -57,15 +74,15 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+          <div className="hidden lg:flex items-center gap-6">
+            {primaryNavLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-primary relative",
-                  isActive(link.path) 
-                    ? "text-primary after:absolute after:bottom-[-8px] after:left-0 after:w-full after:h-0.5 after:bg-gradient-money" 
+                  isActive(link.path)
+                    ? "text-primary after:absolute after:bottom-[-8px] after:left-0 after:w-full after:h-0.5 after:bg-gradient-money"
                     : "text-muted-foreground"
                 )}
               >
@@ -75,7 +92,7 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             {/* Theme & Language Group */}
             <div className="flex items-center gap-1 mr-2">
               <Button
@@ -141,6 +158,12 @@ export default function Navbar() {
                     <Settings size={16} className="mr-2" />
                     Settings
                   </DropdownMenuItem>
+                  {(user?.role === 'admin' || user?.role === 'moderator') && (
+                    <DropdownMenuItem onClick={() => navigate("/admin")} className="cursor-pointer">
+                      <Shield size={16} className="mr-2" />
+                      Admin Panel
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
                     <LogOut size={16} className="mr-2" />
@@ -169,7 +192,8 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="flex md:hidden items-center gap-2">
+          <div className="flex lg:hidden items-center gap-2">
+            {isAuthenticated && <NotificationBell />}
             <Button
               variant="ghost"
               size="icon"
@@ -190,18 +214,19 @@ export default function Navbar() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border/60">
+          <div className="lg:hidden py-4 border-t border-border/60">
             <div className="flex flex-col gap-4">
-              {navLinks.map((link) => (
+              {allNavLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    "text-sm font-medium transition-colors hover:text-primary px-2",
+                    "text-sm font-medium transition-colors hover:text-primary px-2 flex items-center gap-2",
                     isActive(link.path) ? "text-primary" : "text-muted-foreground"
                   )}
                 >
+                  {link.icon && <link.icon size={18} />}
                   {link.name}
                 </Link>
               ))}
@@ -232,6 +257,17 @@ export default function Navbar() {
                   <Button
                     variant="ghost"
                     onClick={() => {
+                      navigate(`/profile/${user?.id}`);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-start gap-2 px-2"
+                  >
+                    <Users size={16} />
+                    My Profile
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
                       navigate("/settings");
                       setMobileMenuOpen(false);
                     }}
@@ -240,6 +276,19 @@ export default function Navbar() {
                     <Settings size={16} />
                     Settings
                   </Button>
+                  {(user?.role === 'admin' || user?.role === 'moderator') && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        navigate("/admin");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center justify-start gap-2 px-2"
+                    >
+                      <Shield size={16} />
+                      Admin Panel
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     onClick={handleLogout}

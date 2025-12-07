@@ -66,3 +66,96 @@ exports.getStockNews = async (req, res) => {
     });
   }
 };
+
+/**
+ * Get general news by category
+ */
+exports.getNewsByCategory = async (req, res) => {
+  try {
+    const { category = 'all' } = req.query;
+    const limit = parseInt(req.query.limit) || 30;
+
+    const news = await newsService.getNewsByCategory(category, limit);
+
+    res.json({
+      success: true,
+      category,
+      count: news.length,
+      data: news
+    });
+  } catch (error) {
+    console.error('Error fetching news by category:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch news',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get news by specific symbols
+ */
+exports.getNewsBySymbols = async (req, res) => {
+  try {
+    const { symbols } = req.query;
+    const limit = parseInt(req.query.limit) || 20;
+
+    if (!symbols) {
+      return res.status(400).json({
+        success: false,
+        message: 'Symbols parameter is required'
+      });
+    }
+
+    const symbolsArray = symbols.split(',').map(s => s.trim().toUpperCase());
+    const news = await newsService.getNewsBySymbols(symbolsArray, limit);
+
+    res.json({
+      success: true,
+      symbols: symbolsArray,
+      count: news.length,
+      data: news
+    });
+  } catch (error) {
+    console.error('Error fetching news by symbols:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch news by symbols',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Search news
+ */
+exports.searchNews = async (req, res) => {
+  try {
+    const { q } = req.query;
+    const limit = parseInt(req.query.limit) || 20;
+
+    if (!q) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query (q) is required'
+      });
+    }
+
+    const news = await newsService.searchNews(q, limit);
+
+    res.json({
+      success: true,
+      query: q,
+      count: news.length,
+      data: news
+    });
+  } catch (error) {
+    console.error('Error searching news:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to search news',
+      error: error.message
+    });
+  }
+};

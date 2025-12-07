@@ -4,6 +4,7 @@
     "dashboard": "Dashboard",
     "feed": "Feed",
     "community": "Community",
+    "news": "News",
     "priceAlerts": "Price Alerts",
     "about": "About",
     "pricing": "Pricing",
@@ -213,7 +214,10 @@
     "24hHigh": "24h High",
     "24hLow": "24h Low",
     "7dChange": "7d Change",
-    "30dChange": "30d Change"
+    "30dChange": "30d Change",
+    "customChart": "Custom Chart",
+    "tradingView": "TradingView",
+    "detailedAnalysis": "Detailed analysis and insights for"
   },
   "stock": {
     "notFound": "Stock not found",
@@ -252,12 +256,23 @@
     "back": "Back"
   },
   "news": {
-    "title": "Latest News",
+    "title": "Market News",
+    "subtitle": "Stay updated with the latest crypto, stock market, and political news",
     "description": "Recent news and updates",
     "noNews": "No news available at the moment",
     "readMore": "Read more",
     "justNow": "Just now",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "categories": {
+      "all": "All News",
+      "crypto": "Crypto",
+      "stocks": "Stocks",
+      "political": "Political"
+    },
+    "loading": "Loading news...",
+    "refresh": "Refresh news",
+    "error": "Failed to fetch news",
+    "tryAgain": "Try refreshing or check back later"
   },
   "about": {
     "title": "About",
@@ -576,13 +591,18 @@
     "following": "Following",
     "follow": "Follow",
     "unfollow": "Unfollow",
+    "connections": "Connections",
     "posts": "Posts",
     "portfolios": "Portfolios",
     "assets": "assets",
     "noPosts": "No posts yet",
     "noPostsMessage": "{{name}} hasn't shared any posts yet.",
     "noPortfolios": "No portfolios shared",
-    "noPortfoliosMessage": "{{name}} hasn't shared any portfolios yet."
+    "noPortfoliosMessage": "{{name}} hasn't shared any portfolios yet.",
+    "noFollowers": "No Followers Yet",
+    "noFollowersMessage": "No one is following this user yet.",
+    "noFollowing": "Not Following Anyone",
+    "noFollowingMessage": "This user is not following anyone yet."
   },
   "portfolio": {
     "owner": "Portfolio Owner",
@@ -636,6 +656,19 @@
     "saving": "Saving...",
     "success": "Privacy settings updated successfully",
     "error": "Failed to update privacy settings"
+  },
+  "share": {
+    "title": "Share Post",
+    "copyLink": "Copy Link",
+    "copyLinkDesc": "Share the post via link",
+    "linkCopied": "Link Copied!",
+    "or": "or",
+    "shareToTimeline": "Share to Your Timeline",
+    "shareToTimelineDesc": "Repost to your followers",
+    "addComment": "Add your thoughts... (optional)",
+    "share": "Share",
+    "sharing": "Sharing...",
+    "shared": "Shared!"
   },
   "priceAlerts": {
     "title": "Price Alerts",

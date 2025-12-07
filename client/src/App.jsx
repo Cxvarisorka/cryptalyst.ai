@@ -6,6 +6,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import WelcomeModal from "@/components/marketing/WelcomeModal";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import About from "@/pages/About";
@@ -19,8 +20,12 @@ import Settings from "@/pages/Settings";
 import Community from "@/pages/Community";
 import UserProfile from "@/pages/UserProfile";
 import SocialFeed from "@/pages/SocialFeed";
+import PostDetail from "@/pages/PostDetail";
 import PortfolioView from "@/pages/PortfolioView";
 import PriceAlerts from "@/pages/PriceAlerts";
+import AdminPanel from "@/pages/AdminPanel";
+import SubscriptionSuccess from "@/pages/SubscriptionSuccess";
+import News from "@/pages/News";
 
 function App() {
   return (
@@ -92,6 +97,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/post/:postId"
+                  element={
+                    <ProtectedRoute>
+                      <PostDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/portfolio/:collectionId"
                   element={
                     <ProtectedRoute>
@@ -107,12 +120,37 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/news"
+                  element={
+                    <ProtectedRoute>
+                      <News />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute>
+                      <AdminPanel />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/about" element={<About />} />
                 <Route path="/pricing" element={<Pricing />} />
+                <Route
+                  path="/subscription/success"
+                  element={
+                    <ProtectedRoute>
+                      <SubscriptionSuccess />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
               <Footer />
+              <WelcomeModal />
               <Toaster />
             </div>
           </NotificationProvider>

@@ -214,6 +214,266 @@ class NewsService {
     return mockArticles.slice(0, limit);
   }
 
+  /**
+   * Get general news by category
+   * @param {string} category - Category: 'all', 'crypto', 'stocks', 'political'
+   * @param {number} limit - Number of articles to fetch
+   * @returns {Promise<Array>} Array of news articles
+   */
+  async getNewsByCategory(category = 'all', limit = 30) {
+    const cacheKey = `news:category:${category}:${limit}`;
+
+    // Check Redis cache first
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      console.log(`✅ News for category ${category} found in Redis cache`);
+      return cached;
+    }
+
+    try {
+      if (this.marketauxApiKey) {
+        const endpoint = `${this.marketauxApiUrl}/news/all`;
+
+        const params = {
+          api_token: this.marketauxApiKey,
+          language: 'en',
+          limit: Math.min(limit, 100),
+          sort: 'published_at'
+        };
+
+        // Set filter based on category
+        switch (category) {
+          case 'crypto':
+            params.filter_entities = 'true';
+            params.entity_types = 'crypto';
+            break;
+          case 'stock':
+          case 'stocks':
+            params.filter_entities = 'true';
+            params.entity_types = 'equity';
+            break;
+          case 'political':
+            params.search = 'politics OR government OR election OR policy';
+            params.countries = 'us,gb,eu';
+            break;
+          case 'all':
+          default:
+            // General financial news
+            params.filter_entities = 'true';
+            break;
+        }
+
+        console.log(`📰 Fetching category news from Marketaux:`, params);
+
+        const response = await axios.get(endpoint, {
+          params: params,
+          timeout: 15000
+        });
+
+        if (response.data && response.data.data && response.data.data.length > 0) {
+          const articles = response.data.data.map(article => ({
+            uuid: article.uuid,
+            title: article.title,
+            description: article.description || article.snippet || '',
+            snippet: article.snippet || '',
+            url: article.url,
+            image_url: article.image_url || null,
+            published_at: article.published_at,
+            source: article.source || 'Unknown',
+            entities: article.entities || [],
+            sentiment: article.sentiment || null
+          }));
+
+          await cache.set(cacheKey, articles, this.cacheTTL);
+          console.log(`✅ Fetched ${articles.length} articles for category ${category}`);
+          return articles;
+        }
+      } else {
+        console.warn('⚠️ MARKETAUX_API_KEY not configured');
+      }
+
+      // Fallback to mock data
+      const mockNews = this.getMockNewsByCategory(category, limit);
+      await cache.set(cacheKey, mockNews, this.cacheTTL);
+      return mockNews;
+    } catch (error) {
+      console.error(`❌ Error fetching news for category ${category}:`, error.message);
+      return this.getMockNewsByCategory(category, limit);
+    }
+  }
+
+  /**
+   * Get news by specific symbols
+   * @param {Array<string>} symbols - Array of symbols
+   * @param {number} limit - Number of articles to fetch
+   * @returns {Promise<Array>} Array of news articles
+   */
+  async getNewsBySymbols(symbols, limit = 20) {
+    if (!symbols || symbols.length === 0) {
+      return [];
+    }
+
+    const cacheKey = `news:symbols:${symbols.join(',')}:${limit}`;
+
+    // Check Redis cache first
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      console.log(`✅ News for symbols found in Redis cache`);
+      return cached;
+    }
+
+    try {
+      if (this.marketauxApiKey) {
+        const endpoint = `${this.marketauxApiUrl}/news/all`;
+
+        const params = {
+          api_token: this.marketauxApiKey,
+          language: 'en',
+          symbols: symbols.join(','),
+          limit: Math.min(limit, 100),
+          sort: 'published_at'
+        };
+
+        const response = await axios.get(endpoint, {
+          params: params,
+          timeout: 15000
+        });
+
+        if (response.data && response.data.data && response.data.data.length > 0) {
+          const articles = response.data.data.map(article => ({
+            uuid: article.uuid,
+            title: article.title,
+            description: article.description || article.snippet || '',
+            snippet: article.snippet || '',
+            url: article.url,
+            image_url: article.image_url || null,
+            published_at: article.published_at,
+            source: article.source || 'Unknown',
+            entities: article.entities || [],
+            sentiment: article.sentiment || null
+          }));
+
+          await cache.set(cacheKey, articles, this.cacheTTL);
+          return articles;
+        }
+      }
+
+      return [];
+    } catch (error) {
+      console.error(`❌ Error fetching news for symbols:`, error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Search news
+   * @param {string} query - Search query
+   * @param {number} limit - Number of articles to fetch
+   * @returns {Promise<Array>} Array of news articles
+   */
+  async searchNews(query, limit = 20) {
+    if (!query) {
+      return [];
+    }
+
+    const cacheKey = `news:search:${query}:${limit}`;
+
+    // Check Redis cache first
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      console.log(`✅ Search results found in Redis cache`);
+      return cached;
+    }
+
+    try {
+      if (this.marketauxApiKey) {
+        const endpoint = `${this.marketauxApiUrl}/news/all`;
+
+        const params = {
+          api_token: this.marketauxApiKey,
+          language: 'en',
+          search: query,
+          limit: Math.min(limit, 100),
+          sort: 'published_at'
+        };
+
+        const response = await axios.get(endpoint, {
+          params: params,
+          timeout: 15000
+        });
+
+        if (response.data && response.data.data && response.data.data.length > 0) {
+          const articles = response.data.data.map(article => ({
+            uuid: article.uuid,
+            title: article.title,
+            description: article.description || article.snippet || '',
+            snippet: article.snippet || '',
+            url: article.url,
+            image_url: article.image_url || null,
+            published_at: article.published_at,
+            source: article.source || 'Unknown',
+            entities: article.entities || [],
+            sentiment: article.sentiment || null
+          }));
+
+          await cache.set(cacheKey, articles, this.cacheTTL);
+          return articles;
+        }
+      }
+
+      return [];
+    } catch (error) {
+      console.error(`❌ Error searching news:`, error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Mock news by category for fallback
+   */
+  getMockNewsByCategory(category, limit) {
+    const mockArticles = [
+      {
+        uuid: 'mock-1',
+        title: `${category === 'crypto' ? 'Cryptocurrency' : category === 'stocks' ? 'Stock Market' : 'Financial'} Markets Show Positive Trends`,
+        description: 'Latest market analysis shows encouraging signs across major indices and assets.',
+        snippet: 'Market analysis shows encouraging signs...',
+        url: '#',
+        image_url: null,
+        published_at: new Date().toISOString(),
+        source: 'Financial News',
+        entities: [],
+        sentiment: 'positive'
+      },
+      {
+        uuid: 'mock-2',
+        title: 'Economic Outlook: What Investors Need to Know',
+        description: 'Expert analysis on current economic conditions and their impact on investment strategies.',
+        snippet: 'Expert analysis on current economic conditions...',
+        url: '#',
+        image_url: null,
+        published_at: new Date(Date.now() - 3600000).toISOString(),
+        source: 'Market Watch',
+        entities: [],
+        sentiment: 'neutral'
+      },
+      {
+        uuid: 'mock-3',
+        title: 'Breaking: Major Developments in Global Markets',
+        description: 'Recent announcements and events shaping the financial landscape.',
+        snippet: 'Recent announcements and events...',
+        url: '#',
+        image_url: null,
+        published_at: new Date(Date.now() - 7200000).toISOString(),
+        source: 'Bloomberg',
+        entities: [],
+        sentiment: 'neutral'
+      }
+    ];
+
+    return mockArticles.slice(0, limit);
+  }
+
 }
 
 // Create singleton instance
