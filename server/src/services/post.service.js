@@ -212,6 +212,62 @@ const incrementShareCount = async (postId) => {
 };
 
 /**
+ * Create a repost (share post to user's timeline)
+ * @param {string} userId - User ID creating the repost
+ * @param {string} originalPostId - Original post ID to share
+ * @param {string} shareComment - Optional comment when sharing
+ * @returns {Promise<Object>} Created repost
+ */
+const createRepost = async (userId, originalPostId, shareComment = '') => {
+  // Get the original post
+  const originalPost = await Post.findById(originalPostId)
+    .populate('userId', 'name avatar email');
+
+  if (!originalPost) {
+    throw new Error('Post not found');
+  }
+
+  // Check if the original post is private
+  if (originalPost.visibility === 'private') {
+    throw new Error('Cannot share private posts');
+  }
+
+  // Check if user already shared this post
+  const existingRepost = await Post.findOne({
+    userId: userId,
+    sharedPost: originalPostId,
+  });
+
+  if (existingRepost) {
+    throw new Error('Post already shared');
+  }
+
+  // Create the repost
+  const repost = new Post({
+    userId: userId,
+    asset: originalPost.asset,
+    content: originalPost.content,
+    sharedPost: originalPostId,
+    shareComment: shareComment || '',
+    visibility: 'public', // Reposts are always public
+    tags: originalPost.tags,
+    sentiment: originalPost.sentiment,
+  });
+
+  await repost.save();
+  await repost.populate('userId', 'name avatar email');
+  await repost.populate({
+    path: 'sharedPost',
+    populate: { path: 'userId', select: 'name avatar email' },
+  });
+
+  // Increment share count on original post
+  await originalPost.incrementShares();
+
+  return repost;
+};
+
+/**
  * Get posts by asset symbol
  * @param {string} symbol - Asset symbol
  * @param {Object} query - Query options
@@ -315,6 +371,7 @@ module.exports = {
   updatePost,
   deletePost,
   incrementShareCount,
+  createRepost,
   getPostsByAsset,
   getPostsByUser,
   getPostsByTag,

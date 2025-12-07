@@ -11,8 +11,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { GradientText } from "@/components/magicui/gradient-text";
 import { FadeIn } from "@/components/magicui/fade-in";
 import settingsService from "@/services/settings.service";
-import { User, Lock, Settings as SettingsIcon, Mail, Globe, Calendar, Palette, Shield, Eye, EyeOff } from "lucide-react";
+import { User, Lock, Settings as SettingsIcon, Mail, Globe, Calendar, Palette, Shield, Eye, EyeOff, CreditCard } from "lucide-react";
 import Hero from "@/components/layout/Hero";
+import SubscriptionManagement from "@/components/settings/SubscriptionManagement";
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -210,6 +211,13 @@ export default function Settings() {
               >
                 <Shield size={18} />
                 <span>{t('settings.tabs.privacy')}</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="subscription"
+                className="w-full justify-start gap-3 data-[state=active]:bg-gradient-money data-[state=active]:text-white"
+              >
+                <CreditCard size={18} />
+                <span>Subscription</span>
               </TabsTrigger>
             </TabsList>
 
@@ -568,6 +576,10 @@ export default function Settings() {
               </form>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="subscription">
+          <SubscriptionManagement />
         </TabsContent>
             </div>
           </div>

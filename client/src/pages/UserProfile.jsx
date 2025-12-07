@@ -52,10 +52,13 @@ export default function UserProfile() {
 
   useEffect(() => {
     fetchUserProfile();
+    fetchFollowStats();
     if (!isOwnProfile) {
-      fetchFollowStats();
       checkFollowStatus();
     }
+    // Clear followers/following when navigating to a different user
+    setFollowers([]);
+    setFollowing([]);
   }, [userId]);
 
   const fetchUserProfile = async () => {
@@ -466,6 +469,140 @@ export default function UserProfile() {
                     </CardContent>
                   </Card>
                 )}
+              </TabsContent>
+
+              {/* Connections Tab */}
+              <TabsContent value="connections" className="mt-6 space-y-4">
+                <Tabs defaultValue="followers" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 bg-muted">
+                    <TabsTrigger value="followers">
+                      {t("profile.followers")} ({followStats.followers})
+                    </TabsTrigger>
+                    <TabsTrigger value="following">
+                      {t("profile.following")} ({followStats.following})
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Followers List */}
+                  <TabsContent value="followers" className="mt-4">
+                    {followListLoading ? (
+                      <div className="text-center py-12">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+                      </div>
+                    ) : followers.length > 0 ? (
+                      <div className="space-y-3">
+                        {followers.map((follower) => (
+                          <Card
+                            key={follower._id}
+                            className="bg-card border-border/60 hover:border-primary/50 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/profile/${follower._id}`)}
+                          >
+                            <CardContent className="py-4">
+                              <div className="flex items-center gap-3">
+                                {follower.avatar ? (
+                                  <img
+                                    src={follower.avatar}
+                                    alt={follower.name}
+                                    className="w-12 h-12 rounded-full object-cover"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 rounded-full bg-gradient-money flex items-center justify-center text-white text-lg font-bold">
+                                    {follower.name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-base font-semibold text-foreground truncate">
+                                    {follower.name}
+                                  </h3>
+                                  {follower.email && (
+                                    <p className="text-sm text-muted-foreground truncate">
+                                      {follower.email}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <Card className="bg-card border-border/60">
+                        <CardContent className="py-12">
+                          <div className="text-center">
+                            <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                            <h3 className="text-lg font-semibold text-foreground mb-2">
+                              {t("profile.noFollowers") || "No Followers Yet"}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {t("profile.noFollowersMessage") || "No one is following this user yet."}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </TabsContent>
+
+                  {/* Following List */}
+                  <TabsContent value="following" className="mt-4">
+                    {followListLoading ? (
+                      <div className="text-center py-12">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+                      </div>
+                    ) : following.length > 0 ? (
+                      <div className="space-y-3">
+                        {following.map((user) => (
+                          <Card
+                            key={user._id}
+                            className="bg-card border-border/60 hover:border-primary/50 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/profile/${user._id}`)}
+                          >
+                            <CardContent className="py-4">
+                              <div className="flex items-center gap-3">
+                                {user.avatar ? (
+                                  <img
+                                    src={user.avatar}
+                                    alt={user.name}
+                                    className="w-12 h-12 rounded-full object-cover"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 rounded-full bg-gradient-money flex items-center justify-center text-white text-lg font-bold">
+                                    {user.name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-base font-semibold text-foreground truncate">
+                                    {user.name}
+                                  </h3>
+                                  {user.email && (
+                                    <p className="text-sm text-muted-foreground truncate">
+                                      {user.email}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <Card className="bg-card border-border/60">
+                        <CardContent className="py-12">
+                          <div className="text-center">
+                            <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                            <h3 className="text-lg font-semibold text-foreground mb-2">
+                              {t("profile.noFollowing") || "Not Following Anyone"}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {t("profile.noFollowingMessage") || "This user is not following anyone yet."}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </Tabs>
           )}

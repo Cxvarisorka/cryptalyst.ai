@@ -61,6 +61,16 @@ const adminOnly = (req, res, next) => {
   }
 };
 
+// Middleware to restrict routes to admin or moderator
+const adminOrModerator = (req, res, next) => {
+  // Check if user is admin or moderator (protect middleware must run before this)
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'moderator')) {
+    next(); // User is admin or moderator, continue
+  } else {
+    res.status(403).json({ message: 'Access denied. Admin or moderator only.' });
+  }
+};
+
 // Optional auth middleware - attaches user if token exists, but doesn't fail if it doesn't
 const optionalAuth = async (req, res, next) => {
   try {
@@ -92,5 +102,6 @@ const optionalAuth = async (req, res, next) => {
 module.exports = {
   protect,
   adminOnly,
+  adminOrModerator,
   optionalAuth
 };

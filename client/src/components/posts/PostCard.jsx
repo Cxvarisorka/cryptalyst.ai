@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, Share2, MoreVertical, Trash2, Edit2, Globe, Users, Lock, TrendingUp, TrendingDown } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreVertical, Trash2, Edit2, Globe, Users, Lock, TrendingUp, TrendingDown, Repeat2 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Button } from '../ui/button';
 import { Avatar } from '../ui/avatar';
@@ -12,6 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import postService from '../../services/post.service';
 import { formatDistanceToNow } from 'date-fns';
 import ImageViewer from './ImageViewer';
+import ShareModal from './ShareModal';
 
 /**
  * PostCard Component
@@ -20,14 +21,17 @@ import ImageViewer from './ImageViewer';
 const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagClick }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+
   const [liked, setLiked] = useState(post.isLikedByUser || false);
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
   const [sharesCount, setSharesCount] = useState(post.sharesCount || 0);
+  const [commentsCount, setCommentsCount] = useState(post.commentsCount || 0);
   const [loading, setLoading] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [imageViewerIndex, setImageViewerIndex] = useState(0);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [editContent, setEditContent] = useState(post.content || '');
   const [editVisibility, setEditVisibility] = useState(post.visibility || 'public');
   const [editTags, setEditTags] = useState((post.tags || []).join(', '));
@@ -46,7 +50,9 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
       setLiked(post.isLikedByUser);
     }
     setLikesCount(post.likesCount || 0);
-  }, [post._id, post.isLikedByUser, post.likesCount]);
+    setSharesCount(post.sharesCount || 0);
+    setCommentsCount(post.commentsCount || 0);
+  }, [post._id, post.isLikedByUser, post.likesCount, post.sharesCount, post.commentsCount]);
 
   /**
    * Handle like toggle
@@ -76,27 +82,39 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
   };
 
   /**
-   * Handle share
+   * Handle share button click - opens share modal
+   */
+  const handleShareClick = () => {
+    if (!user) {
+      alert('Please sign in to share posts');
+      return;
+    }
+    setShowShareModal(true);
+  };
+
+  /**
+   * Handle increment share count only
    */
   const handleShare = async () => {
     try {
       await postService.sharePost(post._id);
       setSharesCount((prev) => prev + 1);
-
-      if (navigator.share) {
-        await navigator.share({
-          title: `${post.userId?.name || 'User'}'s post about ${post.asset?.symbol || 'asset'}`,
-          text: post.content.substring(0, 200),
-          url: window.location.href,
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard!');
-      }
     } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Error sharing post:', error);
-      }
+      console.error('Error incrementing share count:', error);
+    }
+  };
+
+  /**
+   * Handle repost (share to timeline)
+   */
+  const handleRepost = async (shareComment) => {
+    try {
+      await postService.repostPost(post._id, shareComment);
+      setSharesCount((prev) => prev + 1);
+      // Optionally refresh feed or show success message
+    } catch (error) {
+      console.error('Error reposting:', error);
+      throw error;
     }
   };
 
@@ -205,9 +223,59 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
     }
   };
 
+  // Check if this is a shared post (repost)
+  const isSharedPost = !!post.sharedPost;
+  const displayPost = isSharedPost ? post.sharedPost : post;
+  const reposter = isSharedPost ? post.userId : null;
+
+  /**
+   * Handle card click - navigate to original post if it's a shared post
+   */
+  const handleCardClick = (e) => {
+    // Only navigate if clicking on the card itself, not on buttons or interactive elements
+    if (
+      isSharedPost &&
+      !e.target.closest('button') &&
+      !e.target.closest('a') &&
+      !e.target.closest('[role="button"]')
+    ) {
+      navigate(`/post/${post.sharedPost._id}`);
+    }
+  };
+
   return (
     <>
-    <Card className="bg-card border-border hover:border-border/80 transition-colors">
+    <Card
+      className={`bg-card border-border transition-colors ${
+        isSharedPost ? 'hover:border-primary/50 cursor-pointer' : 'hover:border-border/80'
+      }`}
+      onClick={handleCardClick}
+    >
+      {/* Repost Banner */}
+      {isSharedPost && reposter && (
+        <div className="px-3 sm:px-6 pt-3 pb-1">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Repeat2 className="w-4 h-4 text-success" />
+            <span>
+              <span
+                className="font-medium text-foreground hover:text-primary cursor-pointer transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (reposter._id) navigate(`/profile/${reposter._id}`);
+                }}
+              >
+                {reposter.name}
+              </span>
+              {' '}shared this
+            </span>
+          </div>
+          {/* Share comment if present */}
+          {post.shareComment && (
+            <p className="text-sm text-foreground mt-2 whitespace-pre-wrap">{post.shareComment}</p>
+          )}
+        </div>
+      )}
+
       <CardHeader className="pb-3 px-3 sm:px-6">
         <div className="flex items-start justify-between gap-2">
           {/* User Info & Asset */}
@@ -216,13 +284,13 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
               className="w-8 h-8 sm:w-10 sm:h-10 bg-muted text-foreground flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
               onClick={(e) => {
                 e.stopPropagation();
-                if (post.userId?._id) navigate(`/profile/${post.userId._id}`);
+                if (displayPost.userId?._id) navigate(`/profile/${displayPost.userId._id}`);
               }}
             >
-              {post.userId?.avatar ? (
-                <img src={post.userId.avatar} alt={post.userId.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              {displayPost.userId?.avatar ? (
+                <img src={displayPost.userId.avatar} alt={displayPost.userId.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
-                <span className="text-xs sm:text-sm">{post.userId?.name?.charAt(0) || 'U'}</span>
+                <span className="text-xs sm:text-sm">{displayPost.userId?.name?.charAt(0) || 'U'}</span>
               )}
             </Avatar>
             <div className="min-w-0 flex-1">
@@ -231,29 +299,29 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
                   className="text-foreground font-medium text-sm sm:text-base truncate cursor-pointer hover:text-primary transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (post.userId?._id) navigate(`/profile/${post.userId._id}`);
+                    if (displayPost.userId?._id) navigate(`/profile/${displayPost.userId._id}`);
                   }}
                 >
-                  {post.userId?.name || 'Unknown User'}
+                  {displayPost.userId?.name || 'Unknown User'}
                 </h4>
                 <span className="text-muted-foreground text-xs sm:text-sm flex-shrink-0">•</span>
-                <span className="text-muted-foreground text-xs sm:text-sm flex-shrink-0">{formatTime(post.createdAt)}</span>
+                <span className="text-muted-foreground text-xs sm:text-sm flex-shrink-0">{formatTime(displayPost.createdAt)}</span>
                 <span className="flex-shrink-0">{getVisibilityIcon()}</span>
               </div>
               <div className="flex items-center gap-1 sm:gap-2 mt-1 flex-wrap">
-                {post.asset?.image && (
+                {displayPost.asset?.image && (
                   <img
-                    src={post.asset.image}
-                    alt={post.asset?.symbol || 'Asset'}
+                    src={displayPost.asset.image}
+                    alt={displayPost.asset?.symbol || 'Asset'}
                     className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0"
                   />
                 )}
                 <span className="text-primary text-xs sm:text-sm font-medium">
-                  ${post.asset?.symbol || 'N/A'}
+                  ${displayPost.asset?.symbol || 'N/A'}
                 </span>
-                <span className="text-muted-foreground text-xs sm:text-sm hidden sm:inline">{post.asset?.name || 'Unknown'}</span>
+                <span className="text-muted-foreground text-xs sm:text-sm hidden sm:inline">{displayPost.asset?.name || 'Unknown'}</span>
                 <span className="text-xs text-muted-foreground px-1.5 sm:px-2 py-0.5 bg-muted rounded">
-                  {post.asset?.type || 'unknown'}
+                  {displayPost.asset?.type || 'unknown'}
                 </span>
                 {getSentimentBadge()}
               </div>
@@ -293,12 +361,12 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
 
       <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6">
         {/* Content */}
-        <p className="text-card-foreground whitespace-pre-wrap text-sm sm:text-base">{post.content || ''}</p>
+        <p className="text-card-foreground whitespace-pre-wrap text-sm sm:text-base">{displayPost.content || ''}</p>
 
         {/* Tags */}
-        {post.tags && post.tags.length > 0 && (
+        {displayPost.tags && displayPost.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
-            {post.tags.map((tag) => (
+            {displayPost.tags.map((tag) => (
               <button
                 key={tag}
                 onClick={() => onTagClick && onTagClick(tag)}
@@ -311,23 +379,23 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
         )}
 
         {/* Images */}
-        {post.images && post.images.length > 0 && (
+        {displayPost.images && displayPost.images.length > 0 && (
           <div
             className={`grid gap-2 ${
-              post.images.length === 1
+              displayPost.images.length === 1
                 ? 'grid-cols-1'
-                : post.images.length === 2
+                : displayPost.images.length === 2
                 ? 'grid-cols-2'
-                : post.images.length === 3
+                : displayPost.images.length === 3
                 ? 'grid-cols-3'
                 : 'grid-cols-2'
             }`}
           >
-            {post.images.map((image, index) => (
+            {displayPost.images.map((image, index) => (
               <div
                 key={index}
                 className={`relative overflow-hidden rounded-lg ${
-                  post.images.length === 1 ? 'aspect-video' : 'aspect-square'
+                  displayPost.images.length === 1 ? 'aspect-video' : 'aspect-square'
                 }`}
               >
                 <img
@@ -367,12 +435,12 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
               className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground hover:text-primary transition-colors group"
             >
               <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-all" />
-              <span className="text-xs sm:text-sm">{post.commentsCount || 0}</span>
+              <span className="text-xs sm:text-sm">{commentsCount}</span>
             </button>
 
             {/* Share Button */}
             <button
-              onClick={handleShare}
+              onClick={handleShareClick}
               className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground hover:text-success transition-colors group"
             >
               <Share2 className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-all" />
@@ -382,6 +450,17 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
         </div>
       </CardContent>
     </Card>
+
+    {/* Share Modal */}
+    {showShareModal && (
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        post={post.sharedPost || post}
+        onShare={handleShare}
+        onRepost={handleRepost}
+      />
+    )}
 
     {/* Edit Dialog */}
     <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -488,9 +567,9 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
     </Dialog>
 
     {/* Image Viewer */}
-    {showImageViewer && post.images && post.images.length > 0 && (
+    {showImageViewer && displayPost.images && displayPost.images.length > 0 && (
       <ImageViewer
-        images={post.images}
+        images={displayPost.images}
         initialIndex={imageViewerIndex}
         onClose={() => setShowImageViewer(false)}
       />

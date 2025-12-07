@@ -133,6 +133,19 @@ const postService = {
   },
 
   /**
+   * Repost (share to timeline)
+   * @param {string} postId - Post ID
+   * @param {string} shareComment - Optional comment when sharing
+   * @returns {Promise} API response
+   */
+  repostPost: async (postId, shareComment = '') => {
+    const response = await axios.post(`${API_BASE_URL}/posts/${postId}/repost`, {
+      shareComment,
+    });
+    return response.data;
+  },
+
+  /**
    * Get posts by asset symbol
    * @param {string} symbol - Asset symbol
    * @param {Object} params - Query parameters

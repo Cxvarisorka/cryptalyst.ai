@@ -51,5 +51,6 @@ router.post(
 router.patch('/:id', protect, postController.updatePost); // Update post
 router.delete('/:id', protect, postController.deletePost); // Delete post
 router.post('/:id/share', postController.sharePost); // Increment share count
+router.post('/:id/repost', protect, postController.repostPost); // Create repost (share to timeline)
 
 module.exports = router;

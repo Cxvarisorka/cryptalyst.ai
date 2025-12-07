@@ -3,12 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FadeIn } from "@/components/magicui/fade-in";
-import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity, BarChart2 } from "lucide-react";
 import { getCryptoById } from "@/services/marketDataService";
 import { getCryptoAnalysis, getPriceHistory } from "@/services/analysisService";
 import { getCryptoNews } from "@/services/newsService";
 import PriceChart from "@/components/charts/PriceChart";
+import TradingViewWidget from "@/components/charts/TradingViewWidget";
 import NewsSection from "@/components/news/NewsSection";
 import AIAnalysis from "@/components/analysis/AIAnalysis";
 import CreatePriceAlertButton from "@/components/alerts/CreatePriceAlertButton";
@@ -26,6 +28,17 @@ export default function CryptoDetail() {
   const [newsLoading, setNewsLoading] = useState(true);
   const [priceHistory, setPriceHistory] = useState([]);
   const [stats, setStats] = useState(null);
+
+  // Chart view preference: 'custom' or 'tradingview'
+  const [chartView, setChartView] = useState(() => {
+    const saved = localStorage.getItem('chartViewPreference');
+    return saved || 'custom';
+  });
+
+  // Save chart view preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('chartViewPreference', chartView);
+  }, [chartView]);
 
   useEffect(() => {
     fetchCryptoDetail();
@@ -182,15 +195,41 @@ export default function CryptoDetail() {
       <div className="container mx-auto px-4 py-10">
 
         <FadeIn className="space-y-6">
-          {/* Price Chart */}
-          <PriceChart
-            currentPrice={crypto.price}
-            change24h={crypto.change24h}
-            assetName={crypto.name}
-            assetSymbol={crypto.symbol}
-            assetType="crypto"
-            assetId={crypto.id}
-          />
+          {/* Chart View Toggle */}
+          <div className="flex justify-center">
+            <Tabs value={chartView} onValueChange={setChartView} className="w-auto">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="custom" className="flex items-center gap-2">
+                  <LineChart className="w-4 h-4" />
+                  {t("crypto.customChart")}
+                </TabsTrigger>
+                <TabsTrigger value="tradingview" className="flex items-center gap-2">
+                  <BarChart2 className="w-4 h-4" />
+                  {t("crypto.tradingView")}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          {/* Price Chart - Conditional Rendering */}
+          {chartView === 'custom' ? (
+            <PriceChart
+              currentPrice={crypto.price}
+              change24h={crypto.change24h}
+              assetName={crypto.name}
+              assetSymbol={crypto.symbol}
+              assetType="crypto"
+              assetId={crypto.id}
+            />
+          ) : (
+            <TradingViewWidget
+              currentPrice={crypto.price}
+              change24h={crypto.change24h}
+              assetName={crypto.name}
+              assetSymbol={crypto.symbol}
+              assetType="crypto"
+            />
+          )}
 
           {/* Header Card */}
           <Card className="bg-card border-border/60">

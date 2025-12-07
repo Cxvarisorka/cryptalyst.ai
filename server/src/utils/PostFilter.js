@@ -199,6 +199,12 @@ class PostFilter extends FilterBuilder {
       this.addPopulate('userId', 'name avatar email');
     }
 
+    // Add populate for shared posts (reposts)
+    this.addPopulate({
+      path: 'sharedPost',
+      populate: { path: 'userId', select: 'name avatar email' }
+    });
+
     return super.execute(PostModel, true);
   }
 }

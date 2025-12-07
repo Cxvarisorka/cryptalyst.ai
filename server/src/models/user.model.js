@@ -38,12 +38,48 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'moderator', 'admin'],
     default: 'user'
   },
   isActive: {
     type: Boolean,
     default: true
+  },
+  subscription: {
+    stripeCustomerId: {
+      type: String,
+      default: null
+    },
+    stripeSubscriptionId: {
+      type: String,
+      default: null
+    },
+    plan: {
+      type: String,
+      enum: ['free', 'basic', 'premium'],
+      default: 'free'
+    },
+    status: {
+      type: String,
+      enum: ['trialing', 'active', 'canceled', 'past_due', 'unpaid', 'incomplete'],
+      default: null
+    },
+    trialEndsAt: {
+      type: Date,
+      default: null
+    },
+    currentPeriodStart: {
+      type: Date,
+      default: null
+    },
+    currentPeriodEnd: {
+      type: Date,
+      default: null
+    },
+    cancelAtPeriodEnd: {
+      type: Boolean,
+      default: false
+    }
   },
   settings: {
     currency: {

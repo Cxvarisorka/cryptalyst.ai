@@ -242,6 +242,40 @@ const sharePost = async (req, res, next) => {
   }
 };
 
+/**
+ * Create a repost (share to your timeline)
+ */
+const repostPost = async (req, res, next) => {
+  try {
+    const { shareComment } = req.body;
+    const originalPostId = req.params.id;
+
+    const repost = await postService.createRepost(
+      req.user._id,
+      originalPostId,
+      shareComment
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Post shared to your timeline',
+      data: repost,
+    });
+  } catch (error) {
+    if (
+      error.message === 'Post not found' ||
+      error.message === 'Cannot share private posts' ||
+      error.message === 'Post already shared'
+    ) {
+      return res.status(error.message === 'Post not found' ? 404 : 400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    next(error);
+  }
+};
+
 const getPostsByAsset = async (req, res, next) => {
   try {
     const options = {
@@ -322,6 +356,7 @@ module.exports = {
   updatePost,
   deletePost,
   sharePost,
+  repostPost,
   getPostsByAsset,
   getPostsByUser,
   searchPosts,

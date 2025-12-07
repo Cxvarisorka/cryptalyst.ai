@@ -103,6 +103,21 @@ const postSchema = new mongoose.Schema(
       default: 'public',
     },
 
+    // Shared post reference (for reposts/shares)
+    sharedPost: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Post',
+      default: null,
+      index: true,
+    },
+
+    // Optional comment when sharing (reposting with thoughts)
+    shareComment: {
+      type: String,
+      trim: true,
+      maxlength: [1000, 'Share comment cannot exceed 1000 characters'],
+    },
+
     // Moderation
     isReported: {
       type: Boolean,
