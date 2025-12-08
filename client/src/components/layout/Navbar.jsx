@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { Menu, X, Coins, LogOut, Moon, Sun, Settings, Users, Shield, LayoutDashboard, Rss, MessageSquare, Bell, TrendingUp, ChevronDown, Newspaper } from "lucide-react";
+import { Menu, X, Coins, LogOut, Moon, Sun, Settings, Users, Shield, LayoutDashboard, Rss, MessageSquare, Bell, TrendingUp, ChevronDown, Newspaper, BookOpen } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -41,10 +41,11 @@ export default function Navbar() {
         { name: t('nav.feed'), path: "/feed", icon: Rss },
         { name: t('nav.community'), path: "/community", icon: MessageSquare },
         { name: t('nav.news'), path: "/news", icon: Newspaper },
-        { name: t('nav.priceAlerts'), path: "/price-alerts", icon: Bell },
+        { name: "Learn", path: "/learn", icon: BookOpen },
       ]
     : [
         { name: t('nav.home'), path: "/" },
+        { name: "Learn", path: "/learn" },
         { name: t('nav.pricing'), path: "/pricing" },
         { name: t('nav.about'), path: "/about" },
       ];

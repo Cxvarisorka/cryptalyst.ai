@@ -9,6 +9,7 @@ import {
   Shield,
   AlertCircle,
   Loader2,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { FadeIn } from '@/components/magicui/fade-in';
@@ -19,6 +20,7 @@ import AdminStatistics from '@/components/admin/AdminStatistics';
 import UserManagement from '@/components/admin/UserManagement';
 import PostManagement from '@/components/admin/PostManagement';
 import CommentManagement from '@/components/admin/CommentManagement';
+import CourseManagement from '@/components/admin/CourseManagement';
 
 const AdminPanel = () => {
   const { t } = useTranslation();
@@ -49,6 +51,13 @@ const AdminPanel = () => {
       icon: BarChart3,
       component: AdminStatistics,
       allowModerator: true,
+    },
+    {
+      id: 'courses',
+      name: 'Courses',
+      icon: BookOpen,
+      component: CourseManagement,
+      allowModerator: false,
     },
     {
       id: 'users',

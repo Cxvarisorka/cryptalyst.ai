@@ -26,6 +26,8 @@ import PriceAlerts from "@/pages/PriceAlerts";
 import AdminPanel from "@/pages/AdminPanel";
 import SubscriptionSuccess from "@/pages/SubscriptionSuccess";
 import News from "@/pages/News";
+import Learn from "@/pages/Learn";
+import CourseViewer from "@/pages/CourseViewer";
 
 function App() {
   return (
@@ -125,6 +127,15 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <News />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/learn" element={<Learn />} />
+                <Route
+                  path="/learn/course/:courseId"
+                  element={
+                    <ProtectedRoute>
+                      <CourseViewer />
                     </ProtectedRoute>
                   }
                 />
