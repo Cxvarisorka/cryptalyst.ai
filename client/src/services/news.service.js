@@ -1,6 +1,6 @@
 import api from './api';
 
-const API_URL = '/api/news';
+const API_URL = '/news';
 
 export const newsService = {
   // Get news by category
