@@ -8,7 +8,50 @@
     "priceAlerts": "ფასის შეტყობინებები",
     "about": "ჩვენ შესახებ",
     "pricing": "ფასები",
-    "getStarted": "დაწყება"
+    "getStarted": "დაწყება",
+    "learn": "სწავლა"
+  },
+  "learn": {
+    "title": "სწავლა ტრეიდინგი და ინვესტიციები",
+    "subtitle": "დაეუფლეთ კრიპტოს, აქციებს და ტრეიდინგის სტრატეგიებს ექსპერტების მიერ წარმოდგენილი ინტერაქტიული კურსებით",
+    "myLearning": "ჩემი სწავლება",
+    "continueMessage": "გააგრძელეთ სადაც დაასრულეთ",
+    "inProgress": "პროცესშია",
+    "completed": "დასრულებული",
+    "exploreCourses": "გაეცანით მეტ კურსებს",
+    "browseCourses": "დაათვალიერეთ კურსები",
+    "browseTitle": "კურსების დათვალიერება",
+    "coursesAvailable": "კურსი ხელმისაწვდომია",
+    "allSkillLevels": "ყველა უნარის დონე",
+    "allCourses": "ყველა კურსი",
+    "cryptocurrency": "კრიპტოვალუტა",
+    "stocks": "აქციები",
+    "trading": "ტრეიდინგი",
+    "fundamentals": "საფუძვლები",
+    "technicalAnalysis": "ტექნიკური ანალიზი",
+    "minutes": "წუთი",
+    "lessons": "გაკვეთილები",
+    "students": "სტუდენტები",
+    "beginner": "დამწყები",
+    "intermediate": "საშუალო",
+    "advanced": "პროფესიონალი",
+    "yourProgress": "თქვენი პროგრესი",
+    "continuelearning": "გააგრძელეთ სწავლა",
+    "continueLearn": "სწავლის გაგრძელება",
+    "reviewCourse": "გადახედეთ კურსს",
+    "enrollNow": "ჩაწერა ახლავე",
+    "signInToEnroll": "შესვლა ჩასაწერად",
+    "upgradeTo": "განახლება",
+    "upgradeToAccess": "განახლება წვდომისთვის",
+    "required": "საჭიროა",
+    "free": "უფასო",
+    "basic": "ბაზური",
+    "premium": "პრემიუმი",
+    "loadingCourses": "კურსები იტვირთება...",
+    "noCourses": "ამ კატეგორიაში კურსები არ არის ხელმისაწვდომი",
+    "checkBackLater": "შეამოწმეთ მოგვიანებით ახალი კურსებისთვის ან გაეცანით სხვა კატეგორიებს",
+    "viewAllCourses": "ყველა კურსის ნახვა",
+    "viewAllMyCourses": "ჩემი ყველა კურსის ნახვა"
   },
   "feed": {
     "title": "საზოგადოების სიახლეები",
@@ -334,12 +377,23 @@
   "pricing": {
     "title": "მარტივი და გამჭვირვალე ფასები",
     "subtitle": "აირჩიეთ გეგმა, რომელიც შეესაბამება თქვენს ვაჭრობას და ინვესტირებას",
-    "billing": { "monthly": "თვიური გადახდა" },
+    "billing": {
+      "monthly": "თვიური გადახდა"
+    },
     "popular": "ყველაზე პოპულარული",
     "plans": {
-      "pro": { "name": "Pro", "price": "$19/თვე" },
-      "max": { "name": "Max", "price": "$49/თვე" },
-      "enterprise": { "name": "Enterprise", "price": "კონტაქტი" }
+      "pro": {
+        "name": "Pro",
+        "price": "$19/თვე"
+      },
+      "max": {
+        "name": "Max",
+        "price": "$49/თვე"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "კონტაქტი"
+      }
     },
     "features": {
       "aiAnalysis": "AI-ზე დაფუძნებული ანალიზი",
@@ -370,7 +424,6 @@
       "contactSales": "დაუკავშირდით გაყიდვებს"
     }
   },
-
   "auth": {
     "signin": {
       "title": "კეთილი იყოს თქვენი დაბრუნება",
@@ -744,6 +797,26 @@
       "updateFailed": "შეტყობინების განახლება ვერ მოხერხდა",
       "clearSuccess": "ყველა გააქტიურებული შეტყობინება წარმატებით წაიშალა",
       "clearFailed": "გააქტიურებული შეტყობინებების წაშლა ვერ მოხერხდა"
+    }
+  },
+  "course": {
+    "viewer": {
+      "backToCourses": "უკან კურსებზე",
+      "markComplete": "მონიშვნა დასრულებულად",
+      "nextLesson": "შემდეგი გაკვეთილი",
+      "previousLesson": "წინა",
+      "courseComplete": "კურსი დასრულებულია!"
+    },
+    "admin": {
+      "management": "კურსების მართვა",
+      "createCourse": "კურსის შექმნა",
+      "editCourse": "კურსის რედაქტირება",
+      "createSection": "სექციის დამატება",
+      "createLesson": "გაკვეთილის დამატება",
+      "validation": {
+        "titleRequired": "სათაური აუცილებელია ინგლისურად",
+        "contentRequired": "შინაარსი აუცილებელია ინგლისურად"
+      }
     }
   }
 }

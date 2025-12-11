@@ -1,6 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, TrendingUp, DollarSign, Loader2, CheckCircle, Clock, Users, Star, Award, Zap, ArrowRight, Sparkles } from 'lucide-react';
+import { 
+  BookOpen, 
+  TrendingUp, 
+  DollarSign, 
+  Loader2, 
+  CheckCircle, 
+  Clock, 
+  Users, 
+  Star, 
+  Award, 
+  Zap, 
+  ArrowRight, 
+  Sparkles, 
+  Lock, 
+  Crown 
+} from 'lucide-react';
 import { FadeIn } from '@/components/magicui/fade-in';
 import Hero from '@/components/layout/Hero';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,11 +26,32 @@ import { Progress } from '@/components/ui/progress';
 import { courseService } from '@/services/course.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { useTranslation } from 'react-i18next';
+
+// Helper to normalize keys (e.g., "Technical Analysis" -> "technical-analysis")
+const normalizeKey = (str) => {
+  if (!str) return '';
+  return str.toLowerCase().replace(/\s+/g, '-');
+};
 
 const CourseCard = ({ course, enrolledCourses, onEnroll, user }) => {
   const navigate = useNavigate();
-  const enrollment = enrolledCourses?.find((e) => e.courseId._id === course._id);
+  const { t, i18n } = useTranslation();
+  
+  // Safety check: ensure course exists
+  if (!course) return null;
+
+  const enrollment = enrolledCourses?.find((e) => e?.courseId?._id === course._id);
   const isEnrolled = !!enrollment;
+
+  // Check if user has access to this course tier
+  const tierHierarchy = { free: 0, basic: 1, premium: 2 };
+  const userPlan = user?.subscription?.plan || 'free';
+  const courseTier = course.tier || 'free';
+  const userTierLevel = tierHierarchy[userPlan] || 0;
+  const courseTierLevel = tierHierarchy[courseTier] || 0;
+  const hasAccess = userTierLevel >= courseTierLevel;
+  const isLocked = !hasAccess;
 
   const difficultyConfig = {
     beginner: {
@@ -41,6 +77,29 @@ const CourseCard = ({ course, enrolledCourses, onEnroll, user }) => {
     },
   };
 
+  const tierConfig = useMemo(() => ({
+    free: {
+      label: t('learn.free') || 'Free',
+      color: 'text-muted-foreground',
+      bg: 'bg-muted',
+      icon: null,
+    },
+    basic: {
+      label: t('learn.basic') || 'Basic',
+      color: 'text-blue-600 dark:text-blue-400',
+      bg: 'bg-blue-500/10',
+      border: 'border-blue-500/20',
+      icon: Sparkles,
+    },
+    premium: {
+      label: t('learn.premium') || 'Premium',
+      color: 'text-amber-600 dark:text-amber-400',
+      bg: 'bg-gradient-to-r from-amber-500/10 to-orange-500/10',
+      border: 'border-amber-500/20',
+      icon: Crown,
+    },
+  }), [t, i18n.language]);
+
   const categoryIcons = {
     crypto: TrendingUp,
     stocks: DollarSign,
@@ -49,32 +108,71 @@ const CourseCard = ({ course, enrolledCourses, onEnroll, user }) => {
     'technical-analysis': TrendingUp,
   };
 
-  const config = difficultyConfig[course.difficulty] || difficultyConfig.beginner;
-  const CategoryIcon = categoryIcons[course.category] || BookOpen;
+  const categoryTranslations = useMemo(() => ({
+    crypto: t('learn.cryptocurrency'),
+    stocks: t('learn.stocks'),
+    trading: t('learn.trading'),
+    fundamentals: t('learn.fundamentals'),
+    'technical-analysis': t('learn.technicalAnalysis'),
+  }), [t, i18n.language]);
+
+  const difficultyTranslations = useMemo(() => ({
+    beginner: t('learn.beginner'),
+    intermediate: t('learn.intermediate'),
+    advanced: t('learn.advanced'),
+  }), [t, i18n.language]);
+
+  // Normalize keys to ensure matches even if backend case differs
+  const normalizedDifficulty = normalizeKey(course.difficulty);
+  const normalizedCategory = normalizeKey(course.category);
+
+  const config = difficultyConfig[normalizedDifficulty] || difficultyConfig.beginner;
+  const CategoryIcon = categoryIcons[normalizedCategory] || BookOpen;
   const DifficultyIcon = config.icon;
+  const TierIcon = tierConfig[courseTier]?.icon;
 
   return (
-    <Card className="group relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/60 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
+    <Card className={`group relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/60 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 ${isLocked ? 'opacity-75' : ''}`}>
       {/* Animated gradient overlay */}
       <div className={`absolute inset-0 bg-gradient-to-br ${config.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
+
+      {/* Locked overlay */}
+      {isLocked && (
+        <div className="absolute top-4 left-4 z-10 flex items-center gap-1 px-3 py-1.5 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg">
+          <Lock className="h-3.5 w-3.5 text-amber-500" />
+          <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+            {tierConfig[courseTier]?.label} {t('learn.required')}
+          </span>
+        </div>
+      )}
 
       {/* Top accent bar */}
       <div className={`h-1 w-full bg-gradient-to-r ${config.color}`} />
 
       <CardHeader className="relative pb-4">
         <div className="flex items-start justify-between mb-3">
-          <div className={`p-3 rounded-xl bg-gradient-to-br ${config.color} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+          <div className={`p-3 rounded-xl bg-gradient-to-br ${config.color} shadow-lg group-hover:scale-110 transition-transform duration-300 ${isLocked ? 'opacity-50' : ''}`}>
             <CategoryIcon className="h-6 w-6 text-white" />
           </div>
           <div className="flex flex-col items-end gap-2">
-            <Badge variant="secondary" className="text-xs font-semibold">
-              {course.category}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs font-semibold">
+                {categoryTranslations[normalizedCategory] || course.category}
+              </Badge>
+              {courseTier !== 'free' && TierIcon && (
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${tierConfig[courseTier].bg} border ${tierConfig[courseTier].border}`}>
+                  <TierIcon className={`h-3 w-3 ${tierConfig[courseTier].color}`} />
+                  <span className={`text-xs font-semibold ${tierConfig[courseTier].color}`}>
+                    {tierConfig[courseTier].label}
+                  </span>
+                </div>
+              )}
+            </div>
             {isEnrolled && enrollment.progressPercentage === 100 && (
               <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/20">
                 <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
                 <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                  Completed
+                  {t('learn.completed')}
                 </span>
               </div>
             )}
@@ -98,7 +196,7 @@ const CourseCard = ({ course, enrolledCourses, onEnroll, user }) => {
             </div>
             <div>
               <p className="font-medium text-foreground">{course.estimatedDuration || 0}</p>
-              <p className="text-xs">minutes</p>
+              <p className="text-xs">{t('learn.minutes')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -107,7 +205,7 @@ const CourseCard = ({ course, enrolledCourses, onEnroll, user }) => {
             </div>
             <div>
               <p className="font-medium text-foreground">{course.totalLessons || 0}</p>
-              <p className="text-xs">lessons</p>
+              <p className="text-xs">{t('learn.lessons')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -116,7 +214,7 @@ const CourseCard = ({ course, enrolledCourses, onEnroll, user }) => {
             </div>
             <div>
               <p className="font-medium text-foreground">{course.enrolledCount || 0}</p>
-              <p className="text-xs">students</p>
+              <p className="text-xs">{t('learn.students')}</p>
             </div>
           </div>
         </div>
@@ -125,8 +223,8 @@ const CourseCard = ({ course, enrolledCourses, onEnroll, user }) => {
         <div className="flex items-center gap-2">
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${config.bg} border ${config.border}`}>
             <DifficultyIcon className={`h-3.5 w-3.5 ${config.text}`} />
-            <span className={`text-xs font-semibold ${config.text} capitalize`}>
-              {course.difficulty}
+            <span className={`text-xs font-semibold ${config.text}`}>
+              {difficultyTranslations[normalizedDifficulty] || course.difficulty}
             </span>
           </div>
         </div>
@@ -136,7 +234,7 @@ const CourseCard = ({ course, enrolledCourses, onEnroll, user }) => {
           <div className="space-y-3 pt-2">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground font-medium">Your Progress</span>
+                <span className="text-muted-foreground font-medium">{t('learn.yourProgress')}</span>
                 <span className={`font-bold ${enrollment.progressPercentage === 100 ? 'text-green-600' : 'text-primary'}`}>
                   {enrollment.progressPercentage}%
                 </span>
@@ -146,23 +244,47 @@ const CourseCard = ({ course, enrolledCourses, onEnroll, user }) => {
             <Button
               onClick={() => navigate(`/learn/course/${course._id}`)}
               className="w-full group/btn relative overflow-hidden bg-gradient-to-r from-primary to-primary/80 hover:shadow-lg hover:shadow-primary/50"
+              disabled={isLocked}
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
-                {enrollment.progressPercentage === 100 ? 'Review Course' : 'Continue Learning'}
-                <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                {isLocked ? (
+                  <>
+                    <Lock className="h-4 w-4" />
+                    {t('learn.upgradeToAccess')}
+                  </>
+                ) : (
+                  <>
+                    {enrollment.progressPercentage === 100 ? t('learn.reviewCourse') : t('learn.continuelearning')}
+                    <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                  </>
+                )}
               </span>
             </Button>
           </div>
         ) : (
           <Button
-            onClick={() => onEnroll(course._id)}
-            variant="default"
+            onClick={() => isLocked ? navigate('/pricing') : onEnroll(course._id)}
+            variant={isLocked ? "outline" : "default"}
             className="w-full group/btn relative overflow-hidden"
-            disabled={!user}
+            disabled={!user && !isLocked && false} // Logic adjusted: Let guests click to trigger auth redirect
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
-              {user ? 'Enroll Now' : 'Sign in to Enroll'}
-              <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+              {isLocked ? (
+                <>
+                  <Lock className="h-4 w-4" />
+                  {t('learn.upgradeTo')} {tierConfig[courseTier]?.label}
+                </>
+              ) : user ? (
+                <>
+                  {t('learn.enrollNow')}
+                  <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                </>
+              ) : (
+                <>
+                  {t('learn.signInToEnroll')}
+                  <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                </>
+              )}
             </span>
           </Button>
         )}
@@ -172,46 +294,55 @@ const CourseCard = ({ course, enrolledCourses, onEnroll, user }) => {
 };
 
 const Learn = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  
   const [courses, setCourses] = useState([]);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
 
+  // Load Data Effect
   useEffect(() => {
-    fetchCourses();
-    if (user) {
-      fetchEnrolledCourses();
-    }
-  }, [user]);
+    // Only proceed if auth loading is finished to avoid false "logged out" state
+    if (authLoading) return;
 
-  const fetchCourses = async () => {
-    try {
-      setLoading(true);
-      const data = await courseService.getAllCourses();
-      setCourses(data);
-    } catch (error) {
-      console.error('Error fetching courses:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch courses',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadData = async () => {
+      try {
+        setDataLoading(true);
+        const currentLanguage = i18n.language || 'en';
+        
+        // Parallel fetching
+        const promises = [courseService.getAllCourses({ language: currentLanguage })];
+        if (user) {
+          promises.push(courseService.getMyEnrolledCourses(currentLanguage));
+        }
 
-  const fetchEnrolledCourses = async () => {
-    try {
-      const data = await courseService.getMyEnrolledCourses();
-      setEnrolledCourses(data);
-    } catch (error) {
-      console.error('Error fetching enrolled courses:', error);
-    }
-  };
+        const results = await Promise.all(promises);
+        setCourses(results[0] || []);
+        
+        if (user) {
+          setEnrolledCourses(results[1] || []);
+        } else {
+          setEnrolledCourses([]);
+        }
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch courses',
+          variant: 'destructive',
+        });
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, i18n.language, authLoading, toast]);
 
   const handleEnroll = async (courseId) => {
     if (!user) {
@@ -225,36 +356,79 @@ const Learn = () => {
         title: 'Success!',
         description: 'Successfully enrolled in course. Start learning now!',
       });
-      fetchEnrolledCourses();
+      // Refresh enrollments
+      const currentLanguage = i18n.language || 'en';
+      const data = await courseService.getMyEnrolledCourses(currentLanguage);
+      setEnrolledCourses(data);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to enroll in course',
-        variant: 'destructive',
-      });
+      if (error.response?.status === 403) {
+        toast({
+          title: 'Upgrade Required',
+          description: error.response?.data?.message || 'You need to upgrade your subscription to access this course',
+          variant: 'destructive',
+          action: {
+            label: 'View Plans',
+            onClick: () => navigate('/pricing'),
+          },
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to enroll in course',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
-  const categories = [
-    { id: 'all', name: 'All Courses', icon: Sparkles },
-    { id: 'crypto', name: 'Cryptocurrency', icon: TrendingUp },
-    { id: 'stocks', name: 'Stocks', icon: DollarSign },
-    { id: 'trading', name: 'Trading', icon: Star },
-    { id: 'fundamentals', name: 'Fundamentals', icon: BookOpen },
-    { id: 'technical-analysis', name: 'Technical Analysis', icon: Award },
-  ];
+  const categories = useMemo(() => [
+    { id: 'all', name: t('learn.allCourses'), icon: Sparkles },
+    { id: 'crypto', name: t('learn.cryptocurrency'), icon: TrendingUp },
+    { id: 'stocks', name: t('learn.stocks'), icon: DollarSign },
+    { id: 'trading', name: t('learn.trading'), icon: Star },
+    { id: 'fundamentals', name: t('learn.fundamentals'), icon: BookOpen },
+    { id: 'technical-analysis', name: t('learn.technicalAnalysis'), icon: Award },
+  ], [t, i18n.language]);
 
-  const filteredCourses =
-    activeTab === 'all' ? courses : courses.filter((c) => c.category === activeTab);
+  // Optimize Filtering
+  const filteredCourses = useMemo(() => {
+    if (!courses) return [];
+    return activeTab === 'all' 
+      ? courses 
+      : courses.filter((c) => normalizeKey(c.category) === normalizeKey(activeTab));
+  }, [activeTab, courses]);
 
-  const inProgressCourses = enrolledCourses.filter(
-    (e) => e.progressPercentage > 0 && e.progressPercentage < 100
-  );
-  const completedCourses = enrolledCourses.filter((e) => e.progressPercentage === 100);
+  // Optimize Sorting & Safety Check
+  const sortedEnrolledCourses = useMemo(() => {
+    if (!enrolledCourses || enrolledCourses.length === 0) return [];
+    
+    // Filter out corrupted data (where courseId is null)
+    const validEnrollments = enrolledCourses.filter(e => e && e.courseId);
+
+    const inProgress = validEnrollments.filter(
+      (e) => e.progressPercentage > 0 && e.progressPercentage < 100
+    );
+    const completed = validEnrollments.filter((e) => e.progressPercentage === 100);
+    const notStarted = validEnrollments.filter((e) => e.progressPercentage === 0);
+
+    return [
+      ...inProgress,
+      ...notStarted,
+      ...completed
+    ];
+  }, [enrolledCourses]);
 
   const heroIcons = [
     { Icon: BookOpen, gradient: 'bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500' },
   ];
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -262,8 +436,8 @@ const Learn = () => {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
         <Hero
-          title="Learn Trading & Investing"
-          subtitle="Master crypto, stocks, and trading strategies with expert-led interactive courses"
+          title={t('learn.title')}
+          subtitle={t('learn.subtitle')}
           icons={heroIcons}
           showSingleIcon={true}
           align="left"
@@ -274,36 +448,37 @@ const Learn = () => {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-10">
         <FadeIn>
-          {/* My Learning Dashboard (for logged-in users with enrollments) */}
-          {user && enrolledCourses.length > 0 && (
+          {/* My Learning Dashboard (Only for logged in users with courses) */}
+          {user && sortedEnrolledCourses.length > 0 && (
             <div className="mb-12">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                    My Learning
+                    {t('learn.myLearning')}
                   </h2>
-                  <p className="text-muted-foreground mt-1">Continue where you left off</p>
+                  <p className="text-muted-foreground mt-1">{t('learn.continueMessage')}</p>
                 </div>
-                <div className="flex items-center gap-4 text-sm">
+                {/* Stats indicators */}
+                <div className="flex items-center gap-4 text-sm hidden sm:flex">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-primary" />
                     <span className="text-muted-foreground">
-                      {inProgressCourses.length} In Progress
+                      {sortedEnrolledCourses.filter(c => c.progressPercentage > 0 && c.progressPercentage < 100).length} {t('learn.inProgress')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-green-500" />
                     <span className="text-muted-foreground">
-                      {completedCourses.length} Completed
+                      {sortedEnrolledCourses.filter(c => c.progressPercentage === 100).length} {t('learn.completed')}
                     </span>
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {enrolledCourses.slice(0, 6).map((enrollment) => (
+                {sortedEnrolledCourses.slice(0, 6).map((enrollment) => (
                   <CourseCard
-                    key={enrollment.courseId._id}
+                    key={enrollment.courseId?._id || `enroll-${Math.random()}`}
                     course={enrollment.courseId}
                     enrolledCourses={enrolledCourses}
                     onEnroll={handleEnroll}
@@ -312,10 +487,10 @@ const Learn = () => {
                 ))}
               </div>
 
-              {enrolledCourses.length > 6 && (
+              {sortedEnrolledCourses.length > 6 && (
                 <div className="mt-6 text-center">
                   <Button variant="outline" size="lg" className="group">
-                    View All My Courses ({enrolledCourses.length})
+                    {t('learn.viewAllMyCourses')} ({sortedEnrolledCourses.length})
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </div>
@@ -327,10 +502,10 @@ const Learn = () => {
           <div>
             <div className="mb-8">
               <h2 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
-                {user && enrolledCourses.length > 0 ? 'Explore More Courses' : 'Browse Courses'}
+                {user && enrolledCourses.length > 0 ? t('learn.exploreCourses') : t('learn.browseCourses')}
               </h2>
               <p className="text-muted-foreground mt-1">
-                {courses.length} courses available • All skill levels
+                {courses.length} {t('learn.coursesAvailable')} • {t('learn.allSkillLevels')}
               </p>
             </div>
 
@@ -354,11 +529,11 @@ const Learn = () => {
             </Tabs>
 
             {/* Course Grid */}
-            {loading ? (
+            {dataLoading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
                   <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-                  <p className="mt-4 text-muted-foreground">Loading courses...</p>
+                  <p className="mt-4 text-muted-foreground">{t('learn.loadingCourses')}</p>
                 </div>
               </div>
             ) : filteredCourses.length > 0 ? (
@@ -377,16 +552,16 @@ const Learn = () => {
               <Card className="border-dashed">
                 <CardContent className="py-20 text-center">
                   <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium text-muted-foreground">No courses available in this category</p>
+                  <p className="text-lg font-medium text-muted-foreground">{t('learn.noCourses')}</p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Check back later for new courses or explore other categories
+                    {t('learn.checkBackLater')}
                   </p>
                   <Button
                     variant="outline"
                     className="mt-4"
                     onClick={() => setActiveTab('all')}
                   >
-                    View All Courses
+                    {t('learn.viewAllCourses')}
                   </Button>
                 </CardContent>
               </Card>

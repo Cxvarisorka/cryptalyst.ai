@@ -18,6 +18,7 @@ import { courseService } from '@/services/course.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const LessonContent = ({ lesson, onComplete, isCompleted }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -143,6 +144,7 @@ const CourseViewer = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { i18n } = useTranslation();
 
   const [course, setCourse] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -156,13 +158,14 @@ const CourseViewer = () => {
       return;
     }
     fetchCourseData();
-  }, [courseId, user]);
+  }, [courseId, user, i18n.language]);
 
   const fetchCourseData = async () => {
     try {
       setLoading(true);
+      const currentLanguage = i18n.language || 'en';
       const [courseData, progressData] = await Promise.all([
-        courseService.getCourseById(courseId),
+        courseService.getCourseById(courseId, currentLanguage),
         courseService.getCourseProgress(courseId).catch(() => null),
       ]);
 

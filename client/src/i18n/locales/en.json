@@ -8,7 +8,48 @@
     "priceAlerts": "Price Alerts",
     "about": "About",
     "pricing": "Pricing",
-    "getStarted": "Get Started"
+    "getStarted": "Get Started",
+    "learn": "Learn"
+  },
+  "learn": {
+    "title": "Learn Trading & Investing",
+    "subtitle": "Master crypto, stocks, and trading strategies with expert-led interactive courses",
+    "myLearning": "My Learning",
+    "continueMessage": "Continue where you left off",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "exploreCourses": "Explore More Courses",
+    "browseCourses": "Browse Courses",
+    "coursesAvailable": "courses available",
+    "allSkillLevels": "All skill levels",
+    "allCourses": "All Courses",
+    "cryptocurrency": "Cryptocurrency",
+    "stocks": "Stocks",
+    "trading": "Trading",
+    "fundamentals": "Fundamentals",
+    "technicalAnalysis": "Technical Analysis",
+    "minutes": "minutes",
+    "lessons": "lessons",
+    "students": "students",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "yourProgress": "Your Progress",
+    "continuelearning": "Continue Learning",
+    "reviewCourse": "Review Course",
+    "enrollNow": "Enroll Now",
+    "signInToEnroll": "Sign in to Enroll",
+    "upgradeTo": "Upgrade to",
+    "upgradeToAccess": "Upgrade to Access",
+    "required": "Required",
+    "free": "Free",
+    "basic": "Basic",
+    "premium": "Premium",
+    "loadingCourses": "Loading courses...",
+    "noCourses": "No courses available in this category",
+    "checkBackLater": "Check back later for new courses or explore other categories",
+    "viewAllCourses": "View All Courses",
+    "viewAllMyCourses": "View All My Courses"
   },
   "feed": {
     "title": "Community Feed",
@@ -744,6 +785,26 @@
       "updateFailed": "Failed to update alert",
       "clearSuccess": "All triggered alerts deleted successfully",
       "clearFailed": "Failed to delete triggered alerts"
+    }
+  },
+  "course": {
+    "viewer": {
+      "backToCourses": "Back to Courses",
+      "markComplete": "Mark as Complete",
+      "nextLesson": "Next Lesson",
+      "previousLesson": "Previous",
+      "courseComplete": "Course Complete!"
+    },
+    "admin": {
+      "management": "Course Management",
+      "createCourse": "Create Course",
+      "editCourse": "Edit Course",
+      "createSection": "Add Section",
+      "createLesson": "Add Lesson",
+      "validation": {
+        "titleRequired": "Title is required in English",
+        "contentRequired": "Content is required in English"
+      }
     }
   }
 }
