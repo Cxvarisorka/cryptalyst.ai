@@ -8,10 +8,10 @@ const courseController = require('../controllers/course.controller');
 // Get all published courses
 router.get('/', courseController.getAllCourses);
 
-// Get course by ID
-router.get('/:id', courseController.getCourseById);
-
 // ==================== USER ROUTES (require authentication) ====================
+
+// Get my enrolled courses (must be BEFORE /:id to avoid conflict)
+router.get('/me/enrolled', protect, courseController.getMyEnrolledCourses);
 
 // Enroll in a course
 router.post('/:id/enroll', protect, courseController.enrollCourse);
@@ -22,8 +22,8 @@ router.get('/:id/progress', protect, courseController.getCourseProgress);
 // Complete a lesson
 router.post('/:courseId/lessons/:lessonId/complete', protect, courseController.completeLesson);
 
-// Get my enrolled courses
-router.get('/me/enrolled', protect, courseController.getMyEnrolledCourses);
+// Get course by ID (public, but AFTER /me/enrolled to avoid route conflicts)
+router.get('/:id', courseController.getCourseById);
 
 // ==================== ADMIN ROUTES ====================
 
