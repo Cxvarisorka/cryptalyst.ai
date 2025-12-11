@@ -1,18 +1,36 @@
 const PortfolioCollection = require('../models/portfolioCollection.model');
 const Portfolio = require('../models/portfolio.model');
 const marketDataService = require('../services/marketData.service');
+const mongoose = require('mongoose');
 
 /**
  * Utility: Get asset counts for collections (fast, single aggregation)
  */
 async function getAssetCounts(userId) {
+  // Ensure userId is an ObjectId
+  const objectId = mongoose.Types.ObjectId.isValid(userId)
+    ? (userId instanceof mongoose.Types.ObjectId ? userId : new mongoose.Types.ObjectId(userId))
+    : null;
+
+  if (!objectId) {
+    console.error('[getAssetCounts] Invalid userId:', userId);
+    return {};
+  }
+
   const result = await Portfolio.aggregate([
-    { $match: { userId } },
+    { $match: { userId: objectId } },
     { $group: { _id: "$collection", count: { $sum: 1 } } }
   ]);
 
+  console.log(`[getAssetCounts] Found ${result.length} collections with assets for user ${userId}`);
+
   const countMap = {};
-  result.forEach(r => countMap[r._id?.toString()] = r.count);
+  result.forEach(r => {
+    const key = r._id?.toString() || 'null';
+    countMap[key] = r.count;
+    console.log(`[getAssetCounts] Collection ${key}: ${r.count} assets`);
+  });
+
   return countMap;
 }
 

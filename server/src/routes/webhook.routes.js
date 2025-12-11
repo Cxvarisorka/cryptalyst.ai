@@ -4,10 +4,19 @@ const webhookController = require('../controllers/webhook.controller');
 
 // Health check endpoint for webhooks
 router.get('/health', (req, res) => {
+  const config = {
+    webhookSecretConfigured: !!process.env.STRIPE_WEBHOOK_SECRET,
+    stripeConfigured: !!process.env.STRIPE_SECRET_KEY,
+    nodeEnv: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  };
+
+  console.log('🏥 Webhook Health Check:', config);
+
   res.json({
     success: true,
     message: 'Webhook endpoint is accessible',
-    timestamp: new Date().toISOString()
+    config
   });
 });
 

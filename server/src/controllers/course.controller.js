@@ -166,7 +166,13 @@ exports.getCourseById = async (req, res, next) => {
     let hasAccess = true;
     if (req.user) {
       const userPlan = req.user.subscription?.plan || 'free';
+      console.log('🎓 Course Access Check:');
+      console.log('  - Course:', course.title);
+      console.log('  - Course Tier:', course.tier);
+      console.log('  - User Plan:', userPlan);
+      console.log('  - User Subscription:', JSON.stringify(req.user.subscription, null, 2));
       hasAccess = hasAccessToTier(userPlan, course.tier);
+      console.log('  - Has Access:', hasAccess);
     }
 
     res.status(200).json({
@@ -200,7 +206,13 @@ exports.enrollCourse = async (req, res, next) => {
 
     // Check if user has access to this course tier
     const userPlan = req.user.subscription?.plan || 'free';
+    console.log('🎓 Enroll Check:');
+    console.log('  - Course Tier:', course.tier);
+    console.log('  - User Plan:', userPlan);
+    console.log('  - User Subscription:', JSON.stringify(req.user.subscription, null, 2));
+
     if (!hasAccessToTier(userPlan, course.tier)) {
+      console.log('  - ❌ Access DENIED');
       return res.status(403).json({
         success: false,
         message: `This course requires a ${course.tier} subscription or higher. Please upgrade your plan to access this course.`,
@@ -208,6 +220,7 @@ exports.enrollCourse = async (req, res, next) => {
         userTier: userPlan,
       });
     }
+    console.log('  - ✅ Access GRANTED');
 
     // Check if already enrolled
     let progress = await CourseProgress.findOne({ userId, courseId: id });

@@ -87,6 +87,9 @@ const getCurrentUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    console.log('👤 getCurrentUser called for:', user.email);
+    console.log('📊 User subscription:', JSON.stringify(user.subscription, null, 2));
+
     res.status(200).json({
       success: true,
       user: {
@@ -96,7 +99,8 @@ const getCurrentUser = async (req, res) => {
         role: user.role,
         avatar: user.avatar,
         oauthProvider: user.oauthProvider,
-        settings: user.settings
+        settings: user.settings,
+        subscription: user.subscription // Include subscription data
       }
     });
   } catch (error) {

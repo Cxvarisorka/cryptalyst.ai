@@ -38,29 +38,29 @@ exports.handleStripeWebhook = async (req, res) => {
 
   // Handle the event
   try {
-    logger.webhook(`Received event: ${event.type}`);
+    console.log('\n🎯 ========================================');
+    console.log(`📬 STRIPE WEBHOOK RECEIVED: ${event.type}`);
+    console.log('Event ID:', event.id);
+    console.log('========================================');
 
     switch (event.type) {
       case 'checkout.session.completed':
         // Payment successful and subscription created
         const session = event.data.object;
-        logger.webhook('Checkout session completed', {
-          sessionId: session.id,
-          mode: session.mode,
-          subscriptionId: session.subscription,
-          metadata: session.metadata
-        });
+        console.log('💳 Checkout Session Completed');
+        console.log('Session ID:', session.id);
+        console.log('Mode:', session.mode);
+        console.log('Subscription ID:', session.subscription);
+        console.log('Metadata:', JSON.stringify(session.metadata, null, 2));
 
         // If this is a subscription checkout, get the subscription and update user
         if (session.mode === 'subscription' && session.subscription) {
+          console.log('📥 Retrieving subscription details...');
           const subscription = await stripe.subscriptions.retrieve(session.subscription);
-          logger.webhook('Retrieved subscription', {
-            subscriptionId: subscription.id,
-            metadata: subscription.metadata,
-            status: subscription.status
-          });
+          console.log('✅ Subscription retrieved');
+          console.log('Status:', subscription.status);
+          console.log('Metadata:', JSON.stringify(subscription.metadata, null, 2));
           await stripeService.handleSubscriptionUpdate(subscription);
-          logger.webhook('User subscription updated from checkout session');
         }
         break;
 
@@ -68,45 +68,48 @@ exports.handleStripeWebhook = async (req, res) => {
       case 'customer.subscription.updated':
         // Subscription created or updated
         const subscriptionData = event.data.object;
-        logger.webhook('Subscription event', {
-          subscriptionId: subscriptionData.id,
-          metadata: subscriptionData.metadata,
-          status: subscriptionData.status
-        });
+        console.log(`📝 Subscription ${event.type === 'customer.subscription.created' ? 'Created' : 'Updated'}`);
+        console.log('Subscription ID:', subscriptionData.id);
+        console.log('Status:', subscriptionData.status);
+        console.log('Metadata:', JSON.stringify(subscriptionData.metadata, null, 2));
         await stripeService.handleSubscriptionUpdate(subscriptionData);
-        logger.webhook('Subscription updated');
         break;
 
       case 'customer.subscription.deleted':
         // Subscription canceled
+        console.log('🗑️ Subscription Deleted');
         await stripeService.handleSubscriptionDeleted(event.data.object);
-        logger.success('Subscription deleted');
+        console.log('✅ Subscription deletion handled');
         break;
 
       case 'customer.subscription.trial_will_end':
         // Trial will end in 3 days (you can send notification email here)
-        logger.info('Trial ending soon');
+        console.log('⏰ Trial ending soon');
         // TODO: Implement email notification
         break;
 
       case 'invoice.payment_succeeded':
         // Payment succeeded
-        logger.success('Invoice payment succeeded');
+        console.log('✅ Invoice payment succeeded');
         break;
 
       case 'invoice.payment_failed':
         // Payment failed
-        logger.warn('Invoice payment failed');
+        console.log('❌ Invoice payment failed');
         // TODO: Implement email notification
         break;
 
       default:
-        logger.debug(`Unhandled event type: ${event.type}`);
+        console.log(`ℹ️ Unhandled event type: ${event.type}`);
     }
+
+    console.log('========================================\n');
 
     // Return a 200 response to acknowledge receipt of the event
     res.json({ received: true });
   } catch (error) {
+    console.error('❌ ERROR handling webhook:', error.message);
+    console.error('Stack:', error.stack);
     logger.error('Error handling webhook:', error.message);
     res.status(500).json({
       success: false,

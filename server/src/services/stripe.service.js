@@ -237,41 +237,65 @@ class StripeService {
    */
   async handleSubscriptionUpdate(subscription) {
     try {
-      logger.webhook('handleSubscriptionUpdate called', {
-        subscriptionId: subscription.id,
-        metadata: subscription.metadata,
-        status: subscription.status
-      });
+      console.log('========================================');
+      console.log('🔔 STRIPE WEBHOOK: handleSubscriptionUpdate called');
+      console.log('Subscription ID:', subscription.id);
+      console.log('Subscription Status:', subscription.status);
+      console.log('Metadata:', JSON.stringify(subscription.metadata, null, 2));
+      console.log('========================================');
 
       const userId = subscription.metadata?.userId;
       const planType = subscription.metadata?.planType;
 
       if (!userId) {
+        console.error('❌ ERROR: No userId in subscription metadata');
+        console.error('Metadata:', JSON.stringify(subscription.metadata, null, 2));
         logger.error('No userId in subscription metadata', { metadata: subscription.metadata });
         return;
       }
 
       if (!planType) {
+        console.error('❌ ERROR: No planType in subscription metadata');
+        console.error('Metadata:', JSON.stringify(subscription.metadata, null, 2));
         logger.error('No planType in subscription metadata', { metadata: subscription.metadata });
         return;
       }
 
-      logger.webhook('Looking up user', { userId });
+      console.log('🔍 Looking up user with ID:', userId);
       const user = await User.findById(userId);
       if (!user) {
+        console.error('❌ ERROR: User not found for ID:', userId);
         logger.error('User not found for subscription update', { userId });
         return;
       }
 
-      logger.webhook('User found', { email: '[REDACTED]', currentPlan: user.subscription?.plan || 'free' });
-
       const oldPlan = user.subscription?.plan || 'free';
       const newPlan = planType || user.subscription?.plan || 'free';
+
+      console.log('👤 User found:', user.name);
+      console.log('📊 Current Plan:', oldPlan);
+      console.log('📊 New Plan:', newPlan);
+      console.log('📈 Subscription Status:', subscription.status);
 
       // Determine trial end date
       const trialEnd = subscription.trial_end
         ? new Date(subscription.trial_end * 1000)
         : null;
+
+      // Safely convert period dates (handle null/undefined)
+      const periodStart = subscription.current_period_start
+        ? new Date(subscription.current_period_start * 1000)
+        : null;
+
+      const periodEnd = subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000)
+        : null;
+
+      if (trialEnd) {
+        console.log('🎁 Trial ends at:', trialEnd.toISOString());
+      }
+      console.log('📅 Current Period Start:', periodStart ? periodStart.toISOString() : 'null');
+      console.log('📅 Current Period End:', periodEnd ? periodEnd.toISOString() : 'null');
 
       // Update user subscription in MongoDB
       user.subscription = {
@@ -281,12 +305,17 @@ class StripeService {
         plan: newPlan,
         status: subscription.status,
         trialEndsAt: trialEnd,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        currentPeriodStart: periodStart,
+        currentPeriodEnd: periodEnd,
         cancelAtPeriodEnd: subscription.cancel_at_period_end
       };
 
       await user.save();
+
+      console.log('✅ SUCCESS: Subscription saved to database');
+      console.log('Plan Change:', `${oldPlan} → ${newPlan}`);
+      console.log('Current Period End:', user.subscription.currentPeriodEnd ? user.subscription.currentPeriodEnd.toISOString() : 'null');
+      console.log('========================================\n');
 
       logger.webhook('Subscription saved to database', {
         userId: userId,
@@ -296,11 +325,12 @@ class StripeService {
         trialEnd: trialEnd,
         currentPeriodEnd: user.subscription.currentPeriodEnd
       });
-
-      logger.success('Subscription updated in database');
-      logger.info(`Plan: ${oldPlan} → ${newPlan}`);
-      logger.info(`Status: ${subscription.status}`);
     } catch (error) {
+      console.error('========================================');
+      console.error('❌ CRITICAL ERROR in handleSubscriptionUpdate');
+      console.error('Error:', error.message);
+      console.error('Stack:', error.stack);
+      console.error('========================================\n');
       logger.error('Error handling subscription update:', error.message);
       logger.webhook('Error details', { error: error.stack });
     }

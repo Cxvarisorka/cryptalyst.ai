@@ -79,13 +79,16 @@ exports.createPortalSession = async (req, res) => {
  */
 exports.getSubscriptionStatus = async (req, res) => {
   try {
+    console.log('📊 Getting subscription status for user:', req.user._id);
     const status = await stripeService.getSubscriptionStatus(req.user._id);
+    console.log('✅ Subscription status retrieved:', JSON.stringify(status, null, 2));
 
     res.json({
       success: true,
       subscription: status
     });
   } catch (error) {
+    console.error('❌ Error getting subscription status:', error.message);
     logger.error('Error getting subscription status:', error.message);
     res.status(500).json({
       success: false,
