@@ -211,7 +211,9 @@ export default function Community() {
                             <span>{t("community.portfolioValue")}</span>
                           </div>
                           <span className="font-semibold text-foreground text-sm sm:text-base">
-                            {formatPrice(user.portfolioStats?.totalValue || 0)}
+                            {user.portfolioStats?.totalValue !== undefined && user.portfolioStats?.totalValue !== null
+                              ? formatPrice(user.portfolioStats.totalValue)
+                              : '—'}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
@@ -220,7 +222,9 @@ export default function Community() {
                             <span>{t("community.assets")}</span>
                           </div>
                           <span className="font-semibold text-foreground text-sm sm:text-base">
-                            {user.portfolioStats?.assetCount || 0}
+                            {user.portfolioStats?.assetCount !== undefined && user.portfolioStats?.assetCount !== null
+                              ? user.portfolioStats.assetCount
+                              : '—'}
                           </span>
                         </div>
                       </div>

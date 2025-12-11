@@ -440,7 +440,9 @@ export default function UserProfile() {
                               <div>
                                 <CardTitle className="text-lg">{collection.name}</CardTitle>
                                 <CardDescription className="text-sm">
-                                  {collection.assetCount} {t("profile.assets")}
+                                  {collection.assetCount !== undefined && collection.assetCount !== null
+                                    ? `${collection.assetCount} ${t("profile.assets")}`
+                                    : `— ${t("profile.assets")}`}
                                 </CardDescription>
                               </div>
                             </div>

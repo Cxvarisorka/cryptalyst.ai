@@ -41,11 +41,10 @@ export default function Navbar() {
         { name: t('nav.feed'), path: "/feed", icon: Rss },
         { name: t('nav.community'), path: "/community", icon: MessageSquare },
         { name: t('nav.news'), path: "/news", icon: Newspaper },
-        { name: "Learn", path: "/learn", icon: BookOpen },
+        { name: t('nav.learn'), path: "/learn", icon: BookOpen },
       ]
     : [
         { name: t('nav.home'), path: "/" },
-        { name: "Learn", path: "/learn" },
         { name: t('nav.pricing'), path: "/pricing" },
         { name: t('nav.about'), path: "/about" },
       ];
@@ -100,10 +99,10 @@ export default function Navbar() {
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                className="rounded-full hover:bg-primary/10"
+                className="rounded-full hover:bg-primary/10 text-foreground"
                 title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
-                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                {theme === 'dark' ? <Sun size={18} className="text-foreground" /> : <Moon size={18} className="text-foreground" />}
               </Button>
               <LanguageSwitcher />
             </div>
@@ -199,9 +198,9 @@ export default function Navbar() {
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="rounded-full"
+              className="rounded-full text-foreground"
             >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              {theme === 'dark' ? <Sun size={18} className="text-foreground" /> : <Moon size={18} className="text-foreground" />}
             </Button>
             <LanguageSwitcher />
             <button

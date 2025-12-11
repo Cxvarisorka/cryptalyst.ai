@@ -64,7 +64,7 @@ export default function Pricing() {
 
   const handleSubscribe = async (planType) => {
     if (!user) {
-      navigate('/login', { state: { from: '/pricing' } });
+      navigate('/signup', { state: { from: '/pricing', selectedPlan: planType } });
       return;
     }
 
@@ -193,8 +193,16 @@ export default function Pricing() {
                         </ul>
                         <Button
                           className={`w-full ${p.featured ? "bg-gradient-money hover:opacity-90" : ""}`}
-                          onClick={() => p.key !== 'free' && handleSubscribe(p.key)}
-                          disabled={isCurrentPlan(p.key) || processingPlan === p.key || (p.key === 'free' && !user)}
+                          onClick={() => {
+                            if (p.key === 'free') {
+                              if (!user) {
+                                navigate('/signup');
+                              }
+                            } else {
+                              handleSubscribe(p.key);
+                            }
+                          }}
+                          disabled={isCurrentPlan(p.key) || processingPlan === p.key}
                         >
                           {isCurrentPlan(p.key) ? 'Current Plan' : processingPlan === p.key ? 'Processing...' : p.cta}
                         </Button>
@@ -249,7 +257,11 @@ export default function Pricing() {
             <CardContent className="p-10">
               <h2 className="text-2xl md:text-3xl font-bold mb-4">{t("pricing.cta.title")}</h2>
               <p className="text-muted-foreground mb-6 max-w-xl mx-auto">{t("pricing.cta.subtitle")}</p>
-              <Button size="lg" className="bg-gradient-money hover:opacity-90">
+              <Button
+                size="lg"
+                className="bg-gradient-money hover:opacity-90"
+                onClick={() => user ? navigate('/dashboard') : navigate('/signup')}
+              >
                 {t("pricing.cta.getStarted")}
               </Button>
             </CardContent>

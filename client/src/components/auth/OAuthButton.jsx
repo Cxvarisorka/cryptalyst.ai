@@ -24,9 +24,9 @@ export default function OAuthButton({ provider, onClick, disabled }) {
           />
         </svg>
       ),
-      bgColor: "bg-white hover:bg-gray-50",
-      textColor: "text-gray-900",
-      border: "border border-gray-300"
+      bgColor: "bg-white dark:bg-white hover:bg-gray-50 dark:hover:bg-gray-100",
+      textColor: "text-gray-900 dark:text-gray-900",
+      border: "border border-gray-300 dark:border-gray-300"
     },
     github: {
       name: "GitHub",
@@ -38,8 +38,8 @@ export default function OAuthButton({ provider, onClick, disabled }) {
           />
         </svg>
       ),
-      bgColor: "bg-gray-900 hover:bg-gray-800",
-      textColor: "text-white",
+      bgColor: "bg-gray-900 dark:bg-gray-900 hover:bg-gray-800 dark:hover:bg-gray-800",
+      textColor: "text-white dark:text-white",
       border: ""
     }
   };

@@ -40,11 +40,11 @@ export default function LanguageSwitcher() {
         <Button
           variant="outline"
           size="sm"
-          className="gap-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
+          className="gap-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200 text-foreground"
         >
-          <Globe className="h-4 w-4" />
+          <Globe className="h-4 w-4 text-foreground" />
           <span className="hidden sm:inline-block">{currentLanguage.flag}</span>
-          <span className="hidden md:inline-block">{currentLanguage.name}</span>
+          <span className="hidden md:inline-block text-foreground">{currentLanguage.name}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
