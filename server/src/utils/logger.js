@@ -77,6 +77,14 @@ const logger = {
   },
 
   /**
+   * Log critical webhook events (always logged for debugging)
+   */
+  webhook: (...args) => {
+    // Always log webhooks for debugging, but sanitize
+    console.log(...formatMessage('WEBHOOK', ...args));
+  },
+
+  /**
    * Log warning messages (only in development)
    */
   warn: (...args) => {

@@ -38,25 +38,43 @@ exports.handleStripeWebhook = async (req, res) => {
 
   // Handle the event
   try {
+    logger.webhook(`Received event: ${event.type}`);
+
     switch (event.type) {
       case 'checkout.session.completed':
         // Payment successful and subscription created
         const session = event.data.object;
-        logger.success('Checkout session completed');
+        logger.webhook('Checkout session completed', {
+          sessionId: session.id,
+          mode: session.mode,
+          subscriptionId: session.subscription,
+          metadata: session.metadata
+        });
 
         // If this is a subscription checkout, get the subscription and update user
         if (session.mode === 'subscription' && session.subscription) {
           const subscription = await stripe.subscriptions.retrieve(session.subscription);
+          logger.webhook('Retrieved subscription', {
+            subscriptionId: subscription.id,
+            metadata: subscription.metadata,
+            status: subscription.status
+          });
           await stripeService.handleSubscriptionUpdate(subscription);
-          logger.success('User subscription updated from checkout session');
+          logger.webhook('User subscription updated from checkout session');
         }
         break;
 
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
         // Subscription created or updated
-        await stripeService.handleSubscriptionUpdate(event.data.object);
-        logger.success('Subscription updated');
+        const subscriptionData = event.data.object;
+        logger.webhook('Subscription event', {
+          subscriptionId: subscriptionData.id,
+          metadata: subscriptionData.metadata,
+          status: subscriptionData.status
+        });
+        await stripeService.handleSubscriptionUpdate(subscriptionData);
+        logger.webhook('Subscription updated');
         break;
 
       case 'customer.subscription.deleted':

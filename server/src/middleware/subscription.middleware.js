@@ -1,3 +1,5 @@
+const logger = require('../utils/logger');
+
 /**
  * Middleware to check if user has an active subscription
  */
@@ -30,18 +32,35 @@ exports.requireSubscription = (allowedPlans = ['basic', 'premium']) => {
       const hasAccess = (isTrialing || isActive) &&
                        allowedPlans.includes(subscription.plan);
 
+      logger.debug('Subscription check', {
+        plan: subscription.plan,
+        status: subscription.status,
+        isTrialing,
+        isActive,
+        hasAccess,
+        allowedPlans
+      });
+
       if (!hasAccess) {
         return res.status(403).json({
           success: false,
           message: 'This feature requires an active subscription',
           requiresSubscription: true,
-          currentPlan: subscription.plan || 'free'
+          currentPlan: subscription.plan || 'free',
+          debug: {
+            plan: subscription.plan,
+            status: subscription.status,
+            isTrialing,
+            isActive,
+            trialEndsAt: subscription.trialEndsAt,
+            currentPeriodEnd: subscription.currentPeriodEnd
+          }
         });
       }
 
       next();
     } catch (error) {
-      console.error('Subscription middleware error:', error);
+      logger.error('Subscription middleware error:', error.message);
       res.status(500).json({
         success: false,
         message: 'Failed to verify subscription'
@@ -104,7 +123,7 @@ exports.requirePlan = (minPlan) => {
 
       next();
     } catch (error) {
-      console.error('Subscription middleware error:', error);
+      logger.error('Subscription middleware error:', error.message);
       res.status(500).json({
         success: false,
         message: 'Failed to verify subscription'
@@ -143,7 +162,7 @@ exports.attachSubscriptionInfo = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Error attaching subscription info:', error);
+    logger.error('Error attaching subscription info:', error.message);
     next();
   }
 };

@@ -237,14 +237,33 @@ class StripeService {
    */
   async handleSubscriptionUpdate(subscription) {
     try {
-      const userId = subscription.metadata.userId;
-      const planType = subscription.metadata.planType;
+      logger.webhook('handleSubscriptionUpdate called', {
+        subscriptionId: subscription.id,
+        metadata: subscription.metadata,
+        status: subscription.status
+      });
 
-      const user = await User.findById(userId);
-      if (!user) {
-        logger.error('User not found for subscription update');
+      const userId = subscription.metadata?.userId;
+      const planType = subscription.metadata?.planType;
+
+      if (!userId) {
+        logger.error('No userId in subscription metadata', { metadata: subscription.metadata });
         return;
       }
+
+      if (!planType) {
+        logger.error('No planType in subscription metadata', { metadata: subscription.metadata });
+        return;
+      }
+
+      logger.webhook('Looking up user', { userId });
+      const user = await User.findById(userId);
+      if (!user) {
+        logger.error('User not found for subscription update', { userId });
+        return;
+      }
+
+      logger.webhook('User found', { email: '[REDACTED]', currentPlan: user.subscription?.plan || 'free' });
 
       const oldPlan = user.subscription?.plan || 'free';
       const newPlan = planType || user.subscription?.plan || 'free';
@@ -269,11 +288,21 @@ class StripeService {
 
       await user.save();
 
+      logger.webhook('Subscription saved to database', {
+        userId: userId,
+        oldPlan,
+        newPlan,
+        status: subscription.status,
+        trialEnd: trialEnd,
+        currentPeriodEnd: user.subscription.currentPeriodEnd
+      });
+
       logger.success('Subscription updated in database');
       logger.info(`Plan: ${oldPlan} → ${newPlan}`);
       logger.info(`Status: ${subscription.status}`);
     } catch (error) {
       logger.error('Error handling subscription update:', error.message);
+      logger.webhook('Error details', { error: error.stack });
     }
   }
 
