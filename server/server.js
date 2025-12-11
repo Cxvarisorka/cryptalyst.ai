@@ -48,14 +48,16 @@ marketDataService.setSocketIO(io);
 
 // Middleware
 app.use(helmet());
+
+// Webhook routes MUST come before CORS and body parsing
+// Stripe webhooks need raw body and don't need CORS
+app.use('/api/webhooks', webhookRoutes);
+
 app.use(cors({
   origin: process.env.CLIENT_URL, // Allow frontend URL
   credentials: true // Allow cookies to be sent
 }));
 app.use(morgan('dev'));
-
-// Webhook routes (must be before express.json() to preserve raw body)
-app.use('/api/webhooks', webhookRoutes);
 
 app.use(express.json({ limit: '50mb' })); // Increase limit for large requests
 app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Increase limit
