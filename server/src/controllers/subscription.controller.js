@@ -1,18 +1,19 @@
 const stripeService = require('../services/stripe.service');
 const { SUBSCRIPTION_PLANS } = require('../config/stripe.config');
+const logger = require('../utils/logger');
 
 /**
  * Get available subscription plans
  */
 exports.getPlans = async (req, res) => {
   try {
-    console.log('📋 GET /plans endpoint reached - NO AUTH REQUIRED');
+    logger.debug('GET /plans endpoint reached');
     res.json({
       success: true,
       plans: SUBSCRIPTION_PLANS
     });
   } catch (error) {
-    console.error('Error getting plans:', error);
+    logger.error('Error getting plans:', error.message);
     res.status(500).json({
       success: false,
       message: 'Failed to get plans'
@@ -45,7 +46,7 @@ exports.createCheckoutSession = async (req, res) => {
       url: session.url
     });
   } catch (error) {
-    console.error('Error creating checkout session:', error);
+    logger.error('Error creating checkout session:', error.message);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to create checkout session'
@@ -65,7 +66,7 @@ exports.createPortalSession = async (req, res) => {
       url: session.url
     });
   } catch (error) {
-    console.error('Error creating portal session:', error);
+    logger.error('Error creating portal session:', error.message);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to create portal session'
@@ -85,7 +86,7 @@ exports.getSubscriptionStatus = async (req, res) => {
       subscription: status
     });
   } catch (error) {
-    console.error('Error getting subscription status:', error);
+    logger.error('Error getting subscription status:', error.message);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to get subscription status'
@@ -105,7 +106,7 @@ exports.cancelSubscription = async (req, res) => {
       message: 'Subscription will be canceled at the end of the billing period'
     });
   } catch (error) {
-    console.error('Error canceling subscription:', error);
+    logger.error('Error canceling subscription:', error.message);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to cancel subscription'
@@ -125,7 +126,7 @@ exports.reactivateSubscription = async (req, res) => {
       message: 'Subscription reactivated successfully'
     });
   } catch (error) {
-    console.error('Error reactivating subscription:', error);
+    logger.error('Error reactivating subscription:', error.message);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to reactivate subscription'

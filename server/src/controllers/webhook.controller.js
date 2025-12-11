@@ -1,12 +1,30 @@
 const { stripe } = require('../config/stripe.config');
 const stripeService = require('../services/stripe.service');
+const logger = require('../utils/logger');
 
 /**
  * Handle Stripe webhook events
  */
 exports.handleStripeWebhook = async (req, res) => {
+  // Check if Stripe is configured
+  if (!stripe) {
+    logger.error('Stripe is not configured');
+    return res.status(503).json({
+      success: false,
+      message: 'Stripe service is not configured'
+    });
+  }
+
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    logger.error('Stripe webhook secret is not configured');
+    return res.status(503).json({
+      success: false,
+      message: 'Webhook secret is not configured'
+    });
+  }
 
   let event;
 
@@ -14,7 +32,7 @@ exports.handleStripeWebhook = async (req, res) => {
     // Verify webhook signature
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
+    logger.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -24,13 +42,13 @@ exports.handleStripeWebhook = async (req, res) => {
       case 'checkout.session.completed':
         // Payment successful and subscription created
         const session = event.data.object;
-        console.log('✅ Checkout session completed:', session.id);
+        logger.success('Checkout session completed');
 
         // If this is a subscription checkout, get the subscription and update user
         if (session.mode === 'subscription' && session.subscription) {
           const subscription = await stripe.subscriptions.retrieve(session.subscription);
           await stripeService.handleSubscriptionUpdate(subscription);
-          console.log('✅ User subscription updated from checkout session');
+          logger.success('User subscription updated from checkout session');
         }
         break;
 
@@ -38,40 +56,40 @@ exports.handleStripeWebhook = async (req, res) => {
       case 'customer.subscription.updated':
         // Subscription created or updated
         await stripeService.handleSubscriptionUpdate(event.data.object);
-        console.log('✅ Subscription updated:', event.data.object.id);
+        logger.success('Subscription updated');
         break;
 
       case 'customer.subscription.deleted':
         // Subscription canceled
         await stripeService.handleSubscriptionDeleted(event.data.object);
-        console.log('Subscription deleted:', event.data.object.id);
+        logger.success('Subscription deleted');
         break;
 
       case 'customer.subscription.trial_will_end':
         // Trial will end in 3 days (you can send notification email here)
-        console.log('Trial will end:', event.data.object.id);
+        logger.info('Trial ending soon');
         // TODO: Implement email notification
         break;
 
       case 'invoice.payment_succeeded':
         // Payment succeeded
-        console.log('Invoice payment succeeded:', event.data.object.id);
+        logger.success('Invoice payment succeeded');
         break;
 
       case 'invoice.payment_failed':
         // Payment failed
-        console.log('Invoice payment failed:', event.data.object.id);
+        logger.warn('Invoice payment failed');
         // TODO: Implement email notification
         break;
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        logger.debug(`Unhandled event type: ${event.type}`);
     }
 
     // Return a 200 response to acknowledge receipt of the event
     res.json({ received: true });
   } catch (error) {
-    console.error('Error handling webhook:', error);
+    logger.error('Error handling webhook:', error.message);
     res.status(500).json({
       success: false,
       message: 'Webhook handler failed'

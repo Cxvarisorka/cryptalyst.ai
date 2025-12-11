@@ -1,10 +1,12 @@
+const logger = require('../utils/logger');
+
 // Initialize Stripe only if API key is provided
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 } else {
-  console.warn('⚠️  STRIPE_SECRET_KEY not found. Stripe features will be disabled.');
-  console.warn('   Please add STRIPE_SECRET_KEY to your .env file to enable subscriptions.');
+  logger.warn('⚠️  STRIPE_SECRET_KEY not found. Stripe features will be disabled.');
+  logger.warn('   Please add STRIPE_SECRET_KEY to your .env file to enable subscriptions.');
 }
 
 // Subscription plans configuration

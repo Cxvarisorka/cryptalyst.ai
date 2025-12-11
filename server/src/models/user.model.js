@@ -61,7 +61,7 @@ const userSchema = new mongoose.Schema({
     },
     status: {
       type: String,
-      enum: ['trialing', 'active', 'canceled', 'past_due', 'unpaid', 'incomplete'],
+      enum: ['trialing', 'active', 'canceled', 'past_due', 'unpaid', 'incomplete', 'incomplete_expired'],
       default: null
     },
     trialEndsAt: {

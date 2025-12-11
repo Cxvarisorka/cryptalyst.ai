@@ -1,5 +1,6 @@
 const { stripe, SUBSCRIPTION_PLANS, FREE_TRIAL_DAYS } = require('../config/stripe.config');
 const User = require('../models/user.model');
+const logger = require('../utils/logger');
 
 class StripeService {
   /**
@@ -39,7 +40,7 @@ class StripeService {
 
       return customer.id;
     } catch (error) {
-      console.error('Error creating Stripe customer:', error);
+      logger.error('Error creating Stripe customer:', error.message);
       throw new Error('Failed to create customer');
     }
   }
@@ -93,7 +94,7 @@ class StripeService {
 
       return session;
     } catch (error) {
-      console.error('Error creating checkout session:', error);
+      logger.error('Error creating checkout session:', error.message);
       throw new Error('Failed to create checkout session');
     }
   }
@@ -119,7 +120,7 @@ class StripeService {
 
       return session;
     } catch (error) {
-      console.error('Error creating portal session:', error);
+      logger.error('Error creating portal session:', error.message);
       throw new Error('Failed to create portal session');
     }
   }
@@ -152,7 +153,7 @@ class StripeService {
 
       return subscription;
     } catch (error) {
-      console.error('Error canceling subscription:', error);
+      logger.error('Error canceling subscription:', error.message);
       throw new Error('Failed to cancel subscription');
     }
   }
@@ -184,7 +185,7 @@ class StripeService {
 
       return subscription;
     } catch (error) {
-      console.error('Error reactivating subscription:', error);
+      logger.error('Error reactivating subscription:', error.message);
       throw new Error('Failed to reactivate subscription');
     }
   }
@@ -222,7 +223,7 @@ class StripeService {
         cancelAtPeriodEnd: subscription.cancelAtPeriodEnd || false
       };
     } catch (error) {
-      console.error('Error getting subscription status:', error);
+      logger.error('Error getting subscription status:', error.message);
       throw new Error('Failed to get subscription status');
     }
   }
@@ -241,7 +242,7 @@ class StripeService {
 
       const user = await User.findById(userId);
       if (!user) {
-        console.error('❌ User not found for subscription update:', userId);
+        logger.error('User not found for subscription update');
         return;
       }
 
@@ -268,14 +269,11 @@ class StripeService {
 
       await user.save();
 
-      console.log('✅ SUBSCRIPTION UPDATED IN MONGODB:');
-      console.log(`   User: ${user.email} (${userId})`);
-      console.log(`   Plan: ${oldPlan} → ${newPlan}`);
-      console.log(`   Status: ${subscription.status}`);
-      console.log(`   Trial ends: ${trialEnd || 'N/A'}`);
-      console.log(`   Current period: ${user.subscription.currentPeriodStart} to ${user.subscription.currentPeriodEnd}`);
+      logger.success('Subscription updated in database');
+      logger.info(`Plan: ${oldPlan} → ${newPlan}`);
+      logger.info(`Status: ${subscription.status}`);
     } catch (error) {
-      console.error('❌ Error handling subscription update:', error);
+      logger.error('Error handling subscription update:', error.message);
     }
   }
 
@@ -289,7 +287,7 @@ class StripeService {
       const user = await User.findById(userId);
 
       if (!user) {
-        console.error('❌ User not found for subscription deletion:', userId);
+        logger.error('User not found for subscription deletion');
         return;
       }
 
@@ -309,12 +307,10 @@ class StripeService {
 
       await user.save();
 
-      console.log('✅ SUBSCRIPTION DELETED IN MONGODB:');
-      console.log(`   User: ${user.email} (${userId})`);
-      console.log(`   Plan: ${oldPlan} → free`);
-      console.log(`   User reverted to free plan`);
+      logger.success('Subscription deleted in database');
+      logger.info(`Plan: ${oldPlan} → free`);
     } catch (error) {
-      console.error('❌ Error handling subscription deletion:', error);
+      logger.error('Error handling subscription deletion:', error.message);
     }
   }
 }
