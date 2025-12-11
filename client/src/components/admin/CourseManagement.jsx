@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { courseService } from '@/services/course.service';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import { LanguageTabs } from './LanguageTabs';
 
 const CourseManagement = () => {
   const { toast } = useToast();
@@ -30,6 +31,9 @@ const CourseManagement = () => {
   const [editingSection, setEditingSection] = useState(null);
   const [editingLesson, setEditingLesson] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
+  const [courseLanguageTab, setCourseLanguageTab] = useState('en');
+  const [sectionLanguageTab, setSectionLanguageTab] = useState('en');
+  const [lessonLanguageTab, setLessonLanguageTab] = useState('en');
 
   useEffect(() => {
     fetchCourses();
@@ -77,7 +81,24 @@ const CourseManagement = () => {
       isPublished: false,
       estimatedDuration: 0,
       order: courses.length,
+      translations: {
+        ka: { title: '', description: '' }
+      }
     });
+    setCourseLanguageTab('en');
+  };
+
+  const handleEditCourse = (course) => {
+    setEditingCourse({
+      ...course,
+      translations: {
+        ka: {
+          title: course.translations?.get?.('ka')?.title || '',
+          description: course.translations?.get?.('ka')?.description || ''
+        }
+      }
+    });
+    setCourseLanguageTab('en');
   };
 
   const handleSaveCourse = async () => {
@@ -132,7 +153,24 @@ const CourseManagement = () => {
       title: '',
       description: '',
       order: courseDetails.sections?.length || 0,
+      translations: {
+        ka: { title: '', description: '' }
+      }
     });
+    setSectionLanguageTab('en');
+  };
+
+  const handleEditSection = (section) => {
+    setEditingSection({
+      ...section,
+      translations: {
+        ka: {
+          title: section.translations?.get?.('ka')?.title || '',
+          description: section.translations?.get?.('ka')?.description || ''
+        }
+      }
+    });
+    setSectionLanguageTab('en');
   };
 
   const handleSaveSection = async () => {
@@ -184,7 +222,24 @@ const CourseManagement = () => {
       contentType: 'text',
       estimatedDuration: 5,
       order: 0,
+      translations: {
+        ka: { title: '', content: '' }
+      }
     });
+    setLessonLanguageTab('en');
+  };
+
+  const handleEditLesson = (lesson) => {
+    setEditingLesson({
+      ...lesson,
+      translations: {
+        ka: {
+          title: lesson.translations?.get?.('ka')?.title || '',
+          content: lesson.translations?.get?.('ka')?.content || ''
+        }
+      }
+    });
+    setLessonLanguageTab('en');
   };
 
   const handleSaveLesson = async () => {
@@ -308,7 +363,7 @@ const CourseManagement = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setEditingCourse(courseDetails)}
+                      onClick={() => handleEditCourse(courseDetails)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -382,7 +437,7 @@ const CourseManagement = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setEditingSection(section)}
+                                onClick={() => handleEditSection(section)}
                               >
                                 <Edit className="h-3 w-3" />
                               </Button>
@@ -416,7 +471,7 @@ const CourseManagement = () => {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => setEditingLesson(lesson)}
+                                        onClick={() => handleEditLesson(lesson)}
                                       >
                                         <Edit className="h-3 w-3" />
                                       </Button>
@@ -479,26 +534,75 @@ const CourseManagement = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Title</label>
-                <Input
-                  value={editingCourse.title}
-                  onChange={(e) => setEditingCourse({ ...editingCourse, title: e.target.value })}
-                  placeholder="Course title"
-                />
-              </div>
+              <LanguageTabs activeTab={courseLanguageTab} onTabChange={setCourseLanguageTab}>
+                {courseLanguageTab === 'en' ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Title *</label>
+                      <Input
+                        value={editingCourse.title}
+                        onChange={(e) => setEditingCourse({ ...editingCourse, title: e.target.value })}
+                        placeholder="Course title in English"
+                      />
+                    </div>
 
-              <div>
-                <label className="text-sm font-medium">Description</label>
-                <textarea
-                  value={editingCourse.description}
-                  onChange={(e) =>
-                    setEditingCourse({ ...editingCourse, description: e.target.value })
-                  }
-                  className="w-full min-h-[100px] p-2 border border-border rounded-md bg-background"
-                  placeholder="Course description"
-                />
-              </div>
+                    <div>
+                      <label className="text-sm font-medium">Description *</label>
+                      <textarea
+                        value={editingCourse.description}
+                        onChange={(e) =>
+                          setEditingCourse({ ...editingCourse, description: e.target.value })
+                        }
+                        className="w-full min-h-[100px] p-2 border border-border rounded-md bg-background"
+                        placeholder="Course description in English"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Title (Georgian)</label>
+                      <Input
+                        value={editingCourse.translations?.ka?.title || ''}
+                        onChange={(e) =>
+                          setEditingCourse({
+                            ...editingCourse,
+                            translations: {
+                              ...editingCourse.translations,
+                              ka: {
+                                ...editingCourse.translations?.ka,
+                                title: e.target.value
+                              }
+                            }
+                          })
+                        }
+                        placeholder="სათაური ქართულად"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Description (Georgian)</label>
+                      <textarea
+                        value={editingCourse.translations?.ka?.description || ''}
+                        onChange={(e) =>
+                          setEditingCourse({
+                            ...editingCourse,
+                            translations: {
+                              ...editingCourse.translations,
+                              ka: {
+                                ...editingCourse.translations?.ka,
+                                description: e.target.value
+                              }
+                            }
+                          })
+                        }
+                        className="w-full min-h-[100px] p-2 border border-border rounded-md bg-background"
+                        placeholder="აღწერა ქართულად"
+                      />
+                    </div>
+                  </div>
+                )}
+              </LanguageTabs>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -576,24 +680,73 @@ const CourseManagement = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Section Title</label>
-                <Input
-                  value={editingSection.title}
-                  onChange={(e) => setEditingSection({ ...editingSection, title: e.target.value })}
-                  placeholder="e.g., Introduction to Crypto"
-                />
-              </div>
+              <LanguageTabs activeTab={sectionLanguageTab} onTabChange={setSectionLanguageTab}>
+                {sectionLanguageTab === 'en' ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Section Title *</label>
+                      <Input
+                        value={editingSection.title}
+                        onChange={(e) => setEditingSection({ ...editingSection, title: e.target.value })}
+                        placeholder="e.g., Introduction to Crypto"
+                      />
+                    </div>
 
-              <div>
-                <label className="text-sm font-medium">Description (optional)</label>
-                <textarea
-                  value={editingSection.description}
-                  onChange={(e) => setEditingSection({ ...editingSection, description: e.target.value })}
-                  className="w-full min-h-[80px] p-2 border border-border rounded-md bg-background"
-                  placeholder="Section description"
-                />
-              </div>
+                    <div>
+                      <label className="text-sm font-medium">Description (optional)</label>
+                      <textarea
+                        value={editingSection.description}
+                        onChange={(e) => setEditingSection({ ...editingSection, description: e.target.value })}
+                        className="w-full min-h-[80px] p-2 border border-border rounded-md bg-background"
+                        placeholder="Section description"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Section Title (Georgian)</label>
+                      <Input
+                        value={editingSection.translations?.ka?.title || ''}
+                        onChange={(e) =>
+                          setEditingSection({
+                            ...editingSection,
+                            translations: {
+                              ...editingSection.translations,
+                              ka: {
+                                ...editingSection.translations?.ka,
+                                title: e.target.value
+                              }
+                            }
+                          })
+                        }
+                        placeholder="სექციის სათაური ქართულად"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Description (optional)</label>
+                      <textarea
+                        value={editingSection.translations?.ka?.description || ''}
+                        onChange={(e) =>
+                          setEditingSection({
+                            ...editingSection,
+                            translations: {
+                              ...editingSection.translations,
+                              ka: {
+                                ...editingSection.translations?.ka,
+                                description: e.target.value
+                              }
+                            }
+                          })
+                        }
+                        className="w-full min-h-[80px] p-2 border border-border rounded-md bg-background"
+                        placeholder="სექციის აღწერა ქართულად"
+                      />
+                    </div>
+                  </div>
+                )}
+              </LanguageTabs>
 
               <div className="flex gap-2 justify-end pt-4">
                 <Button variant="outline" onClick={() => setEditingSection(null)}>
@@ -622,14 +775,73 @@ const CourseManagement = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Lesson Title</label>
-                <Input
-                  value={editingLesson.title}
-                  onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })}
-                  placeholder="e.g., What is Bitcoin?"
-                />
-              </div>
+              <LanguageTabs activeTab={lessonLanguageTab} onTabChange={setLessonLanguageTab}>
+                {lessonLanguageTab === 'en' ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Lesson Title *</label>
+                      <Input
+                        value={editingLesson.title}
+                        onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })}
+                        placeholder="e.g., What is Bitcoin?"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Content (HTML supported) *</label>
+                      <textarea
+                        value={editingLesson.content}
+                        onChange={(e) => setEditingLesson({ ...editingLesson, content: e.target.value })}
+                        className="w-full min-h-[200px] p-2 border border-border rounded-md bg-background font-mono text-sm"
+                        placeholder="<h2>Lesson Title</h2><p>Content here...</p>"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Lesson Title (Georgian)</label>
+                      <Input
+                        value={editingLesson.translations?.ka?.title || ''}
+                        onChange={(e) =>
+                          setEditingLesson({
+                            ...editingLesson,
+                            translations: {
+                              ...editingLesson.translations,
+                              ka: {
+                                ...editingLesson.translations?.ka,
+                                title: e.target.value
+                              }
+                            }
+                          })
+                        }
+                        placeholder="გაკვეთილის სათაური ქართულად"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Content (HTML supported)</label>
+                      <textarea
+                        value={editingLesson.translations?.ka?.content || ''}
+                        onChange={(e) =>
+                          setEditingLesson({
+                            ...editingLesson,
+                            translations: {
+                              ...editingLesson.translations,
+                              ka: {
+                                ...editingLesson.translations?.ka,
+                                content: e.target.value
+                              }
+                            }
+                          })
+                        }
+                        className="w-full min-h-[200px] p-2 border border-border rounded-md bg-background font-mono text-sm"
+                        placeholder="<h2>გაკვეთილის სათაური</h2><p>შინაარსი აქ...</p>"
+                      />
+                    </div>
+                  </div>
+                )}
+              </LanguageTabs>
 
               <div>
                 <label className="text-sm font-medium">Content Type</label>
@@ -643,16 +855,6 @@ const CourseManagement = () => {
                   <option value="interactive">Interactive</option>
                   <option value="video">Video</option>
                 </select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Content (HTML supported)</label>
-                <textarea
-                  value={editingLesson.content}
-                  onChange={(e) => setEditingLesson({ ...editingLesson, content: e.target.value })}
-                  className="w-full min-h-[200px] p-2 border border-border rounded-md bg-background font-mono text-sm"
-                  placeholder="<h2>Lesson Title</h2><p>Content here...</p>"
-                />
               </div>
 
               <div>

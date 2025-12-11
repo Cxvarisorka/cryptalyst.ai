@@ -21,6 +21,11 @@ const courseSchema = new mongoose.Schema(
       enum: ['beginner', 'intermediate', 'advanced'],
       default: 'beginner',
     },
+    tier: {
+      type: String,
+      enum: ['free', 'basic', 'premium'],
+      default: 'free',
+    },
     thumbnail: {
       type: String,
       default: null,
@@ -74,5 +79,6 @@ const courseSchema = new mongoose.Schema(
 // Index for faster queries
 courseSchema.index({ category: 1, isPublished: 1 });
 courseSchema.index({ order: 1 });
+courseSchema.index({ tier: 1, isPublished: 1 });
 
 module.exports = mongoose.model('Course', courseSchema);

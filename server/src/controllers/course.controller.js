@@ -4,11 +4,27 @@ const Lesson = require('../models/lesson.model');
 const CourseProgress = require('../models/courseProgress.model');
 
 /**
+ * Helper function to check if user has access to a course tier
+ */
+const hasAccessToTier = (userPlan, courseTier) => {
+  const tierHierarchy = {
+    free: 0,
+    basic: 1,
+    premium: 2,
+  };
+
+  const userTierLevel = tierHierarchy[userPlan] || 0;
+  const courseTierLevel = tierHierarchy[courseTier] || 0;
+
+  return userTierLevel >= courseTierLevel;
+};
+
+/**
  * Get all published courses (public)
  */
 exports.getAllCourses = async (req, res, next) => {
   try {
-    const { category, difficulty, search } = req.query;
+    const { category, difficulty, search, language = 'en' } = req.query;
     const query = { isPublished: true };
 
     if (category) query.category = category;
@@ -25,9 +41,28 @@ exports.getAllCourses = async (req, res, next) => {
       .populate('createdBy', 'name avatar')
       .lean();
 
+    // Apply translations to each course
+    const translatedCourses = courses.map((course) => {
+      if (language !== 'en' && course.translations) {
+        // Handle both Map (from Mongoose) and plain object (from .lean())
+        const translation = typeof course.translations.get === 'function'
+          ? course.translations.get(language)
+          : course.translations[language];
+
+        if (translation) {
+          return {
+            ...course,
+            title: translation.title || course.title,
+            description: translation.description || course.description,
+          };
+        }
+      }
+      return course;
+    });
+
     res.status(200).json({
       success: true,
-      data: courses,
+      data: translatedCourses,
     });
   } catch (error) {
     next(error);
@@ -72,10 +107,66 @@ exports.getCourseById = async (req, res, next) => {
     }));
 
     // Apply translations if requested language is not English
-    if (language !== 'en' && course.translations && course.translations.get(language)) {
-      const translation = course.translations.get(language);
-      course.title = translation.title || course.title;
-      course.description = translation.description || course.description;
+    if (language !== 'en' && course.translations) {
+      const translation = typeof course.translations.get === 'function'
+        ? course.translations.get(language)
+        : course.translations[language];
+
+      if (translation) {
+        course.title = translation.title || course.title;
+        course.description = translation.description || course.description;
+      }
+    }
+
+    // Apply section and lesson translations
+    sectionsWithLessons.forEach((section) => {
+      if (language !== 'en' && section.translations) {
+        const sectionTranslation = typeof section.translations.get === 'function'
+          ? section.translations.get(language)
+          : section.translations[language];
+
+        if (sectionTranslation) {
+          section.title = sectionTranslation.title || section.title;
+          section.description = sectionTranslation.description || section.description;
+        }
+      }
+
+      // Apply lesson translations
+      section.lessons.forEach((lesson) => {
+        if (language !== 'en' && lesson.translations) {
+          const lessonTranslation = typeof lesson.translations.get === 'function'
+            ? lesson.translations.get(language)
+            : lesson.translations[language];
+
+          if (lessonTranslation) {
+            lesson.title = lessonTranslation.title || lesson.title;
+            lesson.content = lessonTranslation.content || lesson.content;
+
+            // Apply quiz translations
+            if (lesson.quiz && lesson.quiz.questions && lessonTranslation.quiz && lessonTranslation.quiz.questions) {
+              lesson.quiz.questions = lesson.quiz.questions.map((q, idx) => {
+                const translatedQ = lessonTranslation.quiz.questions[idx];
+                if (translatedQ) {
+                  return {
+                    question: translatedQ.question || q.question,
+                    options: translatedQ.options || q.options,
+                    correctAnswer: q.correctAnswer,
+                    explanation: translatedQ.explanation || q.explanation,
+                  };
+                }
+                return q;
+              });
+            }
+          }
+        }
+      });
+    });
+
+    // Check if user has access to this course tier
+    let hasAccess = true;
+    if (req.user) {
+      const userPlan = req.user.subscription?.plan || 'free';
+      hasAccess = hasAccessToTier(userPlan, course.tier);
     }
 
     res.status(200).json({
@@ -83,6 +174,7 @@ exports.getCourseById = async (req, res, next) => {
       data: {
         ...course,
         sections: sectionsWithLessons,
+        hasAccess,
       },
     });
   } catch (error) {
@@ -106,6 +198,17 @@ exports.enrollCourse = async (req, res, next) => {
       });
     }
 
+    // Check if user has access to this course tier
+    const userPlan = req.user.subscription?.plan || 'free';
+    if (!hasAccessToTier(userPlan, course.tier)) {
+      return res.status(403).json({
+        success: false,
+        message: `This course requires a ${course.tier} subscription or higher. Please upgrade your plan to access this course.`,
+        requiredTier: course.tier,
+        userTier: userPlan,
+      });
+    }
+
     // Check if already enrolled
     let progress = await CourseProgress.findOne({ userId, courseId: id });
 
@@ -116,10 +219,14 @@ exports.enrollCourse = async (req, res, next) => {
       });
     }
 
+    // Get the first lesson of the course to set as current
+    const firstLesson = await Lesson.findOne({ courseId: id }).sort({ order: 1 });
+
     // Create progress record
     progress = await CourseProgress.create({
       userId,
       courseId: id,
+      currentLessonId: firstLesson?._id || null,
     });
 
     // Increment enrolled count
@@ -143,6 +250,23 @@ exports.getCourseProgress = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
+
+    // Check course tier access
+    const course = await Course.findById(id);
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found',
+      });
+    }
+
+    const userPlan = req.user.subscription?.plan || 'free';
+    if (!hasAccessToTier(userPlan, course.tier)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have access to this course',
+      });
+    }
 
     const progress = await CourseProgress.findOne({
       userId,
@@ -173,6 +297,23 @@ exports.completeLesson = async (req, res, next) => {
     const { courseId, lessonId } = req.params;
     const { score } = req.body;
     const userId = req.user._id;
+
+    // Check course tier access
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found',
+      });
+    }
+
+    const userPlan = req.user.subscription?.plan || 'free';
+    if (!hasAccessToTier(userPlan, course.tier)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have access to this course',
+      });
+    }
 
     const progress = await CourseProgress.findOne({ userId, courseId });
 
@@ -239,6 +380,7 @@ exports.completeLesson = async (req, res, next) => {
 exports.getMyEnrolledCourses = async (req, res, next) => {
   try {
     const userId = req.user._id;
+    const { language = 'en' } = req.query;
 
     const enrollments = await CourseProgress.find({ userId })
       .populate('courseId')
@@ -248,9 +390,30 @@ exports.getMyEnrolledCourses = async (req, res, next) => {
     // Filter out enrollments where course was deleted
     const validEnrollments = enrollments.filter(e => e.courseId !== null);
 
+    // Apply translations to each course
+    const translatedEnrollments = validEnrollments.map((enrollment) => {
+      if (language !== 'en' && enrollment.courseId && enrollment.courseId.translations) {
+        const translation = typeof enrollment.courseId.translations.get === 'function'
+          ? enrollment.courseId.translations.get(language)
+          : enrollment.courseId.translations[language];
+
+        if (translation) {
+          return {
+            ...enrollment,
+            courseId: {
+              ...enrollment.courseId,
+              title: translation.title || enrollment.courseId.title,
+              description: translation.description || enrollment.courseId.description,
+            },
+          };
+        }
+      }
+      return enrollment;
+    });
+
     res.status(200).json({
       success: true,
-      data: validEnrollments,
+      data: translatedEnrollments,
     });
   } catch (error) {
     next(error);

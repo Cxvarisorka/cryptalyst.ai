@@ -75,9 +75,11 @@ export const courseService = {
   /**
    * Get my enrolled courses
    */
-  getMyEnrolledCourses: async () => {
+  getMyEnrolledCourses: async (language = 'en') => {
     try {
-      const response = await api.get(`${COURSE_API_URL}/me/enrolled`);
+      const response = await api.get(`${COURSE_API_URL}/me/enrolled`, {
+        params: { language },
+      });
       return response.data.data;
     } catch (error) {
       throw error.response?.data || error;
