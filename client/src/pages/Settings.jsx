@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -11,15 +12,20 @@ import { useToast } from "@/components/ui/use-toast";
 import { GradientText } from "@/components/magicui/gradient-text";
 import { FadeIn } from "@/components/magicui/fade-in";
 import settingsService from "@/services/settings.service";
-import { User, Lock, Settings as SettingsIcon, Mail, Globe, Calendar, Palette, Shield, Eye, EyeOff, CreditCard } from "lucide-react";
+import { User, Lock, Settings as SettingsIcon, Mail, Globe, Calendar, Palette, Shield, Eye, EyeOff, CreditCard, GraduationCap } from "lucide-react";
 import Hero from "@/components/layout/Hero";
 import SubscriptionManagement from "@/components/settings/SubscriptionManagement";
+import LearningSettings from "@/components/settings/LearningSettings";
 
 export default function Settings() {
   const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
+
+  // Get default tab from URL query parameter
+  const defaultTab = searchParams.get('tab') || 'profile';
 
   const [profile, setProfile] = useState({
     name: "",
@@ -181,7 +187,7 @@ export default function Settings() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-10">
 
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <TabsList className="flex flex-col lg:flex-col h-fit bg-card/50 border border-border/60 p-2 gap-2">
               <TabsTrigger
@@ -218,6 +224,13 @@ export default function Settings() {
               >
                 <CreditCard size={18} />
                 <span>Subscription</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="learning"
+                className="w-full justify-start gap-3 data-[state=active]:bg-gradient-money data-[state=active]:text-white"
+              >
+                <GraduationCap size={18} />
+                <span>{t('settings.tabs.learning') || 'Learning'}</span>
               </TabsTrigger>
             </TabsList>
 
@@ -580,6 +593,10 @@ export default function Settings() {
 
         <TabsContent value="subscription">
           <SubscriptionManagement />
+        </TabsContent>
+
+        <TabsContent value="learning">
+          <LearningSettings />
         </TabsContent>
             </div>
           </div>

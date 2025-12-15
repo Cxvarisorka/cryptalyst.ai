@@ -2,6 +2,291 @@ const Course = require('../models/course.model');
 const Section = require('../models/section.model');
 const Lesson = require('../models/lesson.model');
 const CourseProgress = require('../models/courseProgress.model');
+const User = require('../models/user.model');
+
+// XP reward amounts
+const XP_REWARDS = {
+  lessonComplete: 25,
+  courseComplete: 100,
+  dailyStreak: 10,
+  quizBonus: 15
+};
+
+// Level titles mapping
+const LEVEL_TITLES = {
+  1: 'Novice Trader',
+  2: 'Apprentice Investor',
+  3: 'Market Observer',
+  4: 'Chart Reader',
+  5: 'Trend Spotter',
+  6: 'Technical Analyst',
+  7: 'Portfolio Manager',
+  8: 'Strategy Expert',
+  9: 'Trading Veteran',
+  10: 'Market Master',
+  15: 'Crypto Sage',
+  20: 'Trading Legend',
+  25: 'Financial Guru',
+  30: 'Market Oracle'
+};
+
+/**
+ * Calculate cumulative XP threshold to REACH a level
+ * Level 1: 0 XP (starting point)
+ * Level 2: 100 XP
+ * Level 3: 250 XP (100 + 150)
+ * Level 4: 475 XP (250 + 225)
+ */
+const getXpThresholdForLevel = (level) => {
+  if (level <= 1) return 0;
+  let totalXp = 0;
+  for (let i = 1; i < level; i++) {
+    totalXp += Math.floor(100 * Math.pow(1.5, i - 1));
+  }
+  return totalXp;
+};
+
+/**
+ * Get title for a given level
+ */
+const getTitleForLevel = (level) => {
+  const levels = Object.keys(LEVEL_TITLES).map(Number).sort((a, b) => b - a);
+  for (const l of levels) {
+    if (level >= l) return LEVEL_TITLES[l];
+  }
+  return 'Novice Trader';
+};
+
+/**
+ * Award XP to user and handle level ups
+ */
+const awardXp = async (userId, amount, source) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error('awardXp: User not found for ID:', userId);
+      return null;
+    }
+
+    // Initialize learning object if doesn't exist
+    if (!user.learning) {
+      user.learning = {
+        xp: 0,
+        level: 1,
+        title: 'Novice Trader',
+        totalLessonsCompleted: 0,
+        totalCoursesCompleted: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        lastActivityDate: null,
+        achievements: [],
+        preferences: {
+          dailyGoal: 15,
+          reminderEnabled: true,
+          reminderTime: '09:00',
+          showLeaderboard: true,
+          soundEffects: true,
+          celebrationAnimations: true
+        }
+      };
+    }
+
+    // Ensure level is at least 1
+    if (!user.learning.level || user.learning.level < 1) {
+      user.learning.level = 1;
+    }
+
+    // Add XP
+    const previousXp = user.learning.xp || 0;
+    user.learning.xp = previousXp + amount;
+
+    // Check for level up using cumulative thresholds
+    let leveledUp = false;
+    let newLevel = user.learning.level || 1;
+    const previousLevel = newLevel;
+
+    // Keep leveling up while XP is sufficient
+    while (user.learning.xp >= getXpThresholdForLevel(newLevel + 1)) {
+      newLevel++;
+      leveledUp = true;
+    }
+
+    if (leveledUp) {
+      user.learning.level = newLevel;
+      user.learning.title = getTitleForLevel(newLevel);
+      console.log(`User ${userId} leveled up from ${previousLevel} to ${newLevel}!`);
+    }
+
+    // Update streak
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastActivity = user.learning.lastActivityDate
+      ? new Date(user.learning.lastActivityDate)
+      : null;
+
+    if (lastActivity) {
+      lastActivity.setHours(0, 0, 0, 0);
+      const diffDays = Math.floor((today - lastActivity) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        // Continue streak
+        user.learning.currentStreak = (user.learning.currentStreak || 0) + 1;
+        // Award streak bonus
+        user.learning.xp += XP_REWARDS.dailyStreak;
+      } else if (diffDays > 1) {
+        // Streak broken
+        user.learning.currentStreak = 1;
+      }
+      // If same day (diffDays === 0), don't change streak
+    } else {
+      user.learning.currentStreak = 1;
+    }
+
+    // Update longest streak
+    if ((user.learning.currentStreak || 0) > (user.learning.longestStreak || 0)) {
+      user.learning.longestStreak = user.learning.currentStreak;
+    }
+
+    user.learning.lastActivityDate = new Date();
+
+    // Check for new achievements
+    const newAchievements = [];
+    const existingAchievementIds = (user.learning.achievements || []).map(a => a.id);
+
+    // First lesson achievement
+    if (source === 'lesson' && user.learning.totalLessonsCompleted === 1 && !existingAchievementIds.includes('first_lesson')) {
+      newAchievements.push({
+        id: 'first_lesson',
+        name: 'First Steps',
+        description: 'Complete your first lesson',
+        icon: '🎯',
+        xpReward: 50
+      });
+    }
+
+    // Lessons milestones
+    if (user.learning.totalLessonsCompleted >= 10 && !existingAchievementIds.includes('lessons_10')) {
+      newAchievements.push({
+        id: 'lessons_10',
+        name: 'Dedicated Learner',
+        description: 'Complete 10 lessons',
+        icon: '📖',
+        xpReward: 100
+      });
+    }
+
+    if (user.learning.totalLessonsCompleted >= 50 && !existingAchievementIds.includes('lessons_50')) {
+      newAchievements.push({
+        id: 'lessons_50',
+        name: 'Knowledge Seeker',
+        description: 'Complete 50 lessons',
+        icon: '🎓',
+        xpReward: 300
+      });
+    }
+
+    // Course completion achievements
+    if (source === 'course' && user.learning.totalCoursesCompleted === 1 && !existingAchievementIds.includes('first_course')) {
+      newAchievements.push({
+        id: 'first_course',
+        name: 'Course Complete',
+        description: 'Complete your first course',
+        icon: '📚',
+        xpReward: 100
+      });
+    }
+
+    if (user.learning.totalCoursesCompleted >= 3 && !existingAchievementIds.includes('courses_3')) {
+      newAchievements.push({
+        id: 'courses_3',
+        name: 'Multi-skilled',
+        description: 'Complete 3 courses',
+        icon: '🏆',
+        xpReward: 150
+      });
+    }
+
+    if (user.learning.totalCoursesCompleted >= 10 && !existingAchievementIds.includes('courses_10')) {
+      newAchievements.push({
+        id: 'courses_10',
+        name: 'Course Champion',
+        description: 'Complete 10 courses',
+        icon: '💎',
+        xpReward: 500
+      });
+    }
+
+    // Streak achievements
+    if (user.learning.currentStreak >= 7 && !existingAchievementIds.includes('streak_7')) {
+      newAchievements.push({
+        id: 'streak_7',
+        name: 'Week Warrior',
+        description: 'Maintain a 7-day streak',
+        icon: '🔥',
+        xpReward: 75
+      });
+    }
+
+    if (user.learning.currentStreak >= 30 && !existingAchievementIds.includes('streak_30')) {
+      newAchievements.push({
+        id: 'streak_30',
+        name: 'Monthly Master',
+        description: 'Maintain a 30-day streak',
+        icon: '⚡',
+        xpReward: 200
+      });
+    }
+
+    // Level achievements
+    if (user.learning.level >= 5 && !existingAchievementIds.includes('level_5')) {
+      newAchievements.push({
+        id: 'level_5',
+        name: 'Rising Star',
+        description: 'Reach level 5',
+        icon: '⭐',
+        xpReward: 100
+      });
+    }
+
+    if (user.learning.level >= 10 && !existingAchievementIds.includes('level_10')) {
+      newAchievements.push({
+        id: 'level_10',
+        name: 'Expert Trader',
+        description: 'Reach level 10',
+        icon: '👑',
+        xpReward: 250
+      });
+    }
+
+    // Add new achievements and award XP
+    for (const achievement of newAchievements) {
+      user.learning.achievements.push(achievement);
+      user.learning.xp += achievement.xpReward;
+    }
+
+    // Mark the learning subdocument as modified for Mongoose
+    user.markModified('learning');
+
+    await user.save();
+
+    console.log(`XP awarded to user ${userId}: +${amount} XP, Total: ${user.learning.xp}, Level: ${user.learning.level}`);
+
+    return {
+      xpAwarded: amount,
+      totalXp: user.learning.xp,
+      level: user.learning.level,
+      title: user.learning.title || getTitleForLevel(user.learning.level),
+      leveledUp,
+      newAchievements,
+      currentStreak: user.learning.currentStreak || 0,
+      longestStreak: user.learning.longestStreak || 0
+    };
+  } catch (error) {
+    console.error('Error in awardXp:', error);
+    return null;
+  }
+};
 
 /**
  * Helper function to check if user has access to a course tier
@@ -342,6 +627,9 @@ exports.completeLesson = async (req, res, next) => {
       (l) => l.lessonId.toString() === lessonId
     );
 
+    let xpResult = null;
+    let courseCompleted = false;
+
     if (!alreadyCompleted) {
       progress.completedLessons.push({
         lessonId,
@@ -363,14 +651,72 @@ exports.completeLesson = async (req, res, next) => {
         (progress.completedLessons.length / allLessons.length) * 100
       );
 
+      // Update user's total lessons completed and award XP
+      const user = await User.findById(userId);
+      if (user) {
+        if (!user.learning) {
+          user.learning = {
+            xp: 0,
+            level: 1,
+            title: 'Novice Trader',
+            totalLessonsCompleted: 0,
+            totalCoursesCompleted: 0,
+            currentStreak: 0,
+            longestStreak: 0,
+            lastActivityDate: null,
+            achievements: [],
+            preferences: {}
+          };
+        }
+        user.learning.totalLessonsCompleted = (user.learning.totalLessonsCompleted || 0) + 1;
+        user.markModified('learning');
+        await user.save();
+      }
+
+      // Award XP for lesson completion
+      let xpAmount = XP_REWARDS.lessonComplete;
+      if (score && score >= 80) {
+        xpAmount += XP_REWARDS.quizBonus; // Bonus for quiz scores >= 80%
+      }
+      xpResult = await awardXp(userId, xpAmount, 'lesson');
+
       // Check if course completed
       if (progress.progressPercentage === 100 && !progress.completedAt) {
         progress.completedAt = new Date();
+        courseCompleted = true;
 
         // Increment course completed count
         const course = await Course.findById(courseId);
         course.completedCount += 1;
         await course.save();
+
+        // Update user's total courses completed
+        const userForCourse = await User.findById(userId);
+        if (userForCourse) {
+          if (!userForCourse.learning) {
+            userForCourse.learning = {
+              xp: 0,
+              level: 1,
+              title: 'Novice Trader',
+              totalLessonsCompleted: 0,
+              totalCoursesCompleted: 0,
+              currentStreak: 0,
+              longestStreak: 0,
+              lastActivityDate: null,
+              achievements: [],
+              preferences: {}
+            };
+          }
+          userForCourse.learning.totalCoursesCompleted = (userForCourse.learning.totalCoursesCompleted || 0) + 1;
+          userForCourse.markModified('learning');
+          await userForCourse.save();
+        }
+
+        // Award XP for course completion
+        const courseXpResult = await awardXp(userId, XP_REWARDS.courseComplete, 'course');
+        if (courseXpResult) {
+          xpResult = courseXpResult; // Use latest result with updated totals
+        }
       }
 
       progress.lastAccessedAt = new Date();
@@ -381,6 +727,8 @@ exports.completeLesson = async (req, res, next) => {
       success: true,
       message: 'Lesson marked as complete',
       data: progress,
+      xp: xpResult,
+      courseCompleted
     });
   } catch (error) {
     next(error);

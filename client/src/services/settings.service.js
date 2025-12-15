@@ -52,6 +52,20 @@ const settingsService = {
       data: deleteData
     });
     return response.data;
+  },
+
+  // Get learning stats
+  getLearningStats: async () => {
+    const response = await axios.get(`${API_BASE_URL}/settings/learning`);
+    return response.data;
+  },
+
+  // Update learning preferences
+  updateLearning: async (learningData) => {
+    const response = await axios.put(`${API_BASE_URL}/settings/learning`, {
+      learning: learningData
+    });
+    return response.data;
   }
 };
 

@@ -227,6 +227,153 @@ const updatePrivacy = async (req, res) => {
   }
 };
 
+// Update learning settings
+const updateLearning = async (req, res) => {
+  try {
+    const { learning } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Initialize learning if it doesn't exist
+    if (!user.learning) {
+      user.learning = {
+        xp: 0,
+        level: 1,
+        title: 'Novice Trader',
+        totalLessonsCompleted: 0,
+        totalCoursesCompleted: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        lastActivityDate: null,
+        achievements: [],
+        preferences: {
+          dailyGoal: 15,
+          reminderEnabled: true,
+          reminderTime: '09:00',
+          showLeaderboard: true,
+          soundEffects: true,
+          celebrationAnimations: true
+        }
+      };
+    }
+
+    // Update only learning preferences (not XP/level which should be earned)
+    if (learning.preferences) {
+      user.learning.preferences = {
+        ...user.learning.preferences,
+        ...learning.preferences
+      };
+    }
+
+    user.markModified('learning');
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Learning settings updated successfully',
+      learning: user.learning
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get learning stats
+const getLearningStats = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Calculate cumulative XP threshold to REACH a level
+    // Level 1: 0 XP (starting point)
+    // Level 2: 100 XP
+    // Level 3: 250 XP (100 + 150)
+    // Level 4: 475 XP (250 + 225)
+    const getXpThresholdForLevel = (level) => {
+      if (level <= 1) return 0;
+      let totalXp = 0;
+      for (let i = 1; i < level; i++) {
+        totalXp += Math.floor(100 * Math.pow(1.5, i - 1));
+      }
+      return totalXp;
+    };
+
+    const currentLevel = user.learning?.level || 1;
+    const currentXp = user.learning?.xp || 0;
+
+    // XP thresholds
+    const currentLevelThreshold = getXpThresholdForLevel(currentLevel);
+    const nextLevelThreshold = getXpThresholdForLevel(currentLevel + 1);
+
+    // Progress within current level
+    const xpProgress = currentXp - currentLevelThreshold;
+    const xpNeeded = nextLevelThreshold - currentLevelThreshold;
+    const progressPercentage = Math.min(100, Math.max(0, Math.floor((xpProgress / xpNeeded) * 100)));
+
+    // Define level titles
+    const levelTitles = {
+      1: 'Novice Trader',
+      2: 'Apprentice Investor',
+      3: 'Market Observer',
+      4: 'Chart Reader',
+      5: 'Trend Spotter',
+      6: 'Technical Analyst',
+      7: 'Portfolio Manager',
+      8: 'Strategy Expert',
+      9: 'Trading Veteran',
+      10: 'Market Master',
+      15: 'Crypto Sage',
+      20: 'Trading Legend',
+      25: 'Financial Guru',
+      30: 'Market Oracle'
+    };
+
+    // Get closest title for current level
+    const getTitle = (level) => {
+      const levels = Object.keys(levelTitles).map(Number).sort((a, b) => b - a);
+      for (const l of levels) {
+        if (level >= l) return levelTitles[l];
+      }
+      return 'Novice Trader';
+    };
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        xp: currentXp,
+        level: currentLevel,
+        title: getTitle(currentLevel),
+        xpProgress,
+        xpNeeded,
+        progressPercentage,
+        xpForNextLevel: nextLevelThreshold,
+        totalLessonsCompleted: user.learning?.totalLessonsCompleted || 0,
+        totalCoursesCompleted: user.learning?.totalCoursesCompleted || 0,
+        currentStreak: user.learning?.currentStreak || 0,
+        longestStreak: user.learning?.longestStreak || 0,
+        lastActivityDate: user.learning?.lastActivityDate,
+        achievements: user.learning?.achievements || [],
+        preferences: user.learning?.preferences || {
+          dailyGoal: 15,
+          reminderEnabled: true,
+          reminderTime: '09:00',
+          showLeaderboard: true,
+          soundEffects: true,
+          celebrationAnimations: true
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // Delete user account
 const deleteAccount = async (req, res) => {
   try {
@@ -284,5 +431,7 @@ module.exports = {
   updatePreferences,
   updateNotifications,
   updatePrivacy,
+  updateLearning,
+  getLearningStats,
   deleteAccount
 };

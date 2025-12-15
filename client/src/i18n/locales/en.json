@@ -487,7 +487,8 @@
       "profile": "Profile",
       "security": "Security",
       "preferences": "Preferences",
-      "privacy": "Privacy"
+      "privacy": "Privacy",
+      "learning": "Learning"
     },
     "profile": {
       "title": "Profile Information",

@@ -127,6 +127,75 @@ const userSchema = new mongoose.Schema({
       enum: ['en', 'ka'], // en = English, ka = Georgian
       default: 'en'
     }
+  },
+  // Learning & Gamification System
+  learning: {
+    xp: {
+      type: Number,
+      default: 0
+    },
+    level: {
+      type: Number,
+      default: 1
+    },
+    title: {
+      type: String,
+      default: 'Novice Trader'
+    },
+    totalLessonsCompleted: {
+      type: Number,
+      default: 0
+    },
+    totalCoursesCompleted: {
+      type: Number,
+      default: 0
+    },
+    currentStreak: {
+      type: Number,
+      default: 0
+    },
+    longestStreak: {
+      type: Number,
+      default: 0
+    },
+    lastActivityDate: {
+      type: Date,
+      default: null
+    },
+    achievements: [{
+      id: { type: String, required: true },
+      name: { type: String, required: true },
+      description: { type: String },
+      icon: { type: String },
+      unlockedAt: { type: Date, default: Date.now },
+      xpReward: { type: Number, default: 0 }
+    }],
+    preferences: {
+      dailyGoal: {
+        type: Number,
+        default: 15 // minutes per day
+      },
+      reminderEnabled: {
+        type: Boolean,
+        default: true
+      },
+      reminderTime: {
+        type: String,
+        default: '09:00'
+      },
+      showLeaderboard: {
+        type: Boolean,
+        default: true
+      },
+      soundEffects: {
+        type: Boolean,
+        default: true
+      },
+      celebrationAnimations: {
+        type: Boolean,
+        default: true
+      }
+    }
   }
 }, {
   timestamps: true

@@ -13,7 +13,9 @@ import {
   CreditCard,
   ArrowRight,
   AlertCircle,
-  TrendingUp
+  TrendingUp,
+  Settings,
+  ExternalLink
 } from 'lucide-react';
 import subscriptionService from '../../services/subscription.service';
 
@@ -158,14 +160,32 @@ export default function SubscriptionManagement() {
     <div className="space-y-6">
       {/* Current Subscription Status */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Current Subscription
-          </CardTitle>
-          <CardDescription>
-            Manage your subscription and billing settings
-          </CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Current Subscription
+            </CardTitle>
+            <CardDescription className="mt-1.5">
+              Manage your subscription and billing settings
+            </CardDescription>
+          </div>
+          {/* Manage Subscription Button - For any user with a paid plan (active or inactive) */}
+          {currentPlan !== 'free' && (
+            <Button
+              onClick={handleManageBilling}
+              disabled={processing}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+            >
+              {processing && actionType === 'portal' ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Settings className="h-4 w-4 mr-2" />
+              )}
+              Manage Subscription
+              <ExternalLink className="h-3 w-3 ml-2" />
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Plan Info */}
@@ -191,6 +211,16 @@ export default function SubscriptionManagement() {
             </div>
           </div>
 
+          {/* Free User Info */}
+          {currentPlan === 'free' && (
+            <Alert className="bg-muted/50 border-border/60">
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <AlertDescription className="text-foreground">
+                Upgrade to a paid plan to unlock subscription management features including payment method updates, billing history, and invoice downloads.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Trial Info */}
           {subscription?.isTrialing && (
             <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
@@ -215,6 +245,16 @@ export default function SubscriptionManagement() {
             </Alert>
           )}
 
+          {/* Inactive Subscription Warning */}
+          {currentPlan !== 'free' && !isActive && !subscription?.cancelAtPeriodEnd && (
+            <Alert className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700">
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+              <AlertDescription className="text-foreground">
+                Your subscription is currently <strong>inactive</strong>. Use the "Manage Subscription" button to update your payment method or resubscribe to restore access to premium features.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Active Subscription Info */}
           {isActive && !subscription?.cancelAtPeriodEnd && currentPlan !== 'free' && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -228,9 +268,42 @@ export default function SubscriptionManagement() {
             </div>
           )}
 
+          {/* Subscription Management Info for Paid Users */}
+          {currentPlan !== 'free' && !subscription?.cancelAtPeriodEnd && (
+            <div className="p-4 bg-muted/50 rounded-lg border border-border/60">
+              <div className="flex items-start gap-3">
+                <Settings className="h-5 w-5 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium text-sm">Subscription Management</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Use the "Manage Subscription" button to access your billing portal where you can:
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-500" />
+                      Update your payment method
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-500" />
+                      View billing history and invoices
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-500" />
+                      Change or cancel your subscription
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-500" />
+                      Update billing information
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3">
-            {currentPlan !== 'free' && isActive && (
+            {currentPlan !== 'free' && (
               <Button
                 onClick={handleManageBilling}
                 disabled={processing}
@@ -241,7 +314,7 @@ export default function SubscriptionManagement() {
                 ) : (
                   <CreditCard className="h-4 w-4 mr-2" />
                 )}
-                Manage Billing
+                Update Payment Method
               </Button>
             )}
 

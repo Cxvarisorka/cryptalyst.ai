@@ -10,6 +10,7 @@ import {
   BookOpen,
   Trophy,
   ArrowLeft,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { useCelebration } from '@/components/ui/celebration';
 
 const LessonContent = ({ lesson, onComplete, isCompleted }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -145,6 +147,13 @@ const CourseViewer = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { i18n } = useTranslation();
+  const {
+    showXPGain,
+    showLevelUp,
+    showCourseComplete,
+    showAchievement,
+    CelebrationComponents
+  } = useCelebration();
 
   const [course, setCourse] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -211,13 +220,42 @@ const CourseViewer = () => {
       const result = await courseService.completeLesson(courseId, currentLesson._id, score);
       setProgress(result.data);
 
-      toast({
-        title: 'Lesson Complete!',
-        description: 'Great job! Moving to the next lesson.',
-      });
+      // Handle XP and celebration effects
+      if (result.xp) {
+        // Show XP gain popup
+        showXPGain(result.xp.xpAwarded);
 
-      // Move to next lesson
-      goToNextLesson();
+        // Show achievements if any unlocked
+        if (result.xp.newAchievements && result.xp.newAchievements.length > 0) {
+          // Show each achievement with a delay
+          result.xp.newAchievements.forEach((achievement, index) => {
+            setTimeout(() => {
+              showAchievement(achievement);
+            }, 2500 + index * 4000);
+          });
+        }
+
+        // Show level up if user leveled up
+        if (result.xp.leveledUp) {
+          setTimeout(() => {
+            showLevelUp(result.xp.level, result.xp.title || 'New Level!');
+          }, 2000);
+        }
+      }
+
+      // Show course complete celebration if course is finished
+      if (result.courseCompleted) {
+        setTimeout(() => {
+          showCourseComplete(course?.title || 'Course', result.xp?.xpAwarded || 100);
+        }, result.xp?.leveledUp ? 7000 : 2500);
+      } else {
+        toast({
+          title: 'Lesson Complete!',
+          description: `Great job! +${result.xp?.xpAwarded || 25} XP earned`,
+        });
+        // Move to next lesson only if course not completed
+        goToNextLesson();
+      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -281,6 +319,9 @@ const CourseViewer = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Celebration Effects */}
+      <CelebrationComponents />
+
       {/* Top Bar */}
       <div className="border-b border-border bg-card sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">

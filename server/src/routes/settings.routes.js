@@ -6,6 +6,8 @@ const {
   updatePreferences,
   updateNotifications,
   updatePrivacy,
+  updateLearning,
+  getLearningStats,
   deleteAccount
 } = require('../controllers/settings.controller');
 const { protect } = require('../middleware/auth.middleware');
@@ -32,6 +34,12 @@ router.put('/notifications', updateNotifications);
 
 // PUT /api/settings/privacy - Update privacy settings
 router.put('/privacy', updatePrivacy);
+
+// GET /api/settings/learning - Get learning stats
+router.get('/learning', getLearningStats);
+
+// PUT /api/settings/learning - Update learning preferences
+router.put('/learning', updateLearning);
 
 // DELETE /api/settings/account - Delete account (soft delete)
 router.delete('/account', deleteAccount);
