@@ -16,6 +16,7 @@ import AIAnalysis from "@/components/analysis/AIAnalysis";
 import CreatePriceAlertButton from "@/components/alerts/CreatePriceAlertButton";
 import AssetPriceAlerts from "@/components/alerts/AssetPriceAlerts";
 import Hero from "@/components/layout/Hero";
+import ScalpingAnalysisButton from "@/components/analysis/ScalpingAnalysisButton";
 
 export default function CryptoDetail() {
   const { id } = useParams();
@@ -188,6 +189,12 @@ export default function CryptoDetail() {
             assetSymbol={crypto.symbol}
             currentPrice={crypto.price}
             assetImage={crypto.image}
+          />
+          <ScalpingAnalysisButton
+            assetName={crypto.name}
+            assetSymbol={crypto.symbol}
+            assetType="crypto"
+            currentPrice={crypto.price}
           />
         </Hero>
 

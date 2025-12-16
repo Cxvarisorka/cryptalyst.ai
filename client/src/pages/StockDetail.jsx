@@ -14,6 +14,7 @@ import AIAnalysis from "@/components/analysis/AIAnalysis";
 import CreatePriceAlertButton from "@/components/alerts/CreatePriceAlertButton";
 import AssetPriceAlerts from "@/components/alerts/AssetPriceAlerts";
 import Hero from "@/components/layout/Hero";
+import ScalpingAnalysisButton from "@/components/analysis/ScalpingAnalysisButton";
 
 export default function StockDetail() {
   const { symbol } = useParams();
@@ -182,6 +183,12 @@ export default function StockDetail() {
             assetSymbol={stock.symbol}
             currentPrice={stock.price}
             assetImage={stock.image}
+          />
+          <ScalpingAnalysisButton
+            assetName={stock.name}
+            assetSymbol={stock.symbol}
+            assetType="stock"
+            currentPrice={stock.price}
           />
         </Hero>
 

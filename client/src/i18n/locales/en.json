@@ -9,7 +9,8 @@
     "about": "About",
     "pricing": "Pricing",
     "getStarted": "Get Started",
-    "learn": "Learn"
+    "learn": "Learn",
+    "scalpingAI": "Scalping AI"
   },
   "learn": {
     "title": "Learn Trading & Investing",
@@ -806,6 +807,55 @@
         "titleRequired": "Title is required in English",
         "contentRequired": "Content is required in English"
       }
+    }
+  },
+  "scalping": {
+    "title": "Scalping AI",
+    "subtitle": "Upload your chart and let AI analyze the best entry and exit points for scalping trades",
+    "uploadTitle": "Upload Chart",
+    "uploadDescription": "Upload a trading chart image for AI-powered analysis",
+    "dropHere": "Drop your chart here",
+    "orClickBrowse": "or click to browse files",
+    "supportedFormats": "Supports PNG, JPG, JPEG, GIF (Max 10MB)",
+    "analyzingChart": "Analyzing Chart...",
+    "analyzeWithAI": "Analyze with AI",
+    "buy": "BUY",
+    "sell": "SELL",
+    "signalDetected": "Signal Detected",
+    "confidenceLevel": "Confidence Level",
+    "high": "High Confidence",
+    "moderate": "Moderate Confidence",
+    "low": "Low Confidence",
+    "entryPrice": "Entry Price",
+    "recommendedEntry": "Recommended entry point",
+    "stopLoss": "Stop Loss",
+    "riskManagement": "Risk management level",
+    "takeProfit": "Take Profit",
+    "firstTarget": "First target level",
+    "rrRatio": "R:R Ratio",
+    "riskToReward": "Risk to Reward",
+    "takeProfitLevels": "Take Profit Levels",
+    "scaleOutPositions": "Scale out positions at multiple targets for optimal returns",
+    "patternDetected": "Pattern Detected",
+    "trend": "Trend",
+    "bullish": "Bullish",
+    "bearish": "Bearish",
+    "volatility": "Volatility",
+    "timeframe": "Timeframe",
+    "currentPrice": "Current Price",
+    "keyLevels": "Key Levels",
+    "resistance": "Resistance",
+    "support": "Support",
+    "aiRecommendations": "AI Recommendations",
+    "disclaimer": "Disclaimer",
+    "disclaimerText": "This analysis is for educational purposes only. Always do your own research and never invest more than you can afford to lose. Past performance does not guarantee future results.",
+    "reAnalyze": "Re-analyze",
+    "button": {
+      "title": "Scalping Analysis",
+      "dialogTitle": "Scalping Analysis",
+      "dialogDescription": "AI-powered scalping signals for",
+      "analyzing": "Analyzing",
+      "recommendations": "Recommendations"
     }
   }
 }

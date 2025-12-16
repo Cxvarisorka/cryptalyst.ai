@@ -28,6 +28,7 @@ import SubscriptionSuccess from "@/pages/SubscriptionSuccess";
 import News from "@/pages/News";
 import Learn from "@/pages/Learn";
 import CourseViewer from "@/pages/CourseViewer";
+import ScalpingAI from "@/pages/ScalpingAI";
 
 function App() {
   return (
@@ -144,6 +145,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <AdminPanel />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/scalping-ai"
+                  element={
+                    <ProtectedRoute>
+                      <ScalpingAI />
                     </ProtectedRoute>
                   }
                 />
