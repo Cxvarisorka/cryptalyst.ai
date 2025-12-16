@@ -56,8 +56,13 @@ const settingsService = {
 
   // Get learning stats
   getLearningStats: async () => {
-    const response = await axios.get(`${API_BASE_URL}/settings/learning`);
-    return response.data;
+    try {
+      const response = await axios.get(`${API_BASE_URL}/settings/learning`);
+      return response.data;
+    } catch (error) {
+      console.error('getLearningStats error:', error.response?.status, error.response?.data || error.message);
+      throw error;
+    }
   },
 
   // Update learning preferences

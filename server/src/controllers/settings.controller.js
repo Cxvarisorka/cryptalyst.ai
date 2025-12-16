@@ -284,10 +284,35 @@ const updateLearning = async (req, res) => {
 // Get learning stats
 const getLearningStats = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    let user = await User.findById(req.user.id);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Initialize learning field for existing users who don't have it
+    if (!user.learning) {
+      user.learning = {
+        xp: 0,
+        level: 1,
+        title: 'Novice Trader',
+        totalLessonsCompleted: 0,
+        totalCoursesCompleted: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        lastActivityDate: null,
+        achievements: [],
+        preferences: {
+          dailyGoal: 15,
+          reminderEnabled: true,
+          reminderTime: '09:00',
+          showLeaderboard: true,
+          soundEffects: true,
+          celebrationAnimations: true
+        }
+      };
+      user.markModified('learning');
+      await user.save();
     }
 
     // Calculate cumulative XP threshold to REACH a level
@@ -370,6 +395,7 @@ const getLearningStats = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('getLearningStats error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
