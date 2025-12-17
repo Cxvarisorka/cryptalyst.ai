@@ -1,6 +1,7 @@
 const technicalAnalysisService = require('../services/technicalAnalysis.service');
 const priceHistoryService = require('../services/priceHistory.service');
 const marketDataService = require('../services/marketData.service');
+const { completeOnboardingTask } = require('../services/onboarding.service');
 
 /**
  * Get technical analysis for a crypto asset
@@ -23,6 +24,11 @@ exports.getCryptoAnalysis = async (req, res) => {
 
     // Calculate technical analysis
     const analysis = technicalAnalysisService.getCryptoTechnicalAnalysis(crypto);
+
+    // Complete onboarding task if user is authenticated
+    if (req.user?.id) {
+      completeOnboardingTask(req.user.id, 'useCryptoAnalyzer').catch(() => {});
+    }
 
     res.json({
       success: true,
@@ -62,6 +68,11 @@ exports.getStockAnalysis = async (req, res) => {
 
     // Calculate technical analysis
     const analysis = technicalAnalysisService.getStockTechnicalAnalysis(stock);
+
+    // Complete onboarding task if user is authenticated
+    if (req.user?.id) {
+      completeOnboardingTask(req.user.id, 'useStockAnalyzer').catch(() => {});
+    }
 
     res.json({
       success: true,

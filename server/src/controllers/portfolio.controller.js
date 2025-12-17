@@ -1,5 +1,6 @@
 const Portfolio = require('../models/portfolio.model');
 const marketDataService = require('../services/marketData.service');
+const { completeOnboardingTask } = require('../services/onboarding.service');
 
 /**
  * Get all portfolio items for the authenticated user
@@ -159,6 +160,9 @@ exports.addAsset = async (req, res) => {
     });
 
     await portfolioItem.save();
+
+    // Complete onboarding task (async, don't wait)
+    completeOnboardingTask(userId, 'createPortfolio').catch(() => {});
 
     res.status(201).json({
       success: true,

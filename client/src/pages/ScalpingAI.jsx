@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useOnboardingTracker } from "@/hooks/useOnboardingTracker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/magicui/fade-in";
@@ -100,11 +101,19 @@ const generateSimulatedAnalysis = (t) => {
 
 export default function ScalpingAI() {
   const { t } = useTranslation();
+  const { completeTask } = useOnboardingTracker();
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Track onboarding task when analysis is completed
+  useEffect(() => {
+    if (analysis) {
+      completeTask('useScalpingAI');
+    }
+  }, [analysis, completeTask]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];

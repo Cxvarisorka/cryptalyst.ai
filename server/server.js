@@ -28,6 +28,7 @@ const adminRoutes = require('./src/routes/admin.routes');
 const webhookRoutes = require('./src/routes/webhook.routes');
 const subscriptionRoutes = require('./src/routes/subscription.routes');
 const courseRoutes = require('./src/routes/course.routes');
+const onboardingRoutes = require('./src/routes/onboarding.routes');
 
 // Import services
 const marketDataService = require('./src/services/marketData.service');
@@ -86,6 +87,7 @@ app.use('/api', notificationRoutes); // Notification routes
 app.use('/api/price-alerts', priceAlertRoutes); // Price alert routes
 app.use('/api/admin', adminRoutes); // Admin routes
 app.use('/api/courses', courseRoutes); // Course/Learning routes
+app.use('/api/onboarding', onboardingRoutes); // Onboarding tutorial routes
 
 // Public subscription routes (no auth required)
 const subscriptionController = require('./src/controllers/subscription.controller');

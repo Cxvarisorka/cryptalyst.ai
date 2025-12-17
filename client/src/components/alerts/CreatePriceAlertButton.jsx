@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Bell, Loader2, Mail, Monitor, Plus, X } from "lucide-react";
 import priceAlertService from "@/services/priceAlert.service";
+import { useOnboardingTracker } from "@/hooks/useOnboardingTracker";
 
 export default function CreatePriceAlertButton({ assetType, assetId, assetName, assetSymbol, currentPrice, assetImage }) {
   const { toast } = useToast();
+  const { completeTask } = useOnboardingTracker();
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [alertData, setAlertData] = useState({
@@ -50,6 +52,9 @@ export default function CreatePriceAlertButton({ assetType, assetId, assetName, 
         title: "Success",
         description: `Price alert created for ${assetSymbol}`
       });
+
+      // Track onboarding task
+      completeTask('setPriceAlert');
 
       // Reset and close
       setAlertData({

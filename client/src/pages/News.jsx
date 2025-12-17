@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Newspaper, TrendingUp, DollarSign, Globe, Loader2, RefreshCw, Search, Filter } from 'lucide-react';
 import { FadeIn } from '@/components/magicui/fade-in';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { newsService } from '@/services/news.service';
 import { useToast } from '@/components/ui/use-toast';
+import { useOnboardingTracker } from '@/hooks/useOnboardingTracker';
 
 const NewsCard = ({ article }) => {
   const formatDate = (dateString) => {
@@ -91,6 +92,8 @@ const NewsCard = ({ article }) => {
 const News = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { completeTask } = useOnboardingTracker();
+  const hasTrackedRef = useRef(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [news, setNews] = useState([]);
   const [displayedNews, setDisplayedNews] = useState([]);
@@ -102,6 +105,14 @@ const News = () => {
   const [sentimentFilter, setSentimentFilter] = useState('all');
   const [limit, setLimit] = useState(30);
   const [displayLimit, setDisplayLimit] = useState(12);
+
+  // Track onboarding task when news loads successfully
+  useEffect(() => {
+    if (news.length > 0 && !hasTrackedRef.current) {
+      hasTrackedRef.current = true;
+      completeTask('viewNews');
+    }
+  }, [news, completeTask]);
 
   const categories = [
     { id: 'all', name: 'All News', icon: Globe, filter: 'general' },

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,11 +17,14 @@ import CreatePriceAlertButton from "@/components/alerts/CreatePriceAlertButton";
 import AssetPriceAlerts from "@/components/alerts/AssetPriceAlerts";
 import Hero from "@/components/layout/Hero";
 import ScalpingAnalysisButton from "@/components/analysis/ScalpingAnalysisButton";
+import { useOnboardingTracker } from "@/hooks/useOnboardingTracker";
 
 export default function CryptoDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { completeTask } = useOnboardingTracker();
+  const hasTrackedRef = useRef(false);
   const [crypto, setCrypto] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [news, setNews] = useState([]);
@@ -29,6 +32,14 @@ export default function CryptoDetail() {
   const [newsLoading, setNewsLoading] = useState(true);
   const [priceHistory, setPriceHistory] = useState([]);
   const [stats, setStats] = useState(null);
+
+  // Track onboarding task when crypto analysis loads
+  useEffect(() => {
+    if (analysis && !hasTrackedRef.current) {
+      hasTrackedRef.current = true;
+      completeTask('useCryptoAnalyzer');
+    }
+  }, [analysis, completeTask]);
 
   // Chart view preference: 'custom' or 'tradingview'
   const [chartView, setChartView] = useState(() => {

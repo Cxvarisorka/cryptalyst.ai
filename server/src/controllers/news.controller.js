@@ -1,4 +1,5 @@
 const newsService = require('../services/news.service');
+const { completeOnboardingTask } = require('../services/onboarding.service');
 
 /**
  * Get news for a cryptocurrency
@@ -76,6 +77,11 @@ exports.getNewsByCategory = async (req, res) => {
     const limit = parseInt(req.query.limit) || 30;
 
     const news = await newsService.getNewsByCategory(category, limit);
+
+    // Complete onboarding task if user is authenticated
+    if (req.user?.id) {
+      completeOnboardingTask(req.user.id, 'viewNews').catch(() => {});
+    }
 
     res.json({
       success: true,

@@ -196,6 +196,51 @@ const userSchema = new mongoose.Schema({
         default: true
       }
     }
+  },
+  // Onboarding Tutorial System
+  onboarding: {
+    isCompleted: {
+      type: Boolean,
+      default: false
+    },
+    dismissedAt: {
+      type: Date,
+      default: null
+    },
+    tasks: {
+      createPortfolio: {
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date, default: null }
+      },
+      useCryptoAnalyzer: {
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date, default: null }
+      },
+      useStockAnalyzer: {
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date, default: null }
+      },
+      usePortfolioAnalyzer: {
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date, default: null }
+      },
+      viewNews: {
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date, default: null }
+      },
+      setPriceAlert: {
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date, default: null }
+      },
+      startLearning: {
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date, default: null }
+      },
+      useScalpingAI: {
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date, default: null }
+      }
+    }
   }
 }, {
   timestamps: true

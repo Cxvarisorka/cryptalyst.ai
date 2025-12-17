@@ -3,6 +3,7 @@ const Section = require('../models/section.model');
 const Lesson = require('../models/lesson.model');
 const CourseProgress = require('../models/courseProgress.model');
 const User = require('../models/user.model');
+const { completeOnboardingTask } = require('../services/onboarding.service');
 
 // XP reward amounts
 const XP_REWARDS = {
@@ -530,6 +531,9 @@ exports.enrollCourse = async (req, res, next) => {
     // Increment enrolled count
     course.enrolledCount += 1;
     await course.save();
+
+    // Complete onboarding task
+    completeOnboardingTask(userId, 'startLearning').catch(() => {});
 
     res.status(200).json({
       success: true,

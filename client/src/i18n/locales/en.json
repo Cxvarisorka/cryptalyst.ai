@@ -117,7 +117,7 @@
     }
   },
   "home": {
-    "title": "Cryptalyst.ai",
+    "title": "Cryptalyst",
     "subtitle": "AI-Powered Cryptocurrency Analysis Platform",
     "getStarted": "Get Started",
     "learnMore": "Learn More",
@@ -151,7 +151,7 @@
       "insights": "AI-powered insights & predictions"
     },
     "whyChoose": {
-      "title": "Why Choose Cryptalyst.ai?",
+      "title": "Why Choose Cryptalyst?",
       "subtitle": "Join thousands of traders who trust us for their cryptocurrency analysis"
     },
     "cta": {
@@ -206,6 +206,7 @@
         "noResults": "No results found"
       },
       "add": "Add",
+      "qty": "Qty",
       "remove": "Remove",
       "details": "Details",
       "totalValue": "Total Portfolio Value",
@@ -221,7 +222,10 @@
       "removed": "Asset Removed",
       "removedDesc": "has been removed from your portfolio",
       "alreadyExists": "Asset Already Exists",
-      "alreadyExistsDesc": "This asset is already in your portfolio"
+      "alreadyExistsDesc": "This asset is already in your portfolio",
+      "quantityUpdated": "Quantity Updated",
+      "quantityUpdatedDesc": "quantity has been updated",
+      "quantityError": "Failed to update quantity"
     },
     "analytics": {
       "title": "Portfolio Analytics",
@@ -327,7 +331,7 @@
     },
     "mission": {
       "title": "Our Mission",
-      "content": "Cryptalyst.ai is dedicated to democratizing access to professional-grade cryptocurrency analysis tools. We believe that everyone should have access to the same powerful AI-driven insights that institutional investors use to make informed trading decisions."
+      "content": "Cryptalyst is dedicated to democratizing access to professional-grade cryptocurrency analysis tools. We believe that everyone should have access to the same powerful AI-driven insights that institutional investors use to make informed trading decisions."
     },
     "technology": {
       "title": "Our Technology",
@@ -335,7 +339,7 @@
     },
     "keyFeatures": {
       "title": "Key Features",
-      "description": "What makes Cryptalyst.ai unique",
+      "description": "What makes Cryptalyst unique",
       "aiPowered": {
         "title": "AI-Powered Analysis",
         "description": "Advanced algorithms that learn from market patterns to provide predictive insights"
@@ -856,6 +860,26 @@
       "dialogDescription": "AI-powered scalping signals for",
       "analyzing": "Analyzing",
       "recommendations": "Recommendations"
+    }
+  },
+  "onboarding": {
+    "title": "Getting Started",
+    "subtitle": "Complete these tasks to master Cryptalyst",
+    "minimize": "Minimize",
+    "dismiss": "Dismiss",
+    "tasks": {
+      "createPortfolio": "Create your first portfolio",
+      "useCryptoAnalyzer": "Analyze a cryptocurrency",
+      "useStockAnalyzer": "Analyze a stock",
+      "usePortfolioAnalyzer": "View portfolio analytics",
+      "viewNews": "Read market news",
+      "setPriceAlert": "Set a price alert",
+      "startLearning": "Start a learning course",
+      "useScalpingAI": "Try Scalping AI analysis"
+    },
+    "celebration": {
+      "title": "Congratulations!",
+      "message": "You've completed the tutorial. Happy trading!"
     }
   }
 }

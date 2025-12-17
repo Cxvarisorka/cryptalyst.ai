@@ -7,6 +7,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import WelcomeModal from "@/components/marketing/WelcomeModal";
+import OnboardingWidget from "@/components/onboarding/OnboardingWidget";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import About from "@/pages/About";
@@ -170,6 +171,7 @@ function App() {
               </Routes>
             </main>
               <Footer />
+              <OnboardingWidget />
               <WelcomeModal />
               <Toaster />
             </div>

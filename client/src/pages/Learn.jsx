@@ -18,6 +18,7 @@ import {
   Trophy
 } from 'lucide-react';
 import { FadeIn } from '@/components/magicui/fade-in';
+import { useOnboardingTracker } from '@/hooks/useOnboardingTracker';
 import Hero from '@/components/layout/Hero';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -302,6 +303,7 @@ const Learn = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { completeTask } = useOnboardingTracker();
 
   const [courses, setCourses] = useState([]);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
@@ -363,6 +365,10 @@ const Learn = () => {
 
     try {
       await courseService.enrollCourse(courseId);
+
+      // Track onboarding task
+      completeTask('startLearning');
+
       toast({
         title: 'Success!',
         description: 'Successfully enrolled in course. Start learning now!',

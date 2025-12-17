@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,20 +10,35 @@ import PortfolioList from "@/components/portfolio/PortfolioList";
 import PortfolioAnalytics from "@/components/portfolio/PortfolioAnalytics";
 import PortfolioManager from "@/components/portfolio/PortfolioManager";
 import { getMarketData } from "@/services/marketDataService";
-import { getPortfolio, addAsset, removeAsset } from "@/services/portfolioService";
+import { getPortfolio, addAsset, removeAsset, updateAsset } from "@/services/portfolioService";
 import { useToast } from "@/components/ui/use-toast";
 import Hero from "@/components/layout/Hero";
 import socketService from "@/services/socket.service";
+import { useOnboardingTracker } from "@/hooks/useOnboardingTracker";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { completeTask } = useOnboardingTracker();
   const [portfolio, setPortfolio] = useState([]);
   const [portfolioLoading, setPortfolioLoading] = useState(true);
   const [marketData, setMarketData] = useState({ crypto: [], stocks: [] });
   const [selectedCollection, setSelectedCollection] = useState(null);
+  const [imgErrors, setImgErrors] = useState({});
+
+  // Track onboarding task when analytics tab is viewed
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab);
+    if (tab === 'analytics') {
+      completeTask('usePortfolioAnalyzer');
+    }
+  }, [completeTask]);
+
+  const handleImgError = (assetId) => {
+    setImgErrors(prev => ({ ...prev, [assetId]: true }));
+  };
 
   useEffect(() => {
     // Don't load portfolio here - let PortfolioManager trigger it when default collection is selected
@@ -102,6 +117,9 @@ export default function Dashboard() {
       };
       await addAsset(assetWithCollection);
 
+      // Track onboarding task
+      completeTask('createPortfolio');
+
       // Reload portfolio to get updated data
       await loadPortfolio(selectedCollection?._id);
 
@@ -135,6 +153,27 @@ export default function Dashboard() {
       toast({
         title: t("dashboard.portfolio.error") || "Error",
         description: error.message || t("dashboard.portfolio.removeError") || "Failed to remove asset",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUpdateQuantity = async (asset, newQuantity) => {
+    try {
+      await updateAsset(asset._id, { quantity: newQuantity });
+
+      // Reload portfolio to get updated data
+      await loadPortfolio(selectedCollection?._id);
+
+      toast({
+        title: t("dashboard.portfolio.quantityUpdated") || "Quantity Updated",
+        description: `${asset.name} ${t("dashboard.portfolio.quantityUpdatedDesc") || "quantity has been updated"}`
+      });
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      toast({
+        title: t("dashboard.portfolio.error") || "Error",
+        description: error.message || t("dashboard.portfolio.quantityError") || "Failed to update quantity",
         variant: "destructive"
       });
     }
@@ -201,7 +240,7 @@ export default function Dashboard() {
             </div>
           </div>
         ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="bg-muted/60 w-full h-auto flex flex-wrap justify-start sm:justify-center gap-1 p-1">
               <TabsTrigger value="overview" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.overview")}</TabsTrigger>
               <TabsTrigger value="portfolio" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[80px]">{t("dashboard.tabs.portfolio")}</TabsTrigger>
@@ -279,8 +318,17 @@ export default function Dashboard() {
                           className="flex items-center justify-between rounded-md border border-border/60 p-2 sm:p-3 hover:bg-muted/30 cursor-pointer transition-all duration-300 gap-2 min-w-0"
                         >
                           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
-                            {crypto.image && (
-                              <img src={crypto.image} alt={crypto.name} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex-shrink-0" />
+                            {crypto.image && !imgErrors[crypto.id] ? (
+                              <img
+                                src={crypto.image}
+                                alt={crypto.name}
+                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex-shrink-0"
+                                onError={() => handleImgError(crypto.id)}
+                              />
+                            ) : (
+                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex-shrink-0 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+                                <span className="text-xs font-bold text-primary">{crypto.symbol?.charAt(0)}</span>
+                              </div>
                             )}
                             <div className="min-w-0 flex-1 overflow-hidden">
                               <div className="font-medium text-foreground text-sm sm:text-base truncate" title={crypto.name}>{crypto.name}</div>
@@ -316,8 +364,17 @@ export default function Dashboard() {
                           className="flex items-center justify-between rounded-md border border-border/60 p-2 sm:p-3 hover:bg-muted/30 cursor-pointer transition-all duration-300 gap-2 min-w-0"
                         >
                           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
-                            {stock.image && (
-                              <img src={stock.image} alt={stock.name} className="w-7 h-7 sm:w-8 sm:h-8 rounded flex-shrink-0" />
+                            {stock.image && !imgErrors[stock.id] ? (
+                              <img
+                                src={stock.image}
+                                alt={stock.name}
+                                className="w-7 h-7 sm:w-8 sm:h-8 rounded flex-shrink-0"
+                                onError={() => handleImgError(stock.id)}
+                              />
+                            ) : (
+                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded flex-shrink-0 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+                                <span className="text-xs font-bold text-primary">{stock.symbol?.charAt(0)}</span>
+                              </div>
                             )}
                             <div className="min-w-0 flex-1 overflow-hidden">
                               <div className="font-medium text-foreground text-sm sm:text-base truncate" title={stock.name}>{stock.name}</div>
@@ -340,7 +397,7 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="portfolio" className="mt-6">
-            <PortfolioList portfolio={portfolio} onRemoveAsset={handleRemoveAsset} />
+            <PortfolioList portfolio={portfolio} onRemoveAsset={handleRemoveAsset} onUpdateQuantity={handleUpdateQuantity} />
           </TabsContent>
 
           <TabsContent value="search" className="mt-6">

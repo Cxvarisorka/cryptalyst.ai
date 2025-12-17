@@ -1,5 +1,6 @@
 const PriceAlert = require('../models/priceAlert.model');
 const notificationService = require('../services/notification.service');
+const { completeOnboardingTask } = require('../services/onboarding.service');
 
 // Create a new price alert
 const createAlert = async (req, res) => {
@@ -49,6 +50,10 @@ const createAlert = async (req, res) => {
     });
 
     await alert.save();
+
+    // Complete onboarding task
+    completeOnboardingTask(req.user.id, 'setPriceAlert').catch(() => {});
+
     res.status(201).json({ message: 'Price alert created successfully', alert });
   } catch (error) {
     console.error('Error creating price alert:', error);
