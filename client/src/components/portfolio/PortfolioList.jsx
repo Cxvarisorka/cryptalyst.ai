@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   TrendingUp,
   TrendingDown,
@@ -15,14 +16,51 @@ import {
   CheckCircle2,
   Target,
   PieChart,
+  Plus,
+  Minus,
 } from "lucide-react";
 
-export default function PortfolioList({ portfolio, onRemoveAsset }) {
+export default function PortfolioList({ portfolio, onRemoveAsset, onUpdateQuantity }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
+  const [updatingAsset, setUpdatingAsset] = useState(null);
+  const [imgErrors, setImgErrors] = useState({});
+
+  const handleImgError = (assetId) => {
+    setImgErrors(prev => ({ ...prev, [assetId]: true }));
+  };
+
+  const handleQuantityChange = async (asset, newQuantity) => {
+    if (newQuantity < 0) return;
+
+    if (newQuantity === 0) {
+      // Remove asset when quantity reaches 0
+      onRemoveAsset(asset);
+      return;
+    }
+
+    if (onUpdateQuantity) {
+      setUpdatingAsset(asset._id);
+      try {
+        await onUpdateQuantity(asset, newQuantity);
+      } finally {
+        setUpdatingAsset(null);
+      }
+    }
+  };
+
+  const handleIncrement = (asset) => {
+    const currentQuantity = asset.quantity || 1;
+    handleQuantityChange(asset, currentQuantity + 1);
+  };
+
+  const handleDecrement = (asset) => {
+    const currentQuantity = asset.quantity || 1;
+    handleQuantityChange(asset, currentQuantity - 1);
+  };
 
   const formatPrice = (price) => {
     if (price >= 1) {
@@ -196,18 +234,58 @@ export default function PortfolioList({ portfolio, onRemoveAsset }) {
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border border-border/40 rounded-lg hover:bg-muted/30 transition-all duration-300 gap-3 sm:gap-4"
                   >
                     <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                      {asset.image && (
+                      {asset.image && !imgErrors[asset.id] ? (
                         <img
                           src={asset.image}
                           alt={asset.name}
                           className={`w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 ${asset.type === 'crypto' ? 'rounded-full' : 'rounded-lg'}`}
+                          onError={() => handleImgError(asset.id)}
                         />
+                      ) : (
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center ${asset.type === 'crypto' ? 'rounded-full' : 'rounded-lg'}`}>
+                          <span className="text-sm font-bold text-primary">{asset.symbol?.charAt(0)}</span>
+                        </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-foreground text-base sm:text-lg truncate">{asset.symbol}</div>
                         <div className="text-xs sm:text-sm text-muted-foreground truncate">{asset.name}</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {asset.quantity || 1} {asset.quantity > 1 ? 'units' : 'unit'} • {percentage.toFixed(2)}%
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 sm:h-7 sm:w-7 hover:bg-destructive/20 hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDecrement(asset);
+                              }}
+                              disabled={updatingAsset === asset._id}
+                            >
+                              <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                            <span className="min-w-[2rem] text-center font-medium text-sm sm:text-base">
+                              {updatingAsset === asset._id ? (
+                                <Loader2 className="h-3 w-3 animate-spin mx-auto" />
+                              ) : (
+                                asset.quantity || 1
+                              )}
+                            </span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 sm:h-7 sm:w-7 hover:bg-green-500/20 hover:text-green-500"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleIncrement(asset);
+                              }}
+                              disabled={updatingAsset === asset._id}
+                            >
+                              <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {percentage.toFixed(1)}%
+                          </span>
                         </div>
                       </div>
                     </div>
