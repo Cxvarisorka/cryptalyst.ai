@@ -1,5 +1,6 @@
 import { FadeIn } from "@/components/magicui/fade-in";
 import { GradientText } from "@/components/magicui/gradient-text";
+import { useTheme } from "@/contexts/ThemeContext";
 
 /**
  * Modern Hero Component with Configurable Alignment
@@ -8,6 +9,7 @@ import { GradientText } from "@/components/magicui/gradient-text";
  * @param {string} subtitle - Subtitle/description text
  * @param {Array} icons - Array of icon components to display (e.g., [{ Icon: TrendingUp, gradient: 'from-orange-500 to-yellow-500' }])
  * @param {boolean} showSingleIcon - If true, shows a single large icon. If false, shows multiple smaller icons
+ * @param {boolean} showLogo - If true, shows the logo image instead of icons
  * @param {string} align - Text alignment: "center" (for home page) or "left" (for other pages). Default: "center"
  * @param {string} size - Header size: "large" (for home page) or "medium" (for other pages). Default: "large"
  * @param {React.Node} children - Optional children (buttons, actions, etc.)
@@ -17,10 +19,12 @@ export default function Hero({
   subtitle,
   icons = [],
   showSingleIcon = false,
+  showLogo = false,
   align = "center",
   size = "large",
   children
 }) {
+  const { theme } = useTheme();
   const isCenter = align === "center";
   const isLarge = size === "large";
 
@@ -32,8 +36,19 @@ export default function Hero({
       {/* Static spacing: pt-16 for consistent spacing from header */}
       <div className="container mx-auto px-4 pt-16 pb-12 md:pt-20 md:pb-16 relative">
         <FadeIn className={`${isCenter ? "text-center max-w-4xl mx-auto" : "text-left max-w-6xl"}`}>
+          {/* Logo Section */}
+          {showLogo && (
+            <div className={`mb-8 ${isCenter ? "flex justify-center" : ""}`}>
+              <img
+                src={theme === 'dark' ? '/2-2025-12-17T12-39-34.png' : '/1-2025-12-17T12-38-58.png'}
+                alt="Cryptalyst"
+                className="h-24 md:h-32 w-auto object-contain"
+              />
+            </div>
+          )}
+
           {/* Icons Section - Simplified */}
-          {icons.length > 0 && (
+          {!showLogo && icons.length > 0 && (
             <div className="mb-6">
               {showSingleIcon ? (
                 // Single Icon
@@ -65,14 +80,18 @@ export default function Hero({
           )}
 
           {/* Title - Responsive sizing based on size prop */}
-          <h1 className={`${isLarge ? "text-3xl md:text-5xl lg:text-6xl" : "text-2xl md:text-4xl lg:text-4xl"} font-bold mb-4 tracking-tight`}>
-            <GradientText>{title}</GradientText>
-          </h1>
+          {title && (
+            <h1 className={`${isLarge ? "text-3xl md:text-5xl lg:text-6xl" : "text-2xl md:text-4xl lg:text-4xl"} font-bold mb-4 tracking-tight`}>
+              <GradientText>{title}</GradientText>
+            </h1>
+          )}
 
           {/* Subtitle - Compact */}
-          <p className={`text-base md:text-lg text-muted-foreground mb-8 ${isCenter ? "max-w-2xl mx-auto" : "max-w-3xl"} leading-relaxed`}>
-            {subtitle}
-          </p>
+          {subtitle && (
+            <p className={`text-base md:text-lg text-muted-foreground mb-8 ${isCenter ? "max-w-2xl mx-auto" : "max-w-3xl"} leading-relaxed`}>
+              {subtitle}
+            </p>
+          )}
 
           {/* Action Buttons */}
           {children && (

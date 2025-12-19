@@ -1,10 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { GradientText } from "@/components/magicui/gradient-text";
-import { Coins } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Footer() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
@@ -36,13 +36,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
           {/* Brand Section */}
           <div className="lg:col-span-2">
-            <Link to="/" className="inline-flex items-center gap-2 mb-4 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-money flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-110">
-                <Coins className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold">
-                <GradientText>Cryptalyst.ai</GradientText>
-              </h2>
+            <Link to="/" className="inline-flex items-center mb-4 group">
+              <img
+                src={theme === 'dark' ? '/2-2025-12-17T12-39-34.png' : '/1-2025-12-17T12-38-58.png'}
+                alt="Cryptalyst"
+                className="h-16 w-auto object-contain group-hover:scale-105 transition-transform duration-300"
+              />
             </Link>
             <p className="text-muted-foreground text-sm mb-6 leading-relaxed max-w-sm">
               {t('footer.description')}
@@ -188,13 +187,11 @@ export default function Footer() {
         <div className="border-t border-border/60 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              © {currentYear} Cryptalyst.ai. {t('footer.rights')}
+              © {currentYear} Cryptalyst. {t('footer.rights')}
             </p>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Made with</span>
-              <span className="text-red-500 animate-pulse">❤️</span>
-              <span>for traders worldwide</span>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Created by Luka Tskhvaradze
+            </p>
           </div>
         </div>
       </div>

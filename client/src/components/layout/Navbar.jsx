@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { Menu, X, Coins, LogOut, Moon, Sun, Settings, Users, Shield, LayoutDashboard, Rss, MessageSquare, Bell, TrendingUp, ChevronDown, Newspaper, BookOpen } from "lucide-react";
+import { Menu, X, LogOut, Moon, Sun, Settings, Users, Shield, LayoutDashboard, Rss, MessageSquare, Bell, TrendingUp, ChevronDown, Newspaper, BookOpen } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -63,14 +63,15 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 bg-background/70 backdrop-blur-md border-b border-border/60">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <Coins className="h-6 w-6 text-primary" />
-            <span className="text-2xl font-bold">
-              <GradientText>Cryptalyst.ai</GradientText>
-            </span>
+          <Link to="/" className="flex items-center">
+            <img
+              src={theme === 'dark' ? '/2-2025-12-17T12-39-34.png' : '/1-2025-12-17T12-38-58.png'}
+              alt="Cryptalyst"
+              className="h-16 w-auto object-contain"
+            />
           </Link>
 
           {/* Desktop Navigation */}

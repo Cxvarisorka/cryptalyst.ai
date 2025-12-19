@@ -5,7 +5,7 @@ import { ShimmerButton } from "@/components/magicui/shimmer-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, Brain, Wallet, Shield, Zap, BarChart3, CheckCircle2 } from "lucide-react";
+import { TrendingUp, Brain, Wallet, Shield, Zap, BarChart3 } from "lucide-react";
 import MarketOverview from "@/components/market/MarketOverview";
 import Hero from "@/components/layout/Hero";
 
@@ -40,18 +40,11 @@ export default function Home() {
     { icon: BarChart3, text: t('home.benefits.insights') },
   ];
 
-  const heroIcons = [
-    { Icon: TrendingUp, gradient: 'bg-gradient-money' }
-  ];
-
   return (
     <div className="bg-gradient-to-br from-background via-muted to-background">
       {/* Hero Section */}
       <Hero
-        title={t('home.title')}
-        subtitle={t('home.subtitle')}
-        icons={heroIcons}
-        showSingleIcon={true}
+        showLogo={true}
       >
         <ShimmerButton
           onClick={() => navigate("/dashboard")}
