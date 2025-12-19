@@ -35,6 +35,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
   const [editContent, setEditContent] = useState(post.content || '');
   const [editVisibility, setEditVisibility] = useState(post.visibility || 'public');
   const [editTags, setEditTags] = useState((post.tags || []).join(', '));
+  const [assetImgError, setAssetImgError] = useState(false);
 
   // More robust author check - convert to strings and check both id and _id
   const isAuthor = user && post.userId && (
@@ -309,12 +310,17 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, onCommentClick, onTagCli
                 <span className="flex-shrink-0">{getVisibilityIcon()}</span>
               </div>
               <div className="flex items-center gap-1 sm:gap-2 mt-1 flex-wrap">
-                {displayPost.asset?.image && (
+                {displayPost.asset?.image && !assetImgError ? (
                   <img
                     src={displayPost.asset.image}
                     alt={displayPost.asset?.symbol || 'Asset'}
                     className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0"
+                    onError={() => setAssetImgError(true)}
                   />
+                ) : displayPost.asset?.symbol && (
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+                    <span className="text-[8px] font-bold text-primary">{displayPost.asset.symbol.charAt(0)}</span>
+                  </div>
                 )}
                 <span className="text-primary text-xs sm:text-sm font-medium">
                   ${displayPost.asset?.symbol || 'N/A'}

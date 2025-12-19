@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Loader2, DollarSign } from "lucide-react";
 import { getMarketData } from "@/services/marketDataService";
 import { FadeIn } from "@/components/magicui/fade-in";
 import socketService from "@/services/socket.service";
@@ -71,12 +71,22 @@ export default function MarketOverview() {
 
   const MarketItem = ({ item }) => {
     const isPositive = item.change24h >= 0;
+    const [imgError, setImgError] = useState(false);
 
     return (
       <div className="flex items-center justify-between py-3 border-b border-border/40 last:border-0 hover:bg-muted/30 px-3 rounded transition-all duration-300">
         <div className="flex items-center gap-3 flex-1">
-          {item.image && (
-            <img src={item.image} alt={item.name} className="w-8 h-8 rounded-full" />
+          {item.image && !imgError ? (
+            <img
+              src={item.image}
+              alt={item.name}
+              className="w-8 h-8 rounded-full"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+              <span className="text-xs font-bold text-primary">{item.symbol?.charAt(0)}</span>
+            </div>
           )}
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-foreground">{item.symbol}</div>
