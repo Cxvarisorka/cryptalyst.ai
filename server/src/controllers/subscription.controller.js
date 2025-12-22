@@ -136,3 +136,26 @@ exports.reactivateSubscription = async (req, res) => {
     });
   }
 };
+
+/**
+ * Sync subscription from Stripe (recover from failed webhooks)
+ */
+exports.syncSubscription = async (req, res) => {
+  try {
+    console.log('🔄 Syncing subscription for user:', req.user._id);
+    const result = await stripeService.syncSubscriptionFromStripe(req.user._id);
+
+    res.json({
+      success: true,
+      message: result.message,
+      subscription: result.subscription
+    });
+  } catch (error) {
+    console.error('❌ Error syncing subscription:', error.message);
+    logger.error('Error syncing subscription:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to sync subscription'
+    });
+  }
+};

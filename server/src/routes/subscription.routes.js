@@ -21,4 +21,7 @@ router.post('/cancel', subscriptionController.cancelSubscription);
 // Reactivate subscription
 router.post('/reactivate', subscriptionController.reactivateSubscription);
 
+// Sync subscription from Stripe (recover from failed webhooks)
+router.post('/sync', subscriptionController.syncSubscription);
+
 module.exports = router;
