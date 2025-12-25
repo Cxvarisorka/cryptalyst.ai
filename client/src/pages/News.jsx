@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Newspaper, TrendingUp, DollarSign, Globe, Loader2, RefreshCw, Search, Filter } from 'lucide-react';
 import { FadeIn } from '@/components/magicui/fade-in';
@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { newsService } from '@/services/news.service';
+import { useNews } from '@/hooks/queries/useNewsQueries';
 import { useToast } from '@/components/ui/use-toast';
 import { useOnboardingTracker } from '@/hooks/useOnboardingTracker';
 
@@ -95,16 +95,27 @@ const News = () => {
   const { completeTask } = useOnboardingTracker();
   const hasTrackedRef = useRef(false);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [news, setNews] = useState([]);
-  const [displayedNews, setDisplayedNews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [symbolFilter, setSymbolFilter] = useState('');
   const [sentimentFilter, setSentimentFilter] = useState('all');
   const [limit, setLimit] = useState(30);
   const [displayLimit, setDisplayLimit] = useState(12);
+
+  // Use TanStack Query for caching news data
+  const {
+    data: news = [],
+    isLoading: loading,
+    isFetching: refreshing,
+    refetch
+  } = useNews(activeCategory, limit, {
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to fetch news',
+        variant: 'destructive',
+      });
+    }
+  });
 
   // Track onboarding task when news loads successfully
   useEffect(() => {
@@ -114,6 +125,11 @@ const News = () => {
     }
   }, [news, completeTask]);
 
+  // Reset display limit when category changes
+  useEffect(() => {
+    setDisplayLimit(12);
+  }, [activeCategory]);
+
   const categories = [
     { id: 'all', name: 'All News', icon: Globe, filter: 'general' },
     { id: 'crypto', name: 'Crypto', icon: TrendingUp, filter: 'crypto' },
@@ -121,36 +137,8 @@ const News = () => {
     { id: 'political', name: 'Political', icon: Newspaper, filter: 'political' },
   ];
 
-  const fetchNews = async (category = 'all', isRefresh = false, customLimit = 30) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
-
-      const data = await newsService.getNews(category, customLimit);
-      setNews(data);
-      setDisplayLimit(12);
-    } catch (error) {
-      console.error('Error fetching news:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to fetch news',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNews(activeCategory, false, limit);
-  }, [activeCategory, limit]);
-
-  // Filter news based on search, symbol, and sentiment
-  useEffect(() => {
+  // Memoized filtered news - client-side filtering on cached data
+  const displayedNews = useMemo(() => {
     let filtered = [...news];
 
     // Search filter
@@ -179,11 +167,11 @@ const News = () => {
       filtered = filtered.filter((article) => article.sentiment === sentimentFilter);
     }
 
-    setDisplayedNews(filtered);
+    return filtered;
   }, [news, searchQuery, symbolFilter, sentimentFilter]);
 
   const handleRefresh = () => {
-    fetchNews(activeCategory, true, limit);
+    refetch();
   };
 
   const handleLoadMore = () => {
@@ -191,9 +179,7 @@ const News = () => {
   };
 
   const handleRequestMore = () => {
-    setLoadingMore(true);
     setLimit((prev) => prev + 30);
-    setTimeout(() => setLoadingMore(false), 500);
   };
 
   const clearFilters = () => {
@@ -354,11 +340,11 @@ const News = () => {
                     </p>
                     <Button
                       onClick={handleRequestMore}
-                      disabled={loadingMore}
+                      disabled={refreshing}
                       size="lg"
                       className="min-w-[200px]"
                     >
-                      {loadingMore ? (
+                      {refreshing ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Loading...

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/magicui/fade-in";
 import { GradientText } from "@/components/magicui/gradient-text";
 import { Search, Users, TrendingUp, Loader2, Eye, EyeOff, Wallet } from "lucide-react";
-import userService from "@/services/user.service";
+import { usePublicUsers } from "@/hooks/queries/useUserQueries";
 import { useAuth } from "@/contexts/AuthContext";
 import Hero from "@/components/layout/Hero";
 
@@ -15,49 +15,31 @@ export default function Community() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searching, setSearching] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // Use TanStack Query for caching user data
+  const {
+    data: response,
+    isLoading: loading,
+    isFetching: searching,
+    refetch
+  } = usePublicUsers(searchQuery);
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const response = await userService.getPublicUsers();
-      // Filter out current user from the list
-      const filteredUsers = (response.data || []).filter(user => user._id !== currentUser?.id);
-      setUsers(filteredUsers);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Filter out current user from the list with memoization
+  const users = useMemo(() => {
+    const data = response?.data || [];
+    return data.filter(user => user._id !== currentUser?.id);
+  }, [response, currentUser?.id]);
 
-  const handleSearch = async (e) => {
+  const handleSearch = (e) => {
     e.preventDefault();
-    setSearching(true);
-    try {
-      const response = await userService.getPublicUsers(searchQuery);
-      // Filter out current user from the list
-      const filteredUsers = (response.data || []).filter(user => user._id !== currentUser?.id);
-      setUsers(filteredUsers);
-    } catch (error) {
-      console.error("Error searching users:", error);
-      setUsers([]);
-    } finally {
-      setSearching(false);
-    }
+    setSearchQuery(searchInput);
   };
 
   const handleClearSearch = () => {
+    setSearchInput("");
     setSearchQuery("");
-    fetchUsers();
   };
 
   const handleViewProfile = (userId) => {
@@ -108,8 +90,8 @@ export default function Community() {
                   <Input
                     type="text"
                     placeholder={t("community.searchPlaceholder")}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
                     className="pl-9 sm:pl-10 h-10 sm:h-12 text-sm sm:text-base"
                   />
                 </div>
@@ -125,7 +107,7 @@ export default function Community() {
                       t("community.search")
                     )}
                   </Button>
-                  {searchQuery && (
+                  {searchInput && (
                     <Button
                       type="button"
                       variant="outline"
@@ -149,7 +131,7 @@ export default function Community() {
                 <Users className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 opacity-50" />
                 <p className="text-base sm:text-lg font-medium mb-2">{t("community.noUsers")}</p>
                 <p className="text-sm">
-                  {searchQuery
+                  {searchInput
                     ? t("community.noUsersDesc")
                     : t("community.beFirst")}
                 </p>

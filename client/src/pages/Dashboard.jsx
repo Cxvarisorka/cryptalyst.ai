@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FadeIn } from "@/components/magicui/fade-in";
@@ -9,7 +10,7 @@ import PortfolioSearch from "@/components/portfolio/PortfolioSearch";
 import PortfolioList from "@/components/portfolio/PortfolioList";
 import PortfolioAnalytics from "@/components/portfolio/PortfolioAnalytics";
 import PortfolioManager from "@/components/portfolio/PortfolioManager";
-import { getMarketData } from "@/services/marketDataService";
+import { useMarketData, marketKeys } from "@/hooks/queries/useMarketQueries";
 import { getPortfolio, addAsset, removeAsset, updateAsset } from "@/services/portfolioService";
 import { useToast } from "@/components/ui/use-toast";
 import Hero from "@/components/layout/Hero";
@@ -21,12 +22,15 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { completeTask } = useOnboardingTracker();
   const [portfolio, setPortfolio] = useState([]);
   const [portfolioLoading, setPortfolioLoading] = useState(true);
-  const [marketData, setMarketData] = useState({ crypto: [], stocks: [] });
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [imgErrors, setImgErrors] = useState({});
+
+  // Use TanStack Query for market data with caching
+  const { data: marketData = { crypto: [], stocks: [] } } = useMarketData();
 
   // Track onboarding task when analytics tab is viewed
   const handleTabChange = useCallback((tab) => {
@@ -40,28 +44,22 @@ export default function Dashboard() {
     setImgErrors(prev => ({ ...prev, [assetId]: true }));
   };
 
-  useEffect(() => {
-    // Don't load portfolio here - let PortfolioManager trigger it when default collection is selected
-    // Load portfolio will be called by handleCollectionChange when PortfolioManager sets default collection
-
-    // Fetch market data
-    fetchMarketData();
-  }, []);
-
-  // Set up Socket.io listeners for real-time price updates
+  // Set up Socket.io listeners for real-time price updates - updates the query cache
   useEffect(() => {
     const handleCryptoPriceUpdate = (updateData) => {
       console.log('📡 Received crypto price update');
-      setMarketData((prev) => ({
-        ...prev,
+      // Update the query cache with new data
+      queryClient.setQueryData(marketKeys.allData(), (old) => ({
+        ...old,
         crypto: updateData.data
       }));
     };
 
     const handleStockPriceUpdate = (updateData) => {
       console.log('📡 Received stock price update');
-      setMarketData((prev) => ({
-        ...prev,
+      // Update the query cache with new data
+      queryClient.setQueryData(marketKeys.allData(), (old) => ({
+        ...old,
         stocks: updateData.data
       }));
     };
@@ -75,7 +73,7 @@ export default function Dashboard() {
       socketService.offCryptoPriceUpdate(handleCryptoPriceUpdate);
       socketService.offStockPriceUpdate(handleStockPriceUpdate);
     };
-  }, []);
+  }, [queryClient]);
 
   const loadPortfolio = async (collectionId) => {
     setPortfolioLoading(true);
@@ -97,15 +95,6 @@ export default function Dashboard() {
   const handleCollectionChange = async (collection) => {
     setSelectedCollection(collection);
     await loadPortfolio(collection?._id);
-  };
-
-  const fetchMarketData = async () => {
-    try {
-      const data = await getMarketData();
-      setMarketData(data);
-    } catch (error) {
-      console.error("Error fetching market data:", error);
-    }
   };
 
   const handleAddAsset = async (asset) => {
