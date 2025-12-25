@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { Menu, X, LogOut, Moon, Sun, Settings, Users, Shield, LayoutDashboard, Rss, MessageSquare, Bell, TrendingUp, ChevronDown, Newspaper, BookOpen } from "lucide-react";
+import { Menu, X, LogOut, Moon, Sun, Settings, Users, Shield, LayoutDashboard, Rss, MessageSquare, Bell, TrendingUp, ChevronDown, Newspaper, BookOpen, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -38,10 +38,9 @@ export default function Navbar() {
   const navLinks = isAuthenticated
     ? [
         { name: t('nav.dashboard'), path: "/dashboard", icon: LayoutDashboard },
-        { name: t('nav.feed'), path: "/feed", icon: Rss },
         { name: t('nav.community'), path: "/community", icon: MessageSquare },
         { name: t('nav.news'), path: "/news", icon: Newspaper },
-        { name: t('nav.learn'), path: "/learn", icon: BookOpen },
+        { name: t('nav.scalpingAI'), path: "/scalping-ai", icon: Zap },
       ]
     : [
         { name: t('nav.home'), path: "/" },
