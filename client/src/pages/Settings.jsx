@@ -12,10 +12,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { GradientText } from "@/components/magicui/gradient-text";
 import { FadeIn } from "@/components/magicui/fade-in";
 import settingsService from "@/services/settings.service";
-import { User, Lock, Settings as SettingsIcon, Mail, Globe, Calendar, Palette, Shield, Eye, EyeOff, CreditCard, GraduationCap } from "lucide-react";
+import { User, Lock, Settings as SettingsIcon, Mail, Globe, Calendar, Palette, Shield, Eye, EyeOff, CreditCard } from "lucide-react";
 import Hero from "@/components/layout/Hero";
 import SubscriptionManagement from "@/components/settings/SubscriptionManagement";
-import LearningSettings from "@/components/settings/LearningSettings";
+// import LearningSettings from "@/components/settings/LearningSettings";
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -225,13 +225,13 @@ export default function Settings() {
                 <CreditCard size={18} />
                 <span>Subscription</span>
               </TabsTrigger>
-              <TabsTrigger
+              {/* <TabsTrigger
                 value="learning"
                 className="w-full justify-start gap-3 data-[state=active]:bg-gradient-money data-[state=active]:text-white"
               >
                 <GraduationCap size={18} />
                 <span>{t('settings.tabs.learning') || 'Learning'}</span>
-              </TabsTrigger>
+              </TabsTrigger> */}
             </TabsList>
 
             <div className="lg:col-span-3">
@@ -595,9 +595,9 @@ export default function Settings() {
           <SubscriptionManagement />
         </TabsContent>
 
-        <TabsContent value="learning">
+        {/* <TabsContent value="learning">
           <LearningSettings />
-        </TabsContent>
+        </TabsContent> */}
             </div>
           </div>
       </Tabs>

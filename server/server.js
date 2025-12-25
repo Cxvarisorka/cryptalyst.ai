@@ -18,7 +18,7 @@ const portfolioCollectionRoutes = require('./src/routes/portfolioCollection.rout
 const newsRoutes = require('./src/routes/news.routes');
 const settingsRoutes = require('./src/routes/settings.routes');
 const userRoutes = require('./src/routes/user.routes');
-const postRoutes = require('./src/routes/post.routes');
+// const postRoutes = require('./src/routes/post.routes');
 const commentRoutes = require('./src/routes/comment.routes');
 const likeRoutes = require('./src/routes/like.routes');
 const followRoutes = require('./src/routes/follow.routes');
@@ -27,7 +27,7 @@ const priceAlertRoutes = require('./src/routes/priceAlert.routes');
 const adminRoutes = require('./src/routes/admin.routes');
 const webhookRoutes = require('./src/routes/webhook.routes');
 const subscriptionRoutes = require('./src/routes/subscription.routes');
-const courseRoutes = require('./src/routes/course.routes');
+// const courseRoutes = require('./src/routes/course.routes');
 const onboardingRoutes = require('./src/routes/onboarding.routes');
 
 // Import services
@@ -79,14 +79,14 @@ app.use('/api/portfolio-collections', portfolioCollectionRoutes); // Portfolio c
 app.use('/api/news', newsRoutes); // News routes
 app.use('/api/settings', settingsRoutes); // User settings routes
 app.use('/api/users', userRoutes); // User profile routes
-app.use('/api/posts', postRoutes); // Post routes
+// app.use('/api/posts', postRoutes); // Post routes (Feed)
 app.use('/api', commentRoutes); // Comment routes
 app.use('/api', likeRoutes); // Like routes
 app.use('/api', followRoutes); // Follow routes
 app.use('/api', notificationRoutes); // Notification routes
 app.use('/api/price-alerts', priceAlertRoutes); // Price alert routes
 app.use('/api/admin', adminRoutes); // Admin routes
-app.use('/api/courses', courseRoutes); // Course/Learning routes
+// app.use('/api/courses', courseRoutes); // Course/Learning routes
 app.use('/api/onboarding', onboardingRoutes); // Onboarding tutorial routes
 
 // Public subscription routes (no auth required)
