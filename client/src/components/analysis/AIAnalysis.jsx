@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Brain,
   TrendingUp,
@@ -16,10 +18,13 @@ import {
   Target,
   Shield,
   Activity,
-  Info
+  Info,
+  Lock
 } from "lucide-react";
 import { generateAIAnalysis, formatAnalysisForDisplay } from "@/utils/aiAnalysis";
 import { exportAnalysisToPDF } from "@/utils/pdfExport";
+import { useAIUsage } from "@/hooks/useAIUsage";
+import aiUsageService from "@/services/aiUsage.service";
 
 export default function AIAnalysis({
   assetName,
@@ -33,30 +38,73 @@ export default function AIAnalysis({
   chartData
 }) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [usageLimitError, setUsageLimitError] = useState(null);
+  const { refetch: refetchUsage, isAuthenticated, getLimitStatus } = useAIUsage();
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     setLoading(true);
-    setAnalysis(null); // Clear previous analysis
+    setAnalysis(null);
+    setUsageLimitError(null);
 
-    setTimeout(() => {
-      const rawAnalysis = generateAIAnalysis({
-        assetName,
-        assetSymbol,
-        assetType,
-        currentPrice,
-        change24h,
-        priceHistory,
-        stats,
-        news,
-        chartData
-      });
-
-      const formattedAnalysis = formatAnalysisForDisplay(rawAnalysis);
-      setAnalysis(formattedAnalysis);
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setUsageLimitError('Please sign in to use AI analysis');
       setLoading(false);
-    }, 2500);
+      return;
+    }
+
+    try {
+      // Check usage limits before performing analysis
+      const checkResponse = await aiUsageService.checkUsage(assetType === 'portfolio' ? 'portfolio' : assetType);
+
+      if (!checkResponse.data?.allowed) {
+        setUsageLimitError(checkResponse.data?.message || 'AI usage limit exceeded');
+        setLoading(false);
+        return;
+      }
+
+      // Perform the analysis
+      setTimeout(async () => {
+        const rawAnalysis = generateAIAnalysis({
+          assetName,
+          assetSymbol,
+          assetType,
+          currentPrice,
+          change24h,
+          priceHistory,
+          stats,
+          news,
+          chartData
+        });
+
+        const formattedAnalysis = formatAnalysisForDisplay(rawAnalysis);
+        setAnalysis(formattedAnalysis);
+
+        // Record AI usage after successful analysis
+        try {
+          const axios = (await import('axios')).default;
+          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+          await axios.post(`${API_URL}/analysis/record-usage`, {
+            type: assetType,
+            assetId: assetSymbol
+          }, { withCredentials: true });
+
+          // Immediately refresh navbar usage indicator
+          refetchUsage();
+        } catch (err) {
+          console.error('Error recording AI usage:', err);
+        }
+
+        setLoading(false);
+      }, 2500);
+    } catch (error) {
+      console.error('Error checking usage:', error);
+      setUsageLimitError(error.message || 'Failed to check usage limits');
+      setLoading(false);
+    }
   };
 
   const handleExportPDF = () => {
@@ -89,36 +137,74 @@ export default function AIAnalysis({
     return 'text-green-600 dark:text-green-400';
   };
 
+  // Check if at limit to show warning
+  const limitStatus = getLimitStatus();
+
   if (!analysis) {
     return (
-      <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-        <CardHeader className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0">
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center shadow-lg">
-                <Brain className="w-6 h-6 text-white" />
+      <div className="space-y-4">
+        {/* Usage Limit Error */}
+        {usageLimitError && (
+          <Alert className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700">
+            <Lock className="h-5 w-5 text-red-500" />
+            <div className="ml-2 flex-1">
+              <h4 className="font-semibold text-red-700 dark:text-red-400">AI Usage Limit Reached</h4>
+              <AlertDescription className="text-foreground mt-1">
+                {usageLimitError}
+              </AlertDescription>
+              <div className="flex gap-2 mt-3">
+                <Button size="sm" onClick={() => navigate('/pricing')} className="bg-gradient-to-r from-green-600 to-emerald-600">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  Upgrade Plan
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setUsageLimitError(null)}>
+                  Dismiss
+                </Button>
               </div>
             </div>
-            <div className="flex-1">
-              <CardTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                {t('aiAnalysis.title', 'AI-Powered Market Analysis')}
-              </CardTitle>
-              <CardDescription className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                {t('aiAnalysis.description', 'Comprehensive analysis using technical indicators, news sentiment, and market data')}
-              </CardDescription>
+          </Alert>
+        )}
+
+        {/* Near Limit Warning */}
+        {!usageLimitError && limitStatus.nearLimit && (
+          <Alert className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700">
+            <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            <div className="ml-2">
+              <AlertDescription className="text-foreground">
+                You're approaching your AI usage limit. Consider upgrading for more analyses.
+              </AlertDescription>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-8 pb-10">
-          <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-950 mb-4">
-                <Brain className="w-8 h-8 text-green-600 dark:text-green-400" />
+          </Alert>
+        )}
+
+        <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+          <CardHeader className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center shadow-lg">
+                  <Brain className="w-6 h-6 text-white" />
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                {t('aiAnalysis.title', 'AI-Powered Market Analysis')}
-              </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+              <div className="flex-1">
+                <CardTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  {t('aiAnalysis.title', 'AI-Powered Market Analysis')}
+                </CardTitle>
+                <CardDescription className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  {t('aiAnalysis.description', 'Comprehensive analysis using technical indicators, news sentiment, and market data')}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-8 pb-10">
+            <div className="max-w-3xl mx-auto">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-950 mb-4">
+                  <Brain className="w-8 h-8 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                  {t('aiAnalysis.title', 'AI-Powered Market Analysis')}
+                </h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
                 {t('aiAnalysis.description', 'Comprehensive analysis using technical indicators, news sentiment, and market data')}
               </p>
             </div>
@@ -160,6 +246,7 @@ export default function AIAnalysis({
           </div>
         </CardContent>
       </Card>
+      </div>
     );
   }
 

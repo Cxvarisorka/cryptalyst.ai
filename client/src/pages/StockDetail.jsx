@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FadeIn } from "@/components/magicui/fade-in";
-import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity, DollarSign } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity, DollarSign, Lock } from "lucide-react";
 import { getStockBySymbol } from "@/services/marketDataService";
 import { getStockAnalysis, getPriceHistory } from "@/services/analysisService";
 import { getStockNews } from "@/services/newsService";
@@ -16,12 +17,15 @@ import AssetPriceAlerts from "@/components/alerts/AssetPriceAlerts";
 import Hero from "@/components/layout/Hero";
 import ScalpingAnalysisButton from "@/components/analysis/ScalpingAnalysisButton";
 import { useOnboardingTracker } from "@/hooks/useOnboardingTracker";
+import { useAIUsage } from "@/hooks/useAIUsage";
+import { AIUsageBadge } from "@/components/ai/AIUsageDisplay";
 
 export default function StockDetail() {
   const { symbol } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { completeTask } = useOnboardingTracker();
+  const { refetch: refetchUsage } = useAIUsage();
   const hasTrackedRef = useRef(false);
   const [stock, setStock] = useState(null);
   const [analysis, setAnalysis] = useState(null);
@@ -30,6 +34,7 @@ export default function StockDetail() {
   const [newsLoading, setNewsLoading] = useState(true);
   const [priceHistory, setPriceHistory] = useState([]);
   const [stats, setStats] = useState(null);
+  const [usageLimitError, setUsageLimitError] = useState(null);
 
   // Track onboarding task when stock analysis loads
   useEffect(() => {
@@ -71,9 +76,18 @@ export default function StockDetail() {
         const analysisData = await getStockAnalysis(symbol);
         if (analysisData) {
           setAnalysis(analysisData.analysis);
+          // Refresh navbar usage indicator after successful analysis
+          if (analysisData.usage) {
+            refetchUsage();
+          }
         }
       } catch (err) {
-        console.warn('Error fetching analysis (non-critical):', err);
+        // Check if it's a usage limit error
+        if (err.upgradeRequired) {
+          setUsageLimitError(err.message);
+        } else {
+          console.warn('Error fetching analysis (non-critical):', err);
+        }
         // Analysis is optional, don't fail the whole page
       }
     } catch (error) {
@@ -207,6 +221,28 @@ export default function StockDetail() {
       <div className="container mx-auto px-4 py-10">
 
         <FadeIn className="space-y-6">
+          {/* Usage Limit Error */}
+          {usageLimitError && (
+            <Alert className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700">
+              <Lock className="h-5 w-5 text-red-500" />
+              <div className="ml-2 flex-1">
+                <h4 className="font-semibold text-red-700 dark:text-red-400">AI Usage Limit Reached</h4>
+                <AlertDescription className="text-foreground mt-1">
+                  {usageLimitError}
+                </AlertDescription>
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" onClick={() => navigate('/pricing')} className="bg-gradient-money">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    Upgrade Plan
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setUsageLimitError(null)}>
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            </Alert>
+          )}
+
           {/* Price Chart */}
           <PriceChart
             currentPrice={stock.price}
@@ -479,6 +515,9 @@ export default function StockDetail() {
           />
 
           {/* AI Analysis Section */}
+          <div className="flex justify-end mb-2">
+            <AIUsageBadge />
+          </div>
           {stock && priceHistory.length > 0 && stats && (
             <AIAnalysis
               assetName={stock.name}

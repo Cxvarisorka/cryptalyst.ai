@@ -2,6 +2,8 @@ const technicalAnalysisService = require('../services/technicalAnalysis.service'
 const priceHistoryService = require('../services/priceHistory.service');
 const marketDataService = require('../services/marketData.service');
 const { completeOnboardingTask } = require('../services/onboarding.service');
+const { recordUsage, getUsageStats } = require('../services/aiUsage.service');
+const { ANALYSIS_TYPES } = require('../config/stripe.config');
 
 /**
  * Get technical analysis for a crypto asset
@@ -30,12 +32,23 @@ exports.getCryptoAnalysis = async (req, res) => {
       completeOnboardingTask(req.user.id, 'useCryptoAnalyzer').catch(() => {});
     }
 
+    // Record AI usage and get updated stats
+    let usage = null;
+    if (req.user?.id) {
+      try {
+        usage = await recordUsage(req.user.id, ANALYSIS_TYPES.CRYPTO, id);
+      } catch (err) {
+        console.error('Error recording usage:', err);
+      }
+    }
+
     res.json({
       success: true,
       data: {
         asset: crypto,
         analysis
-      }
+      },
+      usage
     });
   } catch (error) {
     console.error('Error getting crypto analysis:', error);
@@ -74,12 +87,23 @@ exports.getStockAnalysis = async (req, res) => {
       completeOnboardingTask(req.user.id, 'useStockAnalyzer').catch(() => {});
     }
 
+    // Record AI usage and get updated stats
+    let usage = null;
+    if (req.user?.id) {
+      try {
+        usage = await recordUsage(req.user.id, ANALYSIS_TYPES.STOCK, symbol);
+      } catch (err) {
+        console.error('Error recording usage:', err);
+      }
+    }
+
     res.json({
       success: true,
       data: {
         asset: stock,
         analysis
-      }
+      },
+      usage
     });
   } catch (error) {
     console.error('Error getting stock analysis:', error);
@@ -219,6 +243,17 @@ exports.getCompleteAnalysis = async (req, res) => {
 
     const stats = priceHistoryService.calculatePriceStats(priceData);
 
+    // Record AI usage and get updated stats
+    let usage = null;
+    if (req.user?.id) {
+      try {
+        const analysisType = type === 'crypto' ? ANALYSIS_TYPES.CRYPTO : ANALYSIS_TYPES.STOCK;
+        usage = await recordUsage(req.user.id, analysisType, id);
+      } catch (err) {
+        console.error('Error recording usage:', err);
+      }
+    }
+
     res.json({
       success: true,
       data: {
@@ -229,13 +264,99 @@ exports.getCompleteAnalysis = async (req, res) => {
           data: priceData,
           stats
         }
-      }
+      },
+      usage
     });
   } catch (error) {
     console.error('Error getting complete analysis:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get complete analysis',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Record scalping AI analysis usage
+ * POST /api/analysis/scalping
+ * This endpoint records usage when a scalping analysis is performed
+ */
+exports.recordScalpingAnalysis = async (req, res) => {
+  try {
+    // Record AI usage
+    let usage = null;
+    if (req.user?.id) {
+      try {
+        usage = await recordUsage(req.user.id, ANALYSIS_TYPES.SCALPING, 'chart-analysis');
+      } catch (err) {
+        console.error('Error recording scalping usage:', err);
+      }
+    }
+
+    // Complete onboarding task
+    if (req.user?.id) {
+      completeOnboardingTask(req.user.id, 'useScalpingAI').catch(() => {});
+    }
+
+    res.json({
+      success: true,
+      message: 'Scalping analysis recorded',
+      usage
+    });
+  } catch (error) {
+    console.error('Error recording scalping analysis:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to record scalping analysis',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Record client-side AI analysis usage (AIAnalysis component)
+ * POST /api/analysis/record-usage
+ * This endpoint records usage for client-side AI analysis
+ */
+exports.recordClientAnalysis = async (req, res) => {
+  try {
+    const { type, assetId } = req.body;
+
+    // Validate analysis type
+    const validTypes = Object.values(ANALYSIS_TYPES);
+    if (!type || !validTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid analysis type. Valid types: ${validTypes.join(', ')}`
+      });
+    }
+
+    // Record AI usage
+    let usage = null;
+    if (req.user?.id) {
+      try {
+        usage = await recordUsage(req.user.id, type, assetId || 'client-analysis');
+      } catch (err) {
+        console.error('Error recording client analysis usage:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to record usage',
+          error: err.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Analysis usage recorded',
+      usage
+    });
+  } catch (error) {
+    console.error('Error recording client analysis:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to record analysis usage',
       error: error.message
     });
   }

@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   TrendingUp,
   TrendingDown,
@@ -18,16 +19,22 @@ import {
   PieChart,
   Plus,
   Minus,
+  Lock,
 } from "lucide-react";
+import { useAIUsage } from "@/hooks/useAIUsage";
+import aiUsageService from "@/services/aiUsage.service";
+import { AIUsageBadge } from "@/components/ai/AIUsageDisplay";
 
 export default function PortfolioList({ portfolio, onRemoveAsset, onUpdateQuantity }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { refetch: refetchUsage, isAuthenticated } = useAIUsage();
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [updatingAsset, setUpdatingAsset] = useState(null);
   const [imgErrors, setImgErrors] = useState({});
+  const [usageLimitError, setUsageLimitError] = useState(null);
 
   const handleImgError = (assetId) => {
     setImgErrors(prev => ({ ...prev, [assetId]: true }));
@@ -94,6 +101,28 @@ export default function PortfolioList({ portfolio, onRemoveAsset, onUpdateQuanti
   };
 
   const generateAIAnalysis = async () => {
+    setUsageLimitError(null);
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setUsageLimitError('Please sign in to use AI analysis');
+      return;
+    }
+
+    try {
+      // Check usage limits before performing analysis
+      const checkResponse = await aiUsageService.checkUsage('portfolio');
+
+      if (!checkResponse.data?.allowed) {
+        setUsageLimitError(checkResponse.data?.message || 'AI usage limit exceeded');
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking usage:', error);
+      setUsageLimitError(error.message || 'Failed to check usage limits');
+      return;
+    }
+
     setAnalyzing(true);
     setShowAnalysis(true);
 
@@ -167,6 +196,20 @@ export default function PortfolioList({ portfolio, onRemoveAsset, onUpdateQuanti
 
     setAnalysis(simulatedAnalysis);
     setAnalyzing(false);
+
+    // Record AI usage after successful analysis
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      await axios.post(`${API_URL}/analysis/record-usage`, {
+        type: 'portfolio',
+        assetId: 'portfolio-analysis'
+      }, { withCredentials: true });
+
+      // Immediately refresh navbar usage indicator
+      refetchUsage();
+    } catch (err) {
+      console.error('Error recording AI usage:', err);
+    }
   };
 
   const totalValue = calculateTotalValue();
@@ -202,14 +245,38 @@ export default function PortfolioList({ portfolio, onRemoveAsset, onUpdateQuanti
             </div>
           </div>
           {portfolio.length > 0 && (
-            <div className="mt-4">
-              <Button
-                onClick={generateAIAnalysis}
-                className="w-full sm:w-auto"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {t("portfolio.analyzeWithAI")}
-              </Button>
+            <div className="mt-4 space-y-3">
+              {/* Usage Limit Error */}
+              {usageLimitError && (
+                <Alert className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700">
+                  <Lock className="h-5 w-5 text-red-500" />
+                  <div className="ml-2 flex-1">
+                    <h4 className="font-semibold text-red-700 dark:text-red-400">AI Usage Limit Reached</h4>
+                    <AlertDescription className="text-foreground mt-1">
+                      {usageLimitError}
+                    </AlertDescription>
+                    <div className="flex gap-2 mt-3">
+                      <Button size="sm" onClick={() => navigate('/pricing')} className="bg-gradient-to-r from-green-600 to-emerald-600">
+                        <TrendingUp className="h-4 w-4 mr-1" />
+                        Upgrade Plan
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setUsageLimitError(null)}>
+                        Dismiss
+                      </Button>
+                    </div>
+                  </div>
+                </Alert>
+              )}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <Button
+                  onClick={generateAIAnalysis}
+                  className="w-full sm:w-auto"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  {t("portfolio.analyzeWithAI")}
+                </Button>
+                <AIUsageBadge />
+              </div>
             </div>
           )}
         </CardContent>

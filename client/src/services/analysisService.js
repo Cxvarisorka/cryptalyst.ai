@@ -5,20 +5,39 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 /**
  * Get technical analysis for a cryptocurrency
  * @param {string} id - Cryptocurrency ID
- * @returns {Promise} Technical analysis data
+ * @returns {Promise} Technical analysis data with usage info
  */
 export const getCryptoAnalysis = async (id) => {
   try {
     const response = await axios.get(`${API_URL}/analysis/crypto/${id}`, {
-      timeout: 5000
+      timeout: 5000,
+      withCredentials: true // Send cookies for usage tracking
     });
 
     if (response.data && response.data.success) {
-      return response.data.data;
+      return {
+        ...response.data.data,
+        usage: response.data.usage // Include usage stats in response
+      };
+    }
+
+    // Handle usage limit exceeded
+    if (response.data && response.data.upgradeRequired) {
+      const error = new Error(response.data.message || 'AI usage limit exceeded');
+      error.upgradeRequired = true;
+      error.usage = response.data.usage;
+      throw error;
     }
 
     throw new Error('Failed to get crypto analysis');
   } catch (error) {
+    // Handle 429 (Too Many Requests) from usage limit
+    if (error.response?.status === 429) {
+      const limitError = new Error(error.response.data?.message || 'AI usage limit exceeded');
+      limitError.upgradeRequired = true;
+      limitError.usage = error.response.data?.usage;
+      throw limitError;
+    }
     console.error('Error fetching crypto analysis:', error);
     throw error;
   }
@@ -27,20 +46,39 @@ export const getCryptoAnalysis = async (id) => {
 /**
  * Get technical analysis for a stock
  * @param {string} symbol - Stock symbol
- * @returns {Promise} Technical analysis data
+ * @returns {Promise} Technical analysis data with usage info
  */
 export const getStockAnalysis = async (symbol) => {
   try {
     const response = await axios.get(`${API_URL}/analysis/stock/${symbol}`, {
-      timeout: 5000
+      timeout: 5000,
+      withCredentials: true // Send cookies for usage tracking
     });
 
     if (response.data && response.data.success) {
-      return response.data.data;
+      return {
+        ...response.data.data,
+        usage: response.data.usage // Include usage stats in response
+      };
+    }
+
+    // Handle usage limit exceeded
+    if (response.data && response.data.upgradeRequired) {
+      const error = new Error(response.data.message || 'AI usage limit exceeded');
+      error.upgradeRequired = true;
+      error.usage = response.data.usage;
+      throw error;
     }
 
     throw new Error('Failed to get stock analysis');
   } catch (error) {
+    // Handle 429 (Too Many Requests) from usage limit
+    if (error.response?.status === 429) {
+      const limitError = new Error(error.response.data?.message || 'AI usage limit exceeded');
+      limitError.upgradeRequired = true;
+      limitError.usage = error.response.data?.usage;
+      throw limitError;
+    }
     console.error('Error fetching stock analysis:', error);
     throw error;
   }
@@ -82,15 +120,34 @@ export const getCompleteAnalysis = async (type, id, timeframe = '1M') => {
   try {
     const response = await axios.get(`${API_URL}/analysis/complete/${type}/${id}`, {
       params: { timeframe },
-      timeout: 5000
+      timeout: 5000,
+      withCredentials: true // Send cookies for usage tracking
     });
 
     if (response.data && response.data.success) {
-      return response.data.data;
+      return {
+        ...response.data.data,
+        usage: response.data.usage // Include usage stats in response
+      };
+    }
+
+    // Handle usage limit exceeded
+    if (response.data && response.data.upgradeRequired) {
+      const error = new Error(response.data.message || 'AI usage limit exceeded');
+      error.upgradeRequired = true;
+      error.usage = response.data.usage;
+      throw error;
     }
 
     throw new Error('Failed to get complete analysis');
   } catch (error) {
+    // Handle 429 (Too Many Requests) from usage limit
+    if (error.response?.status === 429) {
+      const limitError = new Error(error.response.data?.message || 'AI usage limit exceeded');
+      limitError.upgradeRequired = true;
+      limitError.usage = error.response.data?.usage;
+      throw limitError;
+    }
     console.error('Error fetching complete analysis:', error);
     throw error;
   }

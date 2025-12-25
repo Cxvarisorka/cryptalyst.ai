@@ -18,6 +18,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import subscriptionService from '../../services/subscription.service';
+import { AIUsageCard } from '@/components/ai/AIUsageDisplay';
 
 export default function SubscriptionManagement() {
   const navigate = useNavigate();
@@ -158,6 +159,9 @@ export default function SubscriptionManagement() {
 
   return (
     <div className="space-y-6">
+      {/* AI Usage Section */}
+      <AIUsageCard showUpgrade={currentPlan !== 'premium'} />
+
       {/* Current Subscription Status */}
       <Card>
         <CardHeader className="flex flex-row items-start justify-between space-y-0">

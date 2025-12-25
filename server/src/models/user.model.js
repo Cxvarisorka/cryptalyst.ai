@@ -197,6 +197,41 @@ const userSchema = new mongoose.Schema({
       }
     }
   },
+  // AI Usage Tracking
+  aiUsage: {
+    dailyCount: {
+      type: Number,
+      default: 0
+    },
+    monthlyCount: {
+      type: Number,
+      default: 0
+    },
+    lastDailyReset: {
+      type: Date,
+      default: Date.now
+    },
+    lastMonthlyReset: {
+      type: Date,
+      default: Date.now
+    },
+    history: [{
+      type: {
+        type: String,
+        enum: ['crypto', 'stock', 'portfolio', 'scalping'],
+        required: true
+      },
+      assetId: String,
+      credits: {
+        type: Number,
+        default: 1
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now
+      }
+    }]
+  },
   // Onboarding Tutorial System
   onboarding: {
     isCompleted: {

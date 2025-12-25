@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { GradientText } from "@/components/magicui/gradient-text";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAIUsage } from "@/hooks/useAIUsage";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { Menu, X, LogOut, Moon, Sun, Settings, Users, Shield, LayoutDashboard, Rss, MessageSquare, Bell, TrendingUp, ChevronDown, Newspaper, BookOpen, Zap } from "lucide-react";
+import { Menu, X, LogOut, Moon, Sun, Settings, Users, Shield, LayoutDashboard, Rss, MessageSquare, Bell, TrendingUp, ChevronDown, Newspaper, BookOpen, Zap, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -26,6 +27,8 @@ export default function Navbar() {
   const { t } = useTranslation();
   const { isAuthenticated, user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { usage, loading: usageLoading, getLimitStatus } = useAIUsage();
+  const limitStatus = getLimitStatus();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,7 +41,7 @@ export default function Navbar() {
   const navLinks = isAuthenticated
     ? [
         { name: t('nav.dashboard'), path: "/dashboard", icon: LayoutDashboard },
-        { name: t('nav.community'), path: "/community", icon: MessageSquare },
+        // { name: t('nav.community'), path: "/community", icon: MessageSquare }, // MVP: disabled
         { name: t('nav.news'), path: "/news", icon: Newspaper },
         { name: t('nav.scalpingAI'), path: "/scalping-ai", icon: Zap },
       ]
@@ -106,6 +109,25 @@ export default function Navbar() {
               </Button>
               <LanguageSwitcher />
             </div>
+
+            {/* AI Usage Indicator - only for authenticated users */}
+            {isAuthenticated && usage && !usageLoading && (
+              <button
+                onClick={() => navigate('/settings?tab=subscription')}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors text-sm",
+                  limitStatus.atDailyLimit || limitStatus.atMonthlyLimit
+                    ? "bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400"
+                    : limitStatus.nearLimit
+                    ? "bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-600 dark:text-yellow-400"
+                    : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                )}
+                title="AI Usage - Click to view details"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span className="font-medium">{usage.dailyRemaining}/{usage.dailyLimit}</span>
+              </button>
+            )}
 
             {/* Notification Bell - only for authenticated users */}
             {isAuthenticated && <NotificationBell />}
@@ -234,7 +256,33 @@ export default function Navbar() {
               {isAuthenticated ? (
                 <>
                   <div className="border-t border-border/60 pt-4 mt-2"></div>
-                  <div className="flex items-center gap-3 px-2">
+                  {/* Mobile AI Usage Display */}
+                  {usage && !usageLoading && (
+                    <button
+                      onClick={() => {
+                        navigate('/settings?tab=subscription');
+                        setMobileMenuOpen(false);
+                      }}
+                      className={cn(
+                        "flex items-center justify-between w-full px-3 py-2 rounded-lg transition-colors",
+                        limitStatus.atDailyLimit || limitStatus.atMonthlyLimit
+                          ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                          : limitStatus.nearLimit
+                          ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                          : "bg-muted/50 text-muted-foreground"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        <span className="text-sm font-medium">AI Usage</span>
+                      </div>
+                      <div className="text-sm">
+                        <span className="font-bold">{usage.dailyRemaining}</span>
+                        <span className="text-muted-foreground">/{usage.dailyLimit} today</span>
+                      </div>
+                    </button>
+                  )}
+                  <div className="flex items-center gap-3 px-2 mt-2">
                     {user?.avatar ? (
                       <img
                         src={user.avatar}

@@ -1,10 +1,16 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useOnboardingTracker } from "@/hooks/useOnboardingTracker";
+import { useAIUsage } from "@/hooks/useAIUsage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FadeIn } from "@/components/magicui/fade-in";
 import Hero from "@/components/layout/Hero";
+import aiUsageService from "@/services/aiUsage.service";
+import { AIUsageBadge } from "@/components/ai/AIUsageDisplay";
 import {
   Upload,
   Image as ImageIcon,
@@ -20,7 +26,9 @@ import {
   AlertTriangle,
   ArrowUpCircle,
   ArrowDownCircle,
-  BarChart3
+  BarChart3,
+  Lock,
+  Clock
 } from "lucide-react";
 
 // Simulated AI analysis function
@@ -101,12 +109,17 @@ const generateSimulatedAnalysis = (t) => {
 
 export default function ScalpingAI() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { completeTask } = useOnboardingTracker();
+  const { usage, isAuthenticated, checkCanAnalyze, refetch: refetchUsage, getLimitStatus } = useAIUsage();
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
+  const [usageError, setUsageError] = useState(null);
   const fileInputRef = useRef(null);
+
+  const limitStatus = getLimitStatus();
 
   // Track onboarding task when analysis is completed
   useEffect(() => {
@@ -156,12 +169,45 @@ export default function ScalpingAI() {
   };
 
   const analyzeChart = async () => {
+    setUsageError(null);
+
+    // Check if user can perform analysis (only for authenticated users)
+    if (isAuthenticated) {
+      const canAnalyze = await checkCanAnalyze('scalping');
+      if (!canAnalyze.allowed) {
+        setUsageError({
+          type: canAnalyze.reason === 'daily_limit_exceeded' ? 'daily' : 'monthly',
+          message: canAnalyze.message
+        });
+        return;
+      }
+    }
+
     setAnalyzing(true);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 1500));
-    const result = generateSimulatedAnalysis(t);
-    setAnalysis(result);
-    setAnalyzing(false);
+
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 1500));
+      const result = generateSimulatedAnalysis(t);
+      setAnalysis(result);
+
+      // Record usage after successful analysis (for authenticated users)
+      if (isAuthenticated) {
+        try {
+          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+          await fetch(`${API_URL}/analysis/scalping`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          refetchUsage(); // Refresh usage stats
+        } catch (err) {
+          console.error('Error recording usage:', err);
+        }
+      }
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const heroIcons = [
@@ -181,6 +227,67 @@ export default function ScalpingAI() {
 
       <div className="container mx-auto px-4 py-10">
         <FadeIn className="space-y-6">
+          {/* AI Usage Display */}
+          {isAuthenticated && usage && (
+            <Card className="bg-card border-border/60">
+              <CardContent className="py-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Daily:</span>
+                      <Badge variant={limitStatus.atDailyLimit ? "destructive" : "secondary"}>
+                        {usage.dailyRemaining}/{usage.dailyLimit} left
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Monthly:</span>
+                      <Badge variant={limitStatus.atMonthlyLimit ? "destructive" : "secondary"}>
+                        {usage.monthlyRemaining}/{usage.monthlyLimit} left
+                      </Badge>
+                    </div>
+                  </div>
+                  <Badge className={
+                    usage.plan === 'premium' ? 'bg-purple-500' :
+                    usage.plan === 'basic' ? 'bg-blue-500' : 'bg-gray-500'
+                  }>
+                    {usage.planName || usage.plan} Plan
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Usage Limit Error */}
+          {usageError && (
+            <Alert className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700">
+              <Lock className="h-5 w-5 text-red-500" />
+              <div className="ml-2 flex-1">
+                <h4 className="font-semibold text-red-700 dark:text-red-400">
+                  {usageError.type === 'daily' ? 'Daily Limit Reached' : 'Monthly Limit Reached'}
+                </h4>
+                <AlertDescription className="text-foreground mt-1">
+                  {usageError.message}
+                </AlertDescription>
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" onClick={() => navigate('/pricing')} className="bg-gradient-money">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    Upgrade Plan
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setUsageError(null)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </Alert>
+          )}
+
+          {/* AI Usage Badge */}
+          <div className="flex justify-end mb-2">
+            <AIUsageBadge />
+          </div>
+
           {/* Upload Section */}
           <Card className="bg-card border-border/60">
             <CardHeader>
@@ -235,10 +342,10 @@ export default function ScalpingAI() {
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
-                  <div className="flex justify-center">
+                  <div className="flex flex-col items-center gap-2">
                     <Button
                       onClick={analyzeChart}
-                      disabled={analyzing}
+                      disabled={analyzing || (isAuthenticated && (limitStatus.atDailyLimit || limitStatus.atMonthlyLimit))}
                       className="bg-gradient-money hover:opacity-90 px-8"
                       size="lg"
                     >
@@ -247,6 +354,11 @@ export default function ScalpingAI() {
                           <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                           {t('scalping.analyzingChart')}
                         </>
+                      ) : (limitStatus.atDailyLimit || limitStatus.atMonthlyLimit) ? (
+                        <>
+                          <Lock className="w-5 h-5 mr-2" />
+                          Limit Reached
+                        </>
                       ) : (
                         <>
                           <Zap className="w-5 h-5 mr-2" />
@@ -254,6 +366,16 @@ export default function ScalpingAI() {
                         </>
                       )}
                     </Button>
+                    {isAuthenticated && (limitStatus.atDailyLimit || limitStatus.atMonthlyLimit) && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={() => navigate('/pricing')}
+                        className="text-primary"
+                      >
+                        Upgrade for more analyses
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}

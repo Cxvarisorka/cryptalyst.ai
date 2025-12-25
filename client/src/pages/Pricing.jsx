@@ -2,13 +2,21 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { FadeIn } from "@/components/magicui/fade-in";
 import { GradientText } from "@/components/magicui/gradient-text";
-import { Check, DollarSign, Sparkles, Crown, Star } from "lucide-react";
+import { Check, DollarSign, Sparkles, Crown, Star, Zap } from "lucide-react";
 import Hero from "@/components/layout/Hero";
 import { useAuth } from "../contexts/AuthContext";
 import subscriptionService from "../services/subscription.service";
+
+// AI Usage limits configuration (matches backend)
+const AI_USAGE_LIMITS = {
+  free: { dailyLimit: 2, monthlyLimit: 50 },
+  basic: { dailyLimit: 5, monthlyLimit: 150 },
+  premium: { dailyLimit: 40, monthlyLimit: 1000 }
+};
 
 export default function Pricing() {
   const { t } = useTranslation();
@@ -94,9 +102,12 @@ export default function Pricing() {
       period: "Forever",
       icon: DollarSign,
       cta: "Get Started",
+      aiLimits: AI_USAGE_LIMITS.free,
       features: [
         "Basic crypto tracking",
         "Up to 5 portfolio holdings",
+        `${AI_USAGE_LIMITS.free.dailyLimit} AI analyses per day`,
+        `${AI_USAGE_LIMITS.free.monthlyLimit} AI analyses per month`,
         "Community features",
         "Basic price alerts"
       ],
@@ -110,7 +121,12 @@ export default function Pricing() {
       cta: "Start Free Trial",
       featured: true,
       trial: "3-day free trial",
-      features: plans.basic.features
+      aiLimits: AI_USAGE_LIMITS.basic,
+      features: [
+        ...plans.basic.features.filter(f => !f.includes('AI analyses')),
+        `${AI_USAGE_LIMITS.basic.dailyLimit} AI analyses per day`,
+        `${AI_USAGE_LIMITS.basic.monthlyLimit} AI analyses per month`
+      ]
     }] : []),
     ...(plans.premium ? [{
       key: "premium",
@@ -120,7 +136,12 @@ export default function Pricing() {
       icon: Star,
       cta: "Start Free Trial",
       trial: "3-day free trial",
-      features: plans.premium.features
+      aiLimits: AI_USAGE_LIMITS.premium,
+      features: [
+        ...plans.premium.features.filter(f => !f.includes('AI analyses')),
+        `${AI_USAGE_LIMITS.premium.dailyLimit} AI analyses per day`,
+        `${AI_USAGE_LIMITS.premium.monthlyLimit} AI analyses per month`
+      ]
     }] : []),
   ];
 
@@ -213,6 +234,49 @@ export default function Pricing() {
               })}
             </div>
 
+            {/* AI Usage Comparison Section */}
+            <FadeIn delay={0.35} className="mt-12">
+              <Card className="bg-card border-border/60">
+                <CardHeader className="text-center">
+                  <CardTitle className="flex items-center justify-center gap-2">
+                    <Zap className="h-6 w-6 text-primary" />
+                    AI Analysis Limits Comparison
+                  </CardTitle>
+                  <CardDescription>
+                    Each crypto, stock, portfolio, or scalping analysis counts as 1 AI use
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="p-4 rounded-lg bg-gray-500/10 border border-gray-500/20">
+                      <h4 className="font-semibold text-lg mb-2">Free</h4>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-2xl font-bold text-gray-500">{AI_USAGE_LIMITS.free.dailyLimit}</span> /day</p>
+                        <p className="text-muted-foreground">{AI_USAGE_LIMITS.free.monthlyLimit} /month</p>
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                      <h4 className="font-semibold text-lg mb-2 text-blue-600 dark:text-blue-400">Basic</h4>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-2xl font-bold text-blue-500">{AI_USAGE_LIMITS.basic.dailyLimit}</span> /day</p>
+                        <p className="text-muted-foreground">{AI_USAGE_LIMITS.basic.monthlyLimit} /month</p>
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                      <h4 className="font-semibold text-lg mb-2 text-purple-600 dark:text-purple-400">Premium</h4>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-2xl font-bold text-purple-500">{AI_USAGE_LIMITS.premium.dailyLimit}</span> /day</p>
+                        <p className="text-muted-foreground">{AI_USAGE_LIMITS.premium.monthlyLimit} /month</p>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center mt-4">
+                    Limits reset daily at midnight and monthly on the 1st. Portfolio analysis may use 2-3 credits.
+                  </p>
+                </CardContent>
+              </Card>
+            </FadeIn>
+
             {/* Current Subscription Info */}
             {currentSubscription && isPlanActive() && (
               <div className="mt-12 flex justify-center">
@@ -225,7 +289,7 @@ export default function Pricing() {
                     </p>
                     <Button
                       variant="outline"
-                      onClick={() => navigate('/settings')}
+                      onClick={() => navigate('/settings?tab=subscription')}
                     >
                       Manage Subscription
                     </Button>

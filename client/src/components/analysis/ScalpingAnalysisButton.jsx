@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Zap,
   Loader2,
@@ -22,8 +25,11 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   BarChart3,
-  AlertTriangle
+  AlertTriangle,
+  Lock
 } from "lucide-react";
+import { useAIUsage } from "@/hooks/useAIUsage";
+import aiUsageService from "@/services/aiUsage.service";
 
 // Simulated AI scalping analysis based on current price
 const generateScalpingAnalysis = (currentPrice, assetName, assetType) => {
@@ -89,11 +95,36 @@ export default function ScalpingAnalysisButton({
   variant = "outline"
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { refetch: refetchUsage, isAuthenticated } = useAIUsage();
   const [open, setOpen] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
+  const [usageLimitError, setUsageLimitError] = useState(null);
 
   const handleAnalyze = async () => {
+    setUsageLimitError(null);
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setUsageLimitError('Please sign in to use AI analysis');
+      return;
+    }
+
+    try {
+      // Check usage limits before performing analysis
+      const checkResponse = await aiUsageService.checkUsage('scalping');
+
+      if (!checkResponse.data?.allowed) {
+        setUsageLimitError(checkResponse.data?.message || 'AI usage limit exceeded');
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking usage:', error);
+      setUsageLimitError(error.message || 'Failed to check usage limits');
+      return;
+    }
+
     setAnalyzing(true);
     setAnalysis(null);
     // Simulate API delay
@@ -101,6 +132,20 @@ export default function ScalpingAnalysisButton({
     const result = generateScalpingAnalysis(currentPrice, assetName, assetType);
     setAnalysis(result);
     setAnalyzing(false);
+
+    // Record AI usage after successful analysis
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      await axios.post(`${API_URL}/analysis/record-usage`, {
+        type: 'scalping',
+        assetId: assetSymbol
+      }, { withCredentials: true });
+
+      // Immediately refresh navbar usage indicator
+      refetchUsage();
+    } catch (err) {
+      console.error('Error recording AI usage:', err);
+    }
   };
 
   const formatPrice = (price) => {
@@ -130,6 +175,28 @@ export default function ScalpingAnalysisButton({
           </DialogDescription>
         </DialogHeader>
 
+        {/* Usage Limit Error */}
+        {usageLimitError && !analyzing && (
+          <Alert className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700">
+            <Lock className="h-5 w-5 text-red-500" />
+            <div className="ml-2 flex-1">
+              <h4 className="font-semibold text-red-700 dark:text-red-400">AI Usage Limit Reached</h4>
+              <AlertDescription className="text-foreground mt-1">
+                {usageLimitError}
+              </AlertDescription>
+              <div className="flex gap-2 mt-3">
+                <Button size="sm" onClick={() => { setOpen(false); navigate('/pricing'); }} className="bg-gradient-to-r from-green-600 to-emerald-600">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  Upgrade Plan
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setUsageLimitError(null)}>
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </Alert>
+        )}
+
         {analyzing && (
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
@@ -137,7 +204,7 @@ export default function ScalpingAnalysisButton({
           </div>
         )}
 
-        {analysis && !analyzing && (
+        {analysis && !analyzing && !usageLimitError && (
           <div className="space-y-4">
             {/* Signal Banner */}
             <div className={`p-4 rounded-lg flex items-center justify-between ${
