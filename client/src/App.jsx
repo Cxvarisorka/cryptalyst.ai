@@ -8,6 +8,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import WelcomeModal from "@/components/marketing/WelcomeModal";
 import OnboardingWidget from "@/components/onboarding/OnboardingWidget";
+import CustomerSupportChat from "@/components/support/CustomerSupportChat";
 import AppRouter from "@/router/AppRouter";
 
 const queryClient = new QueryClient({
@@ -36,6 +37,7 @@ function App() {
                 </main>
                 <Footer />
                 <OnboardingWidget />
+                <CustomerSupportChat />
                 <WelcomeModal />
                 <Toaster />
               </div>

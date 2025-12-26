@@ -16,7 +16,6 @@ import {
   PieChart,
   Newspaper,
   Bell,
-  GraduationCap,
   Zap,
   Sparkles,
   Trophy
@@ -31,7 +30,6 @@ const TASKS = [
   { id: 'usePortfolioAnalyzer', icon: PieChart, route: '/dashboard?tab=analytics' },
   { id: 'viewNews', icon: Newspaper, route: '/news' },
   { id: 'setPriceAlert', icon: Bell, route: '/price-alerts' },
-  { id: 'startLearning', icon: GraduationCap, route: '/learn' },
   { id: 'useScalpingAI', icon: Zap, route: '/scalping-ai' },
 ];
 

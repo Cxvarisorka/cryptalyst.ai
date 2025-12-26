@@ -39,18 +39,19 @@ export default function Settings() {
     confirmPassword: ""
   });
 
-  const [preferences, setPreferences] = useState({
-    currency: "USD",
-    timezone: "UTC",
-    dateFormat: "MM/DD/YYYY",
-    theme: "system"
-  });
+  // Preferences and Privacy - temporarily disabled
+  // const [preferences, setPreferences] = useState({
+  //   currency: "USD",
+  //   timezone: "UTC",
+  //   dateFormat: "MM/DD/YYYY",
+  //   theme: "system"
+  // });
 
-  const [privacy, setPrivacy] = useState({
-    profileVisibility: "private",
-    showPortfolio: false,
-    dataSharing: false
-  });
+  // const [privacy, setPrivacy] = useState({
+  //   profileVisibility: "private",
+  //   showPortfolio: false,
+  //   dataSharing: false
+  // });
 
   useEffect(() => {
     if (user) {
@@ -59,17 +60,18 @@ export default function Settings() {
         email: user.email || "",
         avatar: user.avatar || ""
       });
-      setPreferences({
-        currency: user.settings?.currency || "USD",
-        timezone: user.settings?.timezone || "UTC",
-        dateFormat: user.settings?.dateFormat || "MM/DD/YYYY",
-        theme: user.settings?.theme || "system"
-      });
-      setPrivacy({
-        profileVisibility: user.settings?.privacy?.profileVisibility || "private",
-        showPortfolio: user.settings?.privacy?.showPortfolio || false,
-        dataSharing: user.settings?.privacy?.dataSharing || false
-      });
+      // Preferences and Privacy initialization - temporarily disabled
+      // setPreferences({
+      //   currency: user.settings?.currency || "USD",
+      //   timezone: user.settings?.timezone || "UTC",
+      //   dateFormat: user.settings?.dateFormat || "MM/DD/YYYY",
+      //   theme: user.settings?.theme || "system"
+      // });
+      // setPrivacy({
+      //   profileVisibility: user.settings?.privacy?.profileVisibility || "private",
+      //   showPortfolio: user.settings?.privacy?.showPortfolio || false,
+      //   dataSharing: user.settings?.privacy?.dataSharing || false
+      // });
     }
   }, [user]);
 
@@ -126,47 +128,49 @@ export default function Settings() {
     }
   };
 
-  const handlePreferencesUpdate = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await settingsService.updatePreferences(preferences);
-      await refreshUser();
-      toast({
-        title: t('settings.common.success'),
-        description: t('settings.preferences.success')
-      });
-    } catch (error) {
-      toast({
-        title: t('settings.common.error'),
-        description: error.response?.data?.message || t('settings.preferences.error'),
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Preferences update handler - temporarily disabled
+  // const handlePreferencesUpdate = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   try {
+  //     await settingsService.updatePreferences(preferences);
+  //     await refreshUser();
+  //     toast({
+  //       title: t('settings.common.success'),
+  //       description: t('settings.preferences.success')
+  //     });
+  //   } catch (error) {
+  //     toast({
+  //       title: t('settings.common.error'),
+  //       description: error.response?.data?.message || t('settings.preferences.error'),
+  //       variant: "destructive"
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  const handlePrivacyUpdate = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await settingsService.updatePrivacy(privacy);
-      await refreshUser();
-      toast({
-        title: t('settings.common.success'),
-        description: 'Privacy settings updated successfully'
-      });
-    } catch (error) {
-      toast({
-        title: t('settings.common.error'),
-        description: error.response?.data?.message || 'Failed to update privacy settings',
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Privacy update handler - temporarily disabled
+  // const handlePrivacyUpdate = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   try {
+  //     await settingsService.updatePrivacy(privacy);
+  //     await refreshUser();
+  //     toast({
+  //       title: t('settings.common.success'),
+  //       description: 'Privacy settings updated successfully'
+  //     });
+  //   } catch (error) {
+  //     toast({
+  //       title: t('settings.common.error'),
+  //       description: error.response?.data?.message || 'Failed to update privacy settings',
+  //       variant: "destructive"
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const heroIcons = [
     { Icon: SettingsIcon, gradient: 'bg-gradient-to-r from-purple-500 to-blue-500' }
@@ -204,20 +208,22 @@ export default function Settings() {
                 <Lock size={18} />
                 <span>{t('settings.tabs.security')}</span>
               </TabsTrigger>
-              <TabsTrigger
+              {/* Preferences tab - temporarily disabled */}
+              {/* <TabsTrigger
                 value="preferences"
                 className="w-full justify-start gap-3 data-[state=active]:bg-gradient-money data-[state=active]:text-white"
               >
                 <SettingsIcon size={18} />
                 <span>{t('settings.tabs.preferences')}</span>
-              </TabsTrigger>
-              <TabsTrigger
+              </TabsTrigger> */}
+              {/* Privacy tab - temporarily disabled */}
+              {/* <TabsTrigger
                 value="privacy"
                 className="w-full justify-start gap-3 data-[state=active]:bg-gradient-money data-[state=active]:text-white"
               >
                 <Shield size={18} />
                 <span>{t('settings.tabs.privacy')}</span>
-              </TabsTrigger>
+              </TabsTrigger> */}
               <TabsTrigger
                 value="subscription"
                 className="w-full justify-start gap-3 data-[state=active]:bg-gradient-money data-[state=active]:text-white"
@@ -390,7 +396,8 @@ export default function Settings() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="preferences">
+        {/* Preferences TabsContent - temporarily disabled */}
+        {/* <TabsContent value="preferences">
           <Card className="border-border/60 shadow-lg">
             <CardHeader className="border-b border-border/60 bg-gradient-to-r from-primary/5 to-primary/0">
               <div className="flex items-center gap-3">
@@ -468,9 +475,10 @@ export default function Settings() {
               </form>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
 
-        <TabsContent value="privacy">
+        {/* Privacy TabsContent - temporarily disabled */}
+        {/* <TabsContent value="privacy">
           <Card className="border-border/60 shadow-lg">
             <CardHeader className="border-b border-border/60 bg-gradient-to-r from-primary/5 to-primary/0">
               <div className="flex items-center gap-3">
@@ -589,7 +597,7 @@ export default function Settings() {
               </form>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="subscription">
           <SubscriptionManagement />

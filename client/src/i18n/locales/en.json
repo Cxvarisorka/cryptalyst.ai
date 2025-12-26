@@ -874,12 +874,22 @@
       "usePortfolioAnalyzer": "View portfolio analytics",
       "viewNews": "Read market news",
       "setPriceAlert": "Set a price alert",
-      "startLearning": "Start a learning course",
       "useScalpingAI": "Try Scalping AI analysis"
     },
     "celebration": {
       "title": "Congratulations!",
       "message": "You've completed the tutorial. Happy trading!"
     }
+  },
+  "support": {
+    "title": "Customer Support",
+    "subtitle": "We typically reply within minutes",
+    "openChat": "Open chat",
+    "namePlaceholder": "Your name",
+    "emailPlaceholder": "Your email",
+    "messagePlaceholder": "How can we help you?",
+    "send": "Send Message",
+    "messageSent": "Message sent!",
+    "willReply": "We'll get back to you soon"
   }
 }
