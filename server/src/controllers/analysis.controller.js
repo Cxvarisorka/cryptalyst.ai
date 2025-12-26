@@ -2,7 +2,7 @@ const technicalAnalysisService = require('../services/technicalAnalysis.service'
 const priceHistoryService = require('../services/priceHistory.service');
 const marketDataService = require('../services/marketData.service');
 const { completeOnboardingTask } = require('../services/onboarding.service');
-const { recordUsage, getUsageStats } = require('../services/aiUsage.service');
+const { recordUsage } = require('../services/aiUsage.service');
 const { ANALYSIS_TYPES } = require('../config/stripe.config');
 
 /**
@@ -32,23 +32,15 @@ exports.getCryptoAnalysis = async (req, res) => {
       completeOnboardingTask(req.user.id, 'useCryptoAnalyzer').catch(() => {});
     }
 
-    // Record AI usage and get updated stats
-    let usage = null;
-    if (req.user?.id) {
-      try {
-        usage = await recordUsage(req.user.id, ANALYSIS_TYPES.CRYPTO, id);
-      } catch (err) {
-        console.error('Error recording usage:', err);
-      }
-    }
+    // NOTE: Usage is NOT recorded here - it's recorded by the client when AI analysis button is clicked
+    // This endpoint just returns data, the /record-usage endpoint handles tracking
 
     res.json({
       success: true,
       data: {
         asset: crypto,
         analysis
-      },
-      usage
+      }
     });
   } catch (error) {
     console.error('Error getting crypto analysis:', error);
@@ -87,23 +79,15 @@ exports.getStockAnalysis = async (req, res) => {
       completeOnboardingTask(req.user.id, 'useStockAnalyzer').catch(() => {});
     }
 
-    // Record AI usage and get updated stats
-    let usage = null;
-    if (req.user?.id) {
-      try {
-        usage = await recordUsage(req.user.id, ANALYSIS_TYPES.STOCK, symbol);
-      } catch (err) {
-        console.error('Error recording usage:', err);
-      }
-    }
+    // NOTE: Usage is NOT recorded here - it's recorded by the client when AI analysis button is clicked
+    // This endpoint just returns data, the /record-usage endpoint handles tracking
 
     res.json({
       success: true,
       data: {
         asset: stock,
         analysis
-      },
-      usage
+      }
     });
   } catch (error) {
     console.error('Error getting stock analysis:', error);
@@ -243,16 +227,8 @@ exports.getCompleteAnalysis = async (req, res) => {
 
     const stats = priceHistoryService.calculatePriceStats(priceData);
 
-    // Record AI usage and get updated stats
-    let usage = null;
-    if (req.user?.id) {
-      try {
-        const analysisType = type === 'crypto' ? ANALYSIS_TYPES.CRYPTO : ANALYSIS_TYPES.STOCK;
-        usage = await recordUsage(req.user.id, analysisType, id);
-      } catch (err) {
-        console.error('Error recording usage:', err);
-      }
-    }
+    // NOTE: Usage is NOT recorded here - it's recorded by the client when AI analysis button is clicked
+    // This endpoint just returns data, the /record-usage endpoint handles tracking
 
     res.json({
       success: true,
@@ -264,8 +240,7 @@ exports.getCompleteAnalysis = async (req, res) => {
           data: priceData,
           stats
         }
-      },
-      usage
+      }
     });
   } catch (error) {
     console.error('Error getting complete analysis:', error);
