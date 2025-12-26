@@ -238,7 +238,7 @@ export default function AIAnalysis({
                 ) : (
                   <>
                     <Brain className="w-5 h-5 mr-2" />
-                    {t('aiAnalysis.analyzeButton', 'Analyze Market')}
+                    {t('aiAnalysis.analyzeButton', 'Analyze Market')} (1 token)
                   </>
                 )}
               </Button>

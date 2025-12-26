@@ -223,11 +223,20 @@ export function AIUsageCard({ showUpgrade = true }) {
   );
 }
 
+// Token costs for different analysis types
+export const TOKEN_COSTS = {
+  crypto: 1,
+  stock: 1,
+  scalping: 1,
+  portfolio: 2  // Portfolio analysis costs 2 tokens
+};
+
 /**
  * Inline AI Usage Badge - Shows remaining tokens in a compact inline format
  * Use this in pages where AI analysis is available
+ * @param {string} analysisType - Type of analysis: 'crypto', 'stock', 'scalping', 'portfolio'
  */
-export function AIUsageBadge({ className = '' }) {
+export function AIUsageBadge({ className = '', analysisType = null }) {
   const { usage, loading, isAuthenticated, getLimitStatus } = useAIUsage();
   const navigate = useNavigate();
 
@@ -271,6 +280,8 @@ export function AIUsageBadge({ className = '' }) {
     return 'text-green-500';
   };
 
+  const cost = analysisType ? TOKEN_COSTS[analysisType] || 1 : null;
+
   return (
     <button
       onClick={() => navigate('/settings?tab=subscription')}
@@ -279,7 +290,8 @@ export function AIUsageBadge({ className = '' }) {
     >
       <Zap className={`w-4 h-4 ${getIconColor()}`} />
       <span className={`text-sm font-medium ${getTextColor()}`}>
-        {usage.dailyRemaining}/{usage.dailyLimit} AI tokens today
+        {usage.dailyRemaining}/{usage.dailyLimit} tokens
+        {cost && <span className="opacity-75"> • Cost: {cost}</span>}
       </span>
       {(limitStatus.atDailyLimit || limitStatus.atMonthlyLimit) && (
         <Badge variant="destructive" className="text-xs px-1.5 py-0">

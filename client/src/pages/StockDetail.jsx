@@ -516,7 +516,7 @@ export default function StockDetail() {
 
           {/* AI Analysis Section */}
           <div className="flex justify-end mb-2">
-            <AIUsageBadge />
+            <AIUsageBadge analysisType="stock" />
           </div>
           {stock && priceHistory.length > 0 && stats && (
             <AIAnalysis

@@ -285,7 +285,7 @@ export default function ScalpingAI() {
 
           {/* AI Usage Badge */}
           <div className="flex justify-end mb-2">
-            <AIUsageBadge />
+            <AIUsageBadge analysisType="scalping" />
           </div>
 
           {/* Upload Section */}

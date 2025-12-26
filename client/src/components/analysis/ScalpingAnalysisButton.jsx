@@ -161,7 +161,7 @@ export default function ScalpingAnalysisButton({
       <DialogTrigger asChild>
         <Button variant={variant} className="gap-2" onClick={() => { setOpen(true); handleAnalyze(); }}>
           <Zap className="w-4 h-4" />
-          {t('scalping.button.title')}
+          {t('scalping.button.title')} (1 token)
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

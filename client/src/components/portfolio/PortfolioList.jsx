@@ -273,9 +273,9 @@ export default function PortfolioList({ portfolio, onRemoveAsset, onUpdateQuanti
                   className="w-full sm:w-auto"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
-                  {t("portfolio.analyzeWithAI")}
+                  {t("portfolio.analyzeWithAI")} (2 tokens)
                 </Button>
-                <AIUsageBadge />
+                <AIUsageBadge analysisType="portfolio" />
               </div>
             </div>
           )}

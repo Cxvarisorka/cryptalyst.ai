@@ -461,7 +461,7 @@ export default function CryptoDetail() {
 
           {/* AI Analysis Section */}
           <div className="flex justify-end mb-2">
-            <AIUsageBadge />
+            <AIUsageBadge analysisType="crypto" />
           </div>
           {crypto && priceHistory.length > 0 && stats && (
             <AIAnalysis
