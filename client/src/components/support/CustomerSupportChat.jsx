@@ -6,6 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+// Event name for onboarding visibility changes
+export const ONBOARDING_VISIBILITY_EVENT = 'onboardingVisibilityChange';
+
 /**
  * Customer Support Chat Widget using Tawk.to
  *
@@ -23,6 +26,19 @@ export default function CustomerSupportChat() {
   const [isTawkLoaded, setIsTawkLoaded] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [onboardingVisible, setOnboardingVisible] = useState(false);
+
+  // Listen for onboarding visibility changes
+  useEffect(() => {
+    const handleOnboardingVisibility = (event) => {
+      setOnboardingVisible(event.detail?.visible || false);
+    };
+
+    window.addEventListener(ONBOARDING_VISIBILITY_EVENT, handleOnboardingVisibility);
+    return () => {
+      window.removeEventListener(ONBOARDING_VISIBILITY_EVENT, handleOnboardingVisibility);
+    };
+  }, []);
 
   useEffect(() => {
     const propertyId = import.meta.env.VITE_TAWKTO_PROPERTY_ID;
@@ -126,21 +142,30 @@ export default function CustomerSupportChat() {
         }
       `}</style>
 
-      {/* Chat Button */}
+      {/* Chat Button - positioned left of onboarding widget when visible */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-[85] h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg flex items-center justify-center chat-bounce transition-all duration-200 hover:scale-110 sm:bottom-6 sm:right-6"
-          style={{ bottom: '24px', right: '24px' }}
+          className={`fixed z-[85] h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg flex items-center justify-center chat-bounce transition-all duration-300 hover:scale-110`}
+          style={{
+            bottom: '24px',
+            right: onboardingVisible ? '420px' : '24px'
+          }}
           aria-label={t('support.openChat', 'Open chat')}
         >
           <MessageCircle className="h-6 w-6 text-primary-foreground" />
         </button>
       )}
 
-      {/* Chat Window */}
+      {/* Chat Window - positioned left of onboarding widget when visible */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-[95] w-80 sm:w-96 chat-window" style={{ bottom: '24px', right: '24px' }}>
+        <div
+          className="fixed z-[95] w-80 sm:w-96 chat-window transition-all duration-300"
+          style={{
+            bottom: '24px',
+            right: onboardingVisible ? '420px' : '24px'
+          }}
+        >
           <Card className="bg-card/95 backdrop-blur border-primary/20 shadow-xl">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { ONBOARDING_UPDATE_EVENT } from '@/hooks/useOnboardingTracker';
+import { ONBOARDING_VISIBILITY_EVENT } from '@/components/support/CustomerSupportChat';
 
 const TASKS = [
   { id: 'createPortfolio', icon: Briefcase, route: '/dashboard?tab=portfolio' },
@@ -119,6 +120,16 @@ export default function OnboardingWidget() {
   const handleToggleMinimize = () => {
     setIsMinimized(!isMinimized);
   };
+
+  // Emit visibility event when isVisible or isMinimized changes
+  useEffect(() => {
+    // Widget is "visible" (takes full space) when not loading, visible, and not minimized
+    const widgetTakesSpace = isVisible && !loading && !isMinimized;
+    const event = new CustomEvent(ONBOARDING_VISIBILITY_EVENT, {
+      detail: { visible: widgetTakesSpace }
+    });
+    window.dispatchEvent(event);
+  }, [isVisible, loading, isMinimized]);
 
   if (loading || !isVisible) return null;
 
