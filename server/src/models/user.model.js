@@ -45,6 +45,23 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  // Email verification for manual signup
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationToken: {
+    type: String,
+    default: null
+  },
+  emailVerificationTokenExpires: {
+    type: Date,
+    default: null
+  },
+  emailVerifiedAt: {
+    type: Date,
+    default: null
+  },
   subscription: {
     stripeCustomerId: {
       type: String,

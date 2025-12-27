@@ -9,6 +9,7 @@ import NotFound from "@/pages/NotFound";
 import Pricing from "@/pages/Pricing";
 import Signup from "@/pages/Signup";
 import Signin from "@/pages/Signin";
+import VerifyEmail from "@/pages/VerifyEmail";
 import CryptoDetail from "@/pages/CryptoDetail";
 import StockDetail from "@/pages/StockDetail";
 import Settings from "@/pages/Settings";
@@ -32,6 +33,7 @@ function AppRouter() {
       <Route path="/" element={<Home />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/signin" element={<Signin />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/about" element={<About />} />
       <Route path="/pricing" element={<Pricing />} />
       {/* <Route path="/learn" element={<Learn />} /> */}{/* MVP: disabled */}

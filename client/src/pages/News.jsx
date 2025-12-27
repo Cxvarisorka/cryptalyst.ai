@@ -189,7 +189,7 @@ const News = () => {
   };
 
   const heroIcons = [
-    { Icon: Newspaper, gradient: 'bg-gradient-to-r from-blue-500 to-purple-500' }
+    { Icon: Newspaper, gradient: 'bg-gradient-money' }
   ];
 
   return (

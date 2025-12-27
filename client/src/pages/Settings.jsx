@@ -173,7 +173,7 @@ export default function Settings() {
   // };
 
   const heroIcons = [
-    { Icon: SettingsIcon, gradient: 'bg-gradient-to-r from-purple-500 to-blue-500' }
+    { Icon: SettingsIcon, gradient: 'bg-gradient-money' }
   ];
 
   return (

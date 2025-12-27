@@ -1,5 +1,5 @@
 const express = require('express');
-const { signup, login, logout, getCurrentUser } = require('../controllers/auth.controller');
+const { signup, login, logout, getCurrentUser, verifyEmail, resendVerificationEmail } = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth.middleware');
 
 const router = express.Router();
@@ -14,6 +14,12 @@ router.post('/login', login);
 
 // POST /api/auth/logout - Logout user
 router.post('/logout', logout);
+
+// GET /api/auth/verify-email - Verify email with token
+router.get('/verify-email', verifyEmail);
+
+// POST /api/auth/resend-verification - Resend verification email
+router.post('/resend-verification', resendVerificationEmail);
 
 // Protected routes - requires authentication
 

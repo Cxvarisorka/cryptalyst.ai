@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { FadeIn } from "@/components/magicui/fade-in";
 import { GradientText } from "@/components/magicui/gradient-text";
-import { Check, DollarSign, Sparkles, Crown, Star, Zap } from "lucide-react";
+import {
+  Check, DollarSign, Sparkles, Crown, Star, Zap,
+  Rocket, Shield, ArrowRight, HelpCircle, ChevronDown
+} from "lucide-react";
 import Hero from "@/components/layout/Hero";
 import { useAuth } from "../contexts/AuthContext";
 import subscriptionService from "../services/subscription.service";
@@ -26,6 +28,7 @@ export default function Pricing() {
   const [loading, setLoading] = useState(true);
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [processingPlan, setProcessingPlan] = useState(null);
+  const [openFaq, setOpenFaq] = useState(null);
 
   useEffect(() => {
     // Set hardcoded plans - no API call needed
@@ -102,6 +105,8 @@ export default function Pricing() {
       period: "Forever",
       icon: DollarSign,
       cta: "Get Started",
+      color: "gray",
+      gradient: "from-gray-500 to-slate-500",
       aiLimits: AI_USAGE_LIMITS.free,
       features: [
         "Basic crypto tracking",
@@ -121,6 +126,8 @@ export default function Pricing() {
       cta: "Start Free Trial",
       featured: true,
       trial: "3-day free trial",
+      color: "blue",
+      gradient: "from-blue-500 to-cyan-500",
       aiLimits: AI_USAGE_LIMITS.basic,
       features: [
         ...plans.basic.features.filter(f => !f.includes('AI analyses')),
@@ -136,6 +143,8 @@ export default function Pricing() {
       icon: Star,
       cta: "Start Free Trial",
       trial: "3-day free trial",
+      color: "purple",
+      gradient: "from-purple-500 to-pink-500",
       aiLimits: AI_USAGE_LIMITS.premium,
       features: [
         ...plans.premium.features.filter(f => !f.includes('AI analyses')),
@@ -154,7 +163,12 @@ export default function Pricing() {
 
   const heroIcons = [
     { Icon: DollarSign, gradient: 'bg-gradient-money' },
-    { Icon: Sparkles, gradient: 'bg-gradient-to-r from-purple-500 to-pink-500' }
+  ];
+
+  const benefits = [
+    { icon: Shield, text: "Cancel anytime" },
+    { icon: Zap, text: "Instant access" },
+    { icon: Sparkles, text: "No hidden fees" },
   ];
 
   return (
@@ -169,7 +183,7 @@ export default function Pricing() {
         size="medium"
       />
 
-      {/* Main Content - Static spacing from hero */}
+      {/* Main Content */}
       <div className="container mx-auto px-4">
         {loading ? (
           <div className="flex items-center justify-center py-20">
@@ -177,43 +191,88 @@ export default function Pricing() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-16 md:pt-20">
+            {/* Trust badges */}
+            <FadeIn className="pt-16 md:pt-20">
+              <div className="flex flex-wrap items-center justify-center gap-6 mb-12">
+                {benefits.map((benefit, i) => (
+                  <div key={i} className="flex items-center gap-2 text-muted-foreground">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <benefit.icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium">{benefit.text}</span>
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
+
+            {/* Pricing Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
               {pricingPlans.map((p, index) => {
                 const Icon = p.icon;
                 return (
                   <FadeIn key={p.key} delay={0.1 * (index + 1)}>
-                    <Card className={`bg-card border-border/60 h-full flex flex-col transition-all duration-500 ${p.featured ? "ring-2 ring-primary shadow-lg" : ""}`}>
+                    <Card className={`bg-card border-border/60 h-full flex flex-col transition-all duration-300 hover:border-primary/30 relative overflow-hidden group ${p.featured ? "ring-2 ring-primary shadow-xl scale-[1.02]" : ""}`}>
+                      {/* Featured badge */}
                       {p.featured && (
-                        <div className="bg-gradient-money text-white text-center py-2 text-sm font-semibold rounded-t-lg">
+                        <div className="absolute top-0 left-0 right-0 bg-gradient-money text-white text-center py-2 text-sm font-semibold">
                           Most Popular
                         </div>
                       )}
-                      <CardHeader>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Icon className="h-6 w-6 text-primary" />
-                          <CardTitle className="text-2xl">{p.name}</CardTitle>
+
+                      {/* Gradient accent on hover */}
+                      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${p.gradient} opacity-0 group-hover:opacity-10 rounded-bl-full transition-opacity duration-300`} />
+
+                      <CardHeader className={p.featured ? "pt-12" : ""}>
+                        {/* Plan icon and name */}
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${p.gradient} flex items-center justify-center`}>
+                            <Icon className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-2xl">{p.name}</CardTitle>
+                            {p.trial && (
+                              <CardDescription className="text-primary font-medium">
+                                {p.trial}
+                              </CardDescription>
+                            )}
+                          </div>
                         </div>
-                        {p.trial && (
-                          <CardDescription className="text-blue-500 font-semibold">
-                            {p.trial}
-                          </CardDescription>
-                        )}
+
+                        {/* Price */}
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-5xl font-bold text-foreground">{p.price}</span>
+                          <span className="text-muted-foreground text-lg">{p.period}</span>
+                        </div>
                       </CardHeader>
-                      <CardContent className="flex-1 flex flex-col">
-                        <div className="mb-6">
-                          <span className="text-4xl font-bold text-foreground">{p.price}</span>
-                          <span className="text-muted-foreground">{p.period}</span>
+
+                      <CardContent className="flex-1 flex flex-col pt-0">
+                        {/* AI Limit highlight */}
+                        <div className={`mb-6 p-3 rounded-xl bg-${p.color}-500/10 border border-${p.color}-500/20`}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">AI Analyses</span>
+                            <div className="text-right">
+                              <span className={`text-lg font-bold text-${p.color}-500`}>{p.aiLimits.dailyLimit}</span>
+                              <span className="text-muted-foreground text-sm">/day</span>
+                            </div>
+                          </div>
                         </div>
+
+                        {/* Features list */}
                         <ul className="space-y-3 mb-8 flex-1">
                           {p.features.map((f, i) => (
-                            <li key={i} className="flex items-start gap-2 text-muted-foreground">
-                              <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                              <span>{f}</span>
+                            <li key={i} className="flex items-start gap-3">
+                              <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <Check className="h-3 w-3 text-green-500" />
+                              </div>
+                              <span className="text-muted-foreground text-sm">{f}</span>
                             </li>
                           ))}
                         </ul>
+
+                        {/* CTA Button */}
                         <Button
-                          className={`w-full ${p.featured ? "bg-gradient-money hover:opacity-90" : ""}`}
+                          className={`w-full h-12 text-base font-semibold transition-all duration-300 ${p.featured ? "bg-gradient-money hover:opacity-90 shadow-lg" : "hover:bg-primary/90"}`}
+                          variant={p.featured ? "default" : "outline"}
                           onClick={() => {
                             if (p.key === 'free') {
                               if (!user) {
@@ -225,7 +284,16 @@ export default function Pricing() {
                           }}
                           disabled={isCurrentPlan(p.key) || processingPlan === p.key}
                         >
-                          {isCurrentPlan(p.key) ? 'Current Plan' : processingPlan === p.key ? 'Processing...' : p.cta}
+                          {isCurrentPlan(p.key) ? (
+                            'Current Plan'
+                          ) : processingPlan === p.key ? (
+                            'Processing...'
+                          ) : (
+                            <>
+                              {p.cta}
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </>
+                          )}
                         </Button>
                       </CardContent>
                     </Card>
@@ -234,43 +302,45 @@ export default function Pricing() {
               })}
             </div>
 
-            {/* AI Usage Comparison Section */}
+            {/* AI Usage Comparison */}
             <FadeIn delay={0.35} className="mt-12">
-              <Card className="bg-card border-border/60">
-                <CardHeader className="text-center">
-                  <CardTitle className="flex items-center justify-center gap-2">
-                    <Zap className="h-6 w-6 text-primary" />
-                    AI Analysis Limits Comparison
-                  </CardTitle>
+              <Card className="bg-card border-border/60 overflow-hidden">
+                <CardHeader className="text-center border-b border-border/60 bg-muted/30">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Zap className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl">AI Analysis Limits Comparison</CardTitle>
                   <CardDescription>
                     Each crypto, stock, portfolio, or scalping analysis counts as 1 AI use
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div className="p-4 rounded-lg bg-gray-500/10 border border-gray-500/20">
-                      <h4 className="font-semibold text-lg mb-2">Free</h4>
-                      <div className="space-y-1 text-sm">
-                        <p><span className="text-2xl font-bold text-gray-500">{AI_USAGE_LIMITS.free.dailyLimit}</span> /day</p>
-                        <p className="text-muted-foreground">{AI_USAGE_LIMITS.free.monthlyLimit} /month</p>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-3 gap-4">
+                    {[
+                      { name: "Free", limits: AI_USAGE_LIMITS.free, color: "gray" },
+                      { name: "Basic", limits: AI_USAGE_LIMITS.basic, color: "blue" },
+                      { name: "Premium", limits: AI_USAGE_LIMITS.premium, color: "purple" },
+                    ].map((plan, i) => (
+                      <div key={i} className={`p-5 rounded-xl bg-${plan.color}-500/10 border border-${plan.color}-500/20 text-center hover:border-${plan.color}-500/40 transition-colors`}>
+                        <h4 className={`font-semibold text-lg mb-3 text-${plan.color}-600 dark:text-${plan.color}-400`}>
+                          {plan.name}
+                        </h4>
+                        <div className="space-y-2">
+                          <div>
+                            <span className={`text-3xl font-bold text-${plan.color}-500`}>{plan.limits.dailyLimit}</span>
+                            <span className="text-muted-foreground text-sm ml-1">/day</span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {plan.limits.monthlyLimit} /month
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                      <h4 className="font-semibold text-lg mb-2 text-blue-600 dark:text-blue-400">Basic</h4>
-                      <div className="space-y-1 text-sm">
-                        <p><span className="text-2xl font-bold text-blue-500">{AI_USAGE_LIMITS.basic.dailyLimit}</span> /day</p>
-                        <p className="text-muted-foreground">{AI_USAGE_LIMITS.basic.monthlyLimit} /month</p>
-                      </div>
-                    </div>
-                    <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                      <h4 className="font-semibold text-lg mb-2 text-purple-600 dark:text-purple-400">Premium</h4>
-                      <div className="space-y-1 text-sm">
-                        <p><span className="text-2xl font-bold text-purple-500">{AI_USAGE_LIMITS.premium.dailyLimit}</span> /day</p>
-                        <p className="text-muted-foreground">{AI_USAGE_LIMITS.premium.monthlyLimit} /month</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                  <p className="text-xs text-muted-foreground text-center mt-4">
+                  <p className="text-xs text-muted-foreground text-center mt-4 flex items-center justify-center gap-1">
+                    <HelpCircle className="h-3 w-3" />
                     Limits reset daily at midnight and monthly on the 1st. Portfolio analysis may use 2-3 credits.
                   </p>
                 </CardContent>
@@ -279,46 +349,91 @@ export default function Pricing() {
 
             {/* Current Subscription Info */}
             {currentSubscription && isPlanActive() && (
-              <div className="mt-12 flex justify-center">
-                <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 max-w-xl w-full">
-                  <CardContent className="p-6 text-center">
-                    <p className="text-foreground mb-3">
-                      {currentSubscription.isTrialing
-                        ? `You're on a free trial until ${new Date(currentSubscription.trialEndsAt).toLocaleDateString()}`
-                        : `Your ${currentSubscription.plan} plan renews on ${new Date(currentSubscription.currentPeriodEnd).toLocaleDateString()}`}
-                    </p>
+              <FadeIn delay={0.4} className="mt-8">
+                <Card className="bg-primary/5 border-primary/20 max-w-xl mx-auto">
+                  <CardContent className="p-6 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Crown className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">
+                          {currentSubscription.isTrialing ? 'Free Trial Active' : `${currentSubscription.plan} Plan`}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {currentSubscription.isTrialing
+                            ? `Ends ${new Date(currentSubscription.trialEndsAt).toLocaleDateString()}`
+                            : `Renews ${new Date(currentSubscription.currentPeriodEnd).toLocaleDateString()}`}
+                        </p>
+                      </div>
+                    </div>
                     <Button
                       variant="outline"
                       onClick={() => navigate('/settings?tab=subscription')}
                     >
-                      Manage Subscription
+                      Manage
                     </Button>
                   </CardContent>
                 </Card>
-              </div>
+              </FadeIn>
             )}
           </>
         )}
 
-        {/* FAQ Section */}
-        <FadeIn delay={0.4} className="mt-16 md:mt-20 max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-10">
-            <GradientText>{t("pricing.faq.title")}</GradientText>
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {faqs.map((faq, index) => (
-              <Card key={index} className="bg-card border-border/60 p-6 transition-all duration-500">
-                <h3 className="font-semibold text-foreground mb-2">{faq.q}</h3>
-                <p className="text-muted-foreground text-sm">{faq.a}</p>
-              </Card>
-            ))}
+        {/* FAQ Section - Accordion Style */}
+        <FadeIn delay={0.4} className="mt-20 md:mt-24">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 mb-4">
+              <HelpCircle className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">FAQ</span>
+            </div>
+            <h2 className="text-3xl font-bold">
+              <GradientText>{t("pricing.faq.title")}</GradientText>
+            </h2>
           </div>
+
+          <Card className="bg-card border-border/60 overflow-hidden divide-y divide-border/60">
+            {faqs.map((faq, index) => (
+              <div key={index} className="overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                  className="w-full px-6 py-5 flex items-center justify-between gap-4 text-left hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-sm text-primary font-bold">
+                      {index + 1}
+                    </span>
+                    <h3 className="font-semibold text-foreground text-base">
+                      {faq.q}
+                    </h3>
+                  </div>
+                  <ChevronDown
+                    className={`h-5 w-5 text-muted-foreground flex-shrink-0 transition-transform duration-300 ${openFaq === index ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                <div
+                  className={`grid transition-all duration-300 ease-in-out ${openFaq === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="px-6 pb-5 pl-[4.5rem]">
+                      <p className="text-muted-foreground leading-relaxed">
+                        {faq.a}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </Card>
         </FadeIn>
 
         {/* CTA */}
         <FadeIn delay={0.5} className="text-center mt-16 md:mt-20 mb-20 md:mb-24">
-          <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 transition-all duration-500">
+          <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
             <CardContent className="p-10">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-money flex items-center justify-center mx-auto mb-6">
+                <Rocket className="h-8 w-8 text-white" />
+              </div>
               <h2 className="text-2xl md:text-3xl font-bold mb-4">{t("pricing.cta.title")}</h2>
               <p className="text-muted-foreground mb-6 max-w-xl mx-auto">{t("pricing.cta.subtitle")}</p>
               <Button
@@ -327,6 +442,7 @@ export default function Pricing() {
                 onClick={() => user ? navigate('/dashboard') : navigate('/signup')}
               >
                 {t("pricing.cta.getStarted")}
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </CardContent>
           </Card>

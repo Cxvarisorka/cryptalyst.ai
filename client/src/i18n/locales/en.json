@@ -450,6 +450,29 @@
         "passwordMismatch": "Passwords do not match",
         "passwordLength": "Password must be at least 6 characters"
       }
+    },
+    "verification": {
+      "title": "Verify Your Email",
+      "checkEmail": "Check your email",
+      "sentTo": "We've sent a verification link to",
+      "instructions": "Click the link in the email to verify your account. If you don't see it, check your spam folder.",
+      "resendButton": "Resend verification email",
+      "resending": "Sending...",
+      "resent": "Verification email sent!",
+      "backToLogin": "Back to sign in",
+      "verifying": "Verifying your email...",
+      "pleaseWait": "Please wait while we verify your email...",
+      "verified": "Email Verified!",
+      "verifiedMessage": "Your email has been successfully verified. You can now log in to your account.",
+      "accountReady": "Your account is now ready to use",
+      "verifyFailed": "Verification Failed",
+      "invalidToken": "This verification link is invalid or has expired.",
+      "errorHint": "The verification link may have expired or already been used. Please try signing in or request a new verification email.",
+      "requestNew": "Request new verification link",
+      "loginNow": "Log in now",
+      "tryAgain": "Try Again",
+      "emailNotVerified": "Please verify your email before logging in.",
+      "resendSuccess": "Verification email has been resent. Please check your inbox."
     }
   },
   "footer": {

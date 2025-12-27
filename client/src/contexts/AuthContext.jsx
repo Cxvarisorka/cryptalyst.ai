@@ -65,6 +65,14 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
+        // Check if email verification is required
+        if (response.data.requiresVerification) {
+          return {
+            success: true,
+            requiresVerification: true,
+            email: response.data.email
+          };
+        }
         // Token is automatically set in httpOnly cookie by server
         setUser(response.data.user);
         return { success: true };
@@ -91,8 +99,15 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       const message = err.response?.data?.message || "Login failed";
+      const requiresVerification = err.response?.data?.requiresVerification || false;
+      const verificationEmail = err.response?.data?.email || email;
       setError(message);
-      return { success: false, error: message };
+      return {
+        success: false,
+        error: message,
+        requiresVerification,
+        email: verificationEmail
+      };
     }
   };
 

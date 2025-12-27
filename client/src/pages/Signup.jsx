@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { FadeIn } from "@/components/magicui/fade-in";
 import { useTranslation } from "react-i18next";
 import OAuthButton from "@/components/auth/OAuthButton";
+import { Mail, CheckCircle2 } from "lucide-react";
+import axios from "axios";
 
 export default function Signup() {
   const { t } = useTranslation();
@@ -21,6 +23,10 @@ export default function Signup() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [resending, setResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -62,13 +68,94 @@ export default function Signup() {
     const result = await signup(formData.name, formData.email, formData.password);
 
     if (result.success) {
-      navigate("/dashboard");
+      // Check if verification is required
+      if (result.requiresVerification) {
+        setVerificationEmail(result.email || formData.email);
+        setVerificationSent(true);
+      } else {
+        navigate("/dashboard");
+      }
     } else {
       setError(result.error);
     }
 
     setIsLoading(false);
   };
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    setResendSuccess(false);
+    try {
+      await axios.post("/auth/resend-verification", { email: verificationEmail });
+      setResendSuccess(true);
+      setTimeout(() => setResendSuccess(false), 5000);
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to resend verification email");
+    }
+    setResending(false);
+  };
+
+  // Show verification sent screen
+  if (verificationSent) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background flex items-center justify-center px-4 py-10">
+        <FadeIn className="w-full max-w-md">
+          <Card className="bg-card border-border/60">
+            <CardHeader className="space-y-1 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Mail className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+              <CardTitle className="text-2xl font-semibold">
+                {t('auth.verification.checkEmail')}
+              </CardTitle>
+              <CardDescription className="text-base">
+                {t('auth.verification.sentTo')}
+              </CardDescription>
+              <p className="font-medium text-foreground">{verificationEmail}</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                {t('auth.verification.instructions')}
+              </p>
+
+              {resendSuccess && (
+                <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md p-3 justify-center">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {t('auth.verification.resent')}
+                </div>
+              )}
+
+              {error && (
+                <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3 text-center">
+                  {error}
+                </div>
+              )}
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleResendVerification}
+                disabled={resending}
+              >
+                {resending ? t('auth.verification.resending') : t('auth.verification.resendButton')}
+              </Button>
+
+              <div className="text-center">
+                <Link
+                  to="/signin"
+                  className="text-sm text-primary hover:underline font-medium"
+                >
+                  {t('auth.verification.backToLogin')}
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </FadeIn>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background flex items-center justify-center px-4 py-10">

@@ -5,6 +5,24 @@
 
 const translations = {
   en: {
+    emailVerification: {
+      subject: 'Verify Your Email - Cryptalyst',
+      title: 'Verify Your Email',
+      greeting: 'Hello',
+      message: 'Thank you for signing up for Cryptalyst! Please verify your email address by clicking the button below.',
+      verifyButton: 'Verify Email',
+      expiresIn: 'This link expires in 24 hours.',
+      ignoreMessage: 'If you did not create an account, you can safely ignore this email.',
+      footer: 'This is an automated message from Cryptalyst. Please do not reply to this email.',
+      copyright: 'Cryptalyst. All rights reserved.',
+      successTitle: 'Email Verified!',
+      successMessage: 'Your email has been successfully verified. You can now log in to your account.',
+      alreadyVerified: 'Your email is already verified.',
+      invalidToken: 'Invalid or expired verification token.',
+      tokenExpired: 'Your verification link has expired. Please request a new one.',
+      resendSuccess: 'Verification email has been resent.',
+      resendSubject: 'New Verification Link - Cryptalyst'
+    },
     priceAlert: {
       subject: 'Price Alert Triggered',
       greeting: 'Hello',
@@ -29,6 +47,24 @@ const translations = {
     }
   },
   ka: {
+    emailVerification: {
+      subject: 'დაადასტურეთ თქვენი ელ-ფოსტა - Cryptalyst',
+      title: 'დაადასტურეთ თქვენი ელ-ფოსტა',
+      greeting: 'გამარჯობა',
+      message: 'გმადლობთ Cryptalyst-ზე რეგისტრაციისთვის! გთხოვთ დაადასტუროთ თქვენი ელ-ფოსტის მისამართი ქვემოთ მოცემულ ღილაკზე დაწკაპუნებით.',
+      verifyButton: 'ელ-ფოსტის დადასტურება',
+      expiresIn: 'ეს ბმული მოქმედებს 24 საათის განმავლობაში.',
+      ignoreMessage: 'თუ თქვენ არ შექმნეთ ანგარიში, შეგიძლიათ უგულებელყოთ ეს წერილი.',
+      footer: 'ეს არის ავტომატური შეტყობინება Cryptalyst-დან. გთხოვთ არ უპასუხოთ ამ ელფოსტას.',
+      copyright: 'Cryptalyst. ყველა უფლება დაცულია.',
+      successTitle: 'ელ-ფოსტა დადასტურებულია!',
+      successMessage: 'თქვენი ელ-ფოსტა წარმატებით დადასტურდა. ახლა შეგიძლიათ შეხვიდეთ თქვენს ანგარიშზე.',
+      alreadyVerified: 'თქვენი ელ-ფოსტა უკვე დადასტურებულია.',
+      invalidToken: 'არასწორი ან ვადაგასული დადასტურების ტოკენი.',
+      tokenExpired: 'თქვენი დადასტურების ბმული ვადაგასულია. გთხოვთ მოითხოვოთ ახალი.',
+      resendSuccess: 'დადასტურების ელ-ფოსტა ხელახლა გაიგზავნა.',
+      resendSubject: 'ახალი დადასტურების ბმული - Cryptalyst'
+    },
     priceAlert: {
       subject: 'ფასის შეტყობინება გააქტიურდა',
       greeting: 'გამარჯობა',

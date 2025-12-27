@@ -216,7 +216,7 @@ export default function UserProfile() {
   }
 
   const heroIcons = [
-    { Icon: Users, gradient: 'bg-gradient-to-r from-blue-500 to-cyan-500' }
+    { Icon: Users, gradient: 'bg-gradient-money' }
   ];
 
   return (
