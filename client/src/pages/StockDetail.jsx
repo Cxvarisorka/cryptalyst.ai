@@ -1,13 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FadeIn } from "@/components/magicui/fade-in";
-import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity, DollarSign, Lock } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity, DollarSign } from "lucide-react";
 import { getStockBySymbol } from "@/services/marketDataService";
-import { getStockAnalysis, getPriceHistory } from "@/services/analysisService";
+import { getPriceHistory } from "@/services/analysisService";
 import { getStockNews } from "@/services/newsService";
 import PriceChart from "@/components/charts/PriceChart";
 import NewsSection from "@/components/news/NewsSection";
@@ -17,7 +16,6 @@ import AssetPriceAlerts from "@/components/alerts/AssetPriceAlerts";
 import Hero from "@/components/layout/Hero";
 import ScalpingAnalysisButton from "@/components/analysis/ScalpingAnalysisButton";
 import { useOnboardingTracker } from "@/hooks/useOnboardingTracker";
-import { useAIUsage } from "@/hooks/useAIUsage";
 import { AIUsageBadge } from "@/components/ai/AIUsageDisplay";
 
 export default function StockDetail() {
@@ -25,24 +23,12 @@ export default function StockDetail() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { completeTask } = useOnboardingTracker();
-  const { refetch: refetchUsage } = useAIUsage();
-  const hasTrackedRef = useRef(false);
   const [stock, setStock] = useState(null);
-  const [analysis, setAnalysis] = useState(null);
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newsLoading, setNewsLoading] = useState(true);
   const [priceHistory, setPriceHistory] = useState([]);
   const [stats, setStats] = useState(null);
-  const [usageLimitError, setUsageLimitError] = useState(null);
-
-  // Track onboarding task when stock analysis loads
-  useEffect(() => {
-    if (analysis && !hasTrackedRef.current) {
-      hasTrackedRef.current = true;
-      completeTask('useStockAnalyzer');
-    }
-  }, [analysis, completeTask]);
 
   useEffect(() => {
     fetchStockDetail();
@@ -70,26 +56,9 @@ export default function StockDetail() {
       console.log('Stock data received:', stockData);
 
       setStock(stockData);
-
-      // Fetch analysis separately (optional)
-      try {
-        const analysisData = await getStockAnalysis(symbol);
-        if (analysisData) {
-          setAnalysis(analysisData.analysis);
-          // Refresh navbar usage indicator after successful analysis
-          if (analysisData.usage) {
-            refetchUsage();
-          }
-        }
-      } catch (err) {
-        // Check if it's a usage limit error
-        if (err.upgradeRequired) {
-          setUsageLimitError(err.message);
-        } else {
-          console.warn('Error fetching analysis (non-critical):', err);
-        }
-        // Analysis is optional, don't fail the whole page
-      }
+      // NOTE: Analysis is NOT fetched automatically on page load
+      // The user must click the "Analyze Market" button to trigger AI analysis
+      // This prevents accidental token usage just from visiting the page
     } catch (error) {
       console.error("Error fetching stock detail:", error);
       setStock(null);
@@ -153,37 +122,45 @@ export default function StockDetail() {
 
   const isPositive = stock.change24h >= 0;
 
-  // Get technical indicators from server analysis with safe defaults
-  const indicators = analysis || {
-    rsi: 'N/A',
-    rsiColor: 'text-muted-foreground',
-    rsiSignal: 'No data',
-    macd: 'N/A',
-    macdColor: 'text-muted-foreground',
-    macdSignal: 'No data',
-    ma50: stock.price,
-    ma200: stock.price,
-    trend: 'Unknown',
-    trendColor: 'text-muted-foreground',
-    peRatio: 'N/A',
-    eps: 'N/A',
-    dividendYield: 'N/A',
-    dayHigh: null,
-    dayLow: null,
-    high52w: null,
-    low52w: null,
-    change1w: null,
-    change1m: null,
-    change3m: null,
-    change1y: null,
-    avgVolume: null,
-    todayVolume: null,
-    isAboveAverage: false,
-    sharesOutstanding: null
+  // Technical indicators - use data from API
+  const indicators = {
+    // RSI from API or fallback
+    rsi: stock.rsi || 'N/A',
+    rsiColor: stock.rsiColor || 'text-muted-foreground',
+    rsiSignal: stock.rsiSignal || 'No data',
+    // MACD from API or fallback
+    macd: stock.macd || 'N/A',
+    macdColor: stock.macdColor || 'text-muted-foreground',
+    macdSignal: stock.macdSignal || 'No data',
+    // Moving averages
+    ma50: stock.ma50 || stock.price,
+    ma200: stock.ma200 || stock.price,
+    // Trend
+    trend: stock.trend || 'Unknown',
+    trendColor: stock.trendColor || 'text-muted-foreground',
+    // Fundamental metrics from API
+    peRatio: stock.peRatio != null ? Number(stock.peRatio).toFixed(2) : 'N/A',
+    eps: stock.eps != null ? Number(stock.eps).toFixed(2) : 'N/A',
+    dividendYield: stock.dividendYield != null ? Number(stock.dividendYield).toFixed(2) : 'N/A',
+    // Price action from API
+    dayHigh: stock.dayHigh || null,
+    dayLow: stock.dayLow || null,
+    high52w: stock.high52w || null,
+    low52w: stock.low52w || null,
+    // Performance from API
+    change1w: stock.change1w || null,
+    change1m: stock.change1m || null,
+    change3m: stock.change3m || null,
+    change1y: stock.change1y || null,
+    // Volume from API
+    avgVolume: stock.avgVolume || null,
+    todayVolume: stock.todayVolume || stock.volume24h || null,
+    isAboveAverage: stock.isAboveAverage || false,
+    sharesOutstanding: stock.sharesOutstanding || null
   };
 
   const heroIcons = [
-    { Icon: DollarSign, gradient: 'bg-gradient-to-r from-blue-500 to-purple-500' }
+    { Icon: DollarSign, gradient: 'bg-gradient-money' }
   ];
 
   return (
@@ -221,28 +198,6 @@ export default function StockDetail() {
       <div className="container mx-auto px-4 py-10">
 
         <FadeIn className="space-y-6">
-          {/* Usage Limit Error */}
-          {usageLimitError && (
-            <Alert className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700">
-              <Lock className="h-5 w-5 text-red-500" />
-              <div className="ml-2 flex-1">
-                <h4 className="font-semibold text-red-700 dark:text-red-400">AI Usage Limit Reached</h4>
-                <AlertDescription className="text-foreground mt-1">
-                  {usageLimitError}
-                </AlertDescription>
-                <div className="flex gap-2 mt-3">
-                  <Button size="sm" onClick={() => navigate('/pricing')} className="bg-gradient-money">
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    Upgrade Plan
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setUsageLimitError(null)}>
-                    Dismiss
-                  </Button>
-                </div>
-              </div>
-            </Alert>
-          )}
-
           {/* Price Chart */}
           <PriceChart
             currentPrice={stock.price}
@@ -258,9 +213,23 @@ export default function StockDetail() {
             <CardContent className="pt-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-6">
                 <div className="flex items-center gap-3 sm:gap-4">
-                  {stock.image && (
-                    <img src={stock.image} alt={stock.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg flex-shrink-0" />
-                  )}
+                  {stock.image ? (
+                    <img
+                      src={stock.image}
+                      alt={stock.name}
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg flex-shrink-0"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg flex-shrink-0 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center text-xl sm:text-2xl font-bold text-primary"
+                    style={{ display: stock.image ? 'none' : 'flex' }}
+                  >
+                    {stock.symbol?.charAt(0) || '?'}
+                  </div>
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{stock.name}</h1>
                     <p className="text-lg sm:text-xl text-muted-foreground mt-1">{stock.symbol}</p>
@@ -317,7 +286,9 @@ export default function StockDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-2">
-                <div className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">${indicators.eps}</div>
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
+                  {indicators.eps !== 'N/A' ? `$${indicators.eps}` : 'N/A'}
+                </div>
               </CardContent>
             </Card>
 
@@ -329,7 +300,9 @@ export default function StockDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-2">
-                <div className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{indicators.dividendYield}%</div>
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
+                  {indicators.dividendYield !== 'N/A' ? `${indicators.dividendYield}%` : 'N/A'}
+                </div>
               </CardContent>
             </Card>
           </div>

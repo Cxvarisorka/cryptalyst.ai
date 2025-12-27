@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { cache } = require('../config/redis');
+const { getCryptoTechnicalAnalysis, getStockTechnicalAnalysis } = require('./technicalAnalysis.service');
 
 class MarketDataService {
   constructor() {
@@ -373,6 +374,11 @@ class MarketDataService {
     const cached = cryptoCache.find(c => c.id === id);
     if (cached) {
       console.log(`✅ Crypto ${id} found in Redis cache`);
+      // Add technical analysis to cached data if not already present
+      if (!cached.rsi) {
+        const technicalIndicators = getCryptoTechnicalAnalysis(cached);
+        return { ...cached, ...technicalIndicators };
+      }
       return cached;
     }
 
@@ -399,17 +405,26 @@ class MarketDataService {
 
       const coin = response.data;
 
-      return {
+      const cryptoData = {
         id: coin.id,
         symbol: coin.symbol.toUpperCase(),
         name: coin.name,
         price: coin.market_data.current_price.usd,
-        change24h: coin.market_data.price_change_percentage_24h,
+        change24h: coin.market_data.price_change_percentage_24h || 0,
         marketCap: coin.market_data.market_cap.usd,
         volume24h: coin.market_data.total_volume.usd,
         image: coin.image.large,
-        type: 'crypto'
+        type: 'crypto',
+        // Additional data from CoinGecko
+        high24h: coin.market_data.high_24h?.usd || null,
+        low24h: coin.market_data.low_24h?.usd || null,
+        change7d: coin.market_data.price_change_percentage_7d || null,
+        change30d: coin.market_data.price_change_percentage_30d || null
       };
+
+      // Add technical analysis indicators
+      const technicalIndicators = getCryptoTechnicalAnalysis(cryptoData);
+      return { ...cryptoData, ...technicalIndicators };
     } catch (error) {
       console.error(`❌ Error fetching crypto ${id} from API:`, error.message);
       return null;
@@ -425,13 +440,18 @@ class MarketDataService {
     const cached = stockCache.find(s => s.symbol === symbol);
     if (cached) {
       console.log(`✅ Stock ${symbol} found in Redis cache`);
+      // Add technical analysis to cached data if not already present
+      if (!cached.rsi) {
+        const technicalIndicators = getStockTechnicalAnalysis(cached);
+        return { ...cached, ...technicalIndicators };
+      }
       return cached;
     }
 
     // If not in cache, fetch from API
     try {
       console.log(`🔍 Fetching stock ${symbol} from API...`);
-      const [quoteResponse, profileResponse] = await Promise.all([
+      const [quoteResponse, profileResponse, metricsResponse] = await Promise.all([
         axios.get(`${this.finnhubAPI}/quote`, {
           params: { symbol, token: this.finnhubApiKey },
           timeout: 5000
@@ -439,33 +459,48 @@ class MarketDataService {
         axios.get(`${this.finnhubAPI}/stock/profile2`, {
           params: { symbol, token: this.finnhubApiKey },
           timeout: 5000
-        })
+        }),
+        axios.get(`${this.finnhubAPI}/stock/metric`, {
+          params: { symbol, metric: 'all', token: this.finnhubApiKey },
+          timeout: 5000
+        }).catch(() => ({ data: { metric: {} } }))
       ]);
 
       const quote = quoteResponse.data;
       const profile = profileResponse.data;
+      const metrics = metricsResponse.data?.metric || {};
 
       if (!quote.c || quote.c <= 0) {
         console.log(`❌ Stock ${symbol} returned invalid data`);
         return null;
       }
 
-      // Generate logo URL from company domain
-      const logoUrl = profile.weburl
-        ? `https://logo.clearbit.com/${new URL(profile.weburl).hostname}`
-        : this.getStockLogoUrl(symbol);
+      // Generate logo URL from company domain - always use our mapped URLs first
+      const logoUrl = this.getStockLogoUrl(symbol);
 
-      return {
+      const stockData = {
         id: symbol,
         symbol: symbol,
         name: profile.name || symbol,
         price: quote.c,
-        change24h: quote.dp,
+        change24h: quote.dp || 0,
         marketCap: profile.marketCapitalization ? profile.marketCapitalization * 1000000 : 0,
         volume24h: quote.v || 0,
         image: logoUrl,
-        type: 'stock'
+        type: 'stock',
+        // Fundamental metrics from Finnhub
+        peRatio: metrics.peBasicExclExtraTTM || metrics.peNormalizedAnnual || null,
+        eps: metrics.epsBasicExclExtraItemsTTM || metrics.epsNormalizedAnnual || null,
+        dividendYield: metrics.dividendYieldIndicatedAnnual || null,
+        high52w: metrics['52WeekHigh'] || null,
+        low52w: metrics['52WeekLow'] || null,
+        dayHigh: quote.h || null,
+        dayLow: quote.l || null
       };
+
+      // Add technical analysis indicators
+      const technicalIndicators = getStockTechnicalAnalysis(stockData);
+      return { ...stockData, ...technicalIndicators };
     } catch (error) {
       console.error(`❌ Error fetching stock ${symbol} from API:`, error.message);
       return null;

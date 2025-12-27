@@ -1,14 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FadeIn } from "@/components/magicui/fade-in";
-import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity, BarChart2, Lock } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Loader2, BarChart3, LineChart, PieChart, Activity, BarChart2 } from "lucide-react";
 import { getCryptoById } from "@/services/marketDataService";
-import { getCryptoAnalysis, getPriceHistory } from "@/services/analysisService";
+import { getPriceHistory } from "@/services/analysisService";
 import { getCryptoNews } from "@/services/newsService";
 import PriceChart from "@/components/charts/PriceChart";
 import TradingViewWidget from "@/components/charts/TradingViewWidget";
@@ -19,7 +18,6 @@ import AssetPriceAlerts from "@/components/alerts/AssetPriceAlerts";
 import Hero from "@/components/layout/Hero";
 import ScalpingAnalysisButton from "@/components/analysis/ScalpingAnalysisButton";
 import { useOnboardingTracker } from "@/hooks/useOnboardingTracker";
-import { useAIUsage } from "@/hooks/useAIUsage";
 import { AIUsageBadge } from "@/components/ai/AIUsageDisplay";
 
 export default function CryptoDetail() {
@@ -27,24 +25,12 @@ export default function CryptoDetail() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { completeTask } = useOnboardingTracker();
-  const { refetch: refetchUsage } = useAIUsage();
-  const hasTrackedRef = useRef(false);
   const [crypto, setCrypto] = useState(null);
-  const [analysis, setAnalysis] = useState(null);
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newsLoading, setNewsLoading] = useState(true);
   const [priceHistory, setPriceHistory] = useState([]);
   const [stats, setStats] = useState(null);
-  const [usageLimitError, setUsageLimitError] = useState(null);
-
-  // Track onboarding task when crypto analysis loads
-  useEffect(() => {
-    if (analysis && !hasTrackedRef.current) {
-      hasTrackedRef.current = true;
-      completeTask('useCryptoAnalyzer');
-    }
-  }, [analysis, completeTask]);
 
   // Chart view preference: 'custom' or 'tradingview'
   const [chartView, setChartView] = useState(() => {
@@ -83,26 +69,9 @@ export default function CryptoDetail() {
       console.log('Crypto data received:', cryptoData);
 
       setCrypto(cryptoData);
-
-      // Fetch analysis separately (optional)
-      try {
-        const analysisData = await getCryptoAnalysis(id);
-        if (analysisData) {
-          setAnalysis(analysisData.analysis);
-          // Refresh navbar usage indicator after successful analysis
-          if (analysisData.usage) {
-            refetchUsage();
-          }
-        }
-      } catch (err) {
-        // Check if it's a usage limit error
-        if (err.upgradeRequired) {
-          setUsageLimitError(err.message);
-        } else {
-          console.warn('Error fetching analysis (non-critical):', err);
-        }
-        // Analysis is optional, don't fail the whole page
-      }
+      // NOTE: Analysis is NOT fetched automatically on page load
+      // The user must click the "Analyze Market" button to trigger AI analysis
+      // This prevents accidental token usage just from visiting the page
     } catch (error) {
       console.error("Error fetching crypto detail:", error);
       setCrypto(null);
@@ -169,23 +138,28 @@ export default function CryptoDetail() {
 
   const isPositive = crypto.change24h >= 0;
 
-  // Get technical indicators from server analysis with safe defaults
-  const indicators = analysis || {
-    rsi: 'N/A',
-    rsiColor: 'text-muted-foreground',
-    rsiSignal: 'No data',
-    macd: 'N/A',
-    macdColor: 'text-muted-foreground',
-    macdSignal: 'No data',
-    ma7: crypto.price,
-    ma30: crypto.price,
-    trend: 'Unknown',
-    trendColor: 'text-muted-foreground',
-    volume24h: null,
-    high24h: null,
-    low24h: null,
-    change7d: null,
-    change30d: null
+  // Technical indicators - use data from API
+  const indicators = {
+    // RSI from API or fallback
+    rsi: crypto.rsi || 'N/A',
+    rsiColor: crypto.rsiColor || 'text-muted-foreground',
+    rsiSignal: crypto.rsiSignal || 'No data',
+    // MACD from API or fallback
+    macd: crypto.macd || 'N/A',
+    macdColor: crypto.macdColor || 'text-muted-foreground',
+    macdSignal: crypto.macdSignal || 'No data',
+    // Moving averages
+    ma7: crypto.ma7 || crypto.price,
+    ma30: crypto.ma30 || crypto.price,
+    // Trend
+    trend: crypto.trend || 'Unknown',
+    trendColor: crypto.trendColor || 'text-muted-foreground',
+    // Price data from API
+    volume24h: crypto.volume24h || null,
+    high24h: crypto.high24h || null,
+    low24h: crypto.low24h || null,
+    change7d: crypto.change7d || null,
+    change30d: crypto.change30d || null
   };
 
   const heroIcons = [
@@ -227,28 +201,6 @@ export default function CryptoDetail() {
       <div className="container mx-auto px-4 py-10">
 
         <FadeIn className="space-y-6">
-          {/* Usage Limit Error */}
-          {usageLimitError && (
-            <Alert className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700">
-              <Lock className="h-5 w-5 text-red-500" />
-              <div className="ml-2 flex-1">
-                <h4 className="font-semibold text-red-700 dark:text-red-400">AI Usage Limit Reached</h4>
-                <AlertDescription className="text-foreground mt-1">
-                  {usageLimitError}
-                </AlertDescription>
-                <div className="flex gap-2 mt-3">
-                  <Button size="sm" onClick={() => navigate('/pricing')} className="bg-gradient-money">
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    Upgrade Plan
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setUsageLimitError(null)}>
-                    Dismiss
-                  </Button>
-                </div>
-              </div>
-            </Alert>
-          )}
-
           {/* Chart View Toggle */}
           <div className="flex justify-center">
             <Tabs value={chartView} onValueChange={setChartView} className="w-auto">
@@ -290,9 +242,23 @@ export default function CryptoDetail() {
             <CardContent className="pt-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-6">
                 <div className="flex items-center gap-3 sm:gap-4">
-                  {crypto.image && (
-                    <img src={crypto.image} alt={crypto.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex-shrink-0" />
-                  )}
+                  {crypto.image ? (
+                    <img
+                      src={crypto.image}
+                      alt={crypto.name}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex-shrink-0"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex-shrink-0 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center text-2xl sm:text-3xl font-bold text-primary"
+                    style={{ display: crypto.image ? 'none' : 'flex' }}
+                  >
+                    {crypto.symbol?.charAt(0) || '?'}
+                  </div>
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{crypto.name}</h1>
                     <p className="text-lg sm:text-xl text-muted-foreground">{crypto.symbol}</p>
